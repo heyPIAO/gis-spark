@@ -1,0 +1,44 @@
+package edu.zju.gis.hls.trajectory.datastore.storage.helper;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @author Hu
+ * @date 2019/9/18
+ * 每一个子类都必须实现单例
+ **/
+public abstract class StorageHelper {
+
+  public abstract void useDB(String databaseName);
+
+  public abstract long insert(String tableName, Map<String, ?> data);
+
+  public abstract long insert(String tableName, List<Map<String, ?>> data);
+
+  public abstract long getSize(String tableName);
+
+  /**
+   * 打开数据 reader
+   * @param tableName
+   */
+  public abstract void initReader(String tableName);
+
+  /**
+   * 是否还有值
+   * @return
+   */
+  public abstract boolean hasNext();
+
+  /**
+   * 返回一个JsonString
+   * @return
+   */
+  public abstract String next();
+
+  /**
+   * 关闭 reader
+   */
+  public abstract void closeReader();
+
+}
