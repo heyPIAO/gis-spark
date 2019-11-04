@@ -59,4 +59,14 @@ public abstract class Layer<K,V extends Feature> extends JavaPairRDD<K, V> imple
     this.attributeTypes.put("shape", String.class.getName());
   }
 
+  /**
+   * 点偏移
+   * @param deltaX
+   * @param deltaY
+   * @return
+   */
+  public Layer shift(double deltaX, double deltaY) {
+    return null;
+  }
+
 }

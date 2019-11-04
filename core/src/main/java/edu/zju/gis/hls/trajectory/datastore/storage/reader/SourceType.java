@@ -9,7 +9,7 @@ import lombok.Getter;
  **/
 public enum SourceType {
 
-  FILE(0);
+  FILE(0), MONGODB(1);
 
   @Getter
   private int type;

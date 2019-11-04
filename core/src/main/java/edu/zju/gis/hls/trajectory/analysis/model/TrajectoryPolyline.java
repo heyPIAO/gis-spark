@@ -33,4 +33,14 @@ public class TrajectoryPolyline extends PolylineFeature {
     this.startTime = f.getStartTime();
     this.endTime = f.getEndTime();
   }
+
+  @Override
+  protected Map<String, Object> getGeometryMap() {
+    Map<String, Object> geometryMap = super.getGeometryMap();
+    geometryMap.put("startTime", this.startTime);
+    geometryMap.put("endTime", this.endTime);
+    return geometryMap;
+  }
+
+
 }

@@ -114,7 +114,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
       endTimeIndex = Integer.valueOf(this.prop.getProperty(END_TIME_INDEX));
     }
 
-    // set up headers
+    // set up attributes
     Gson gson = new Gson();
     String headerJson = this.prop.getProperty(HEADER_INDEX, gson.toJson(new HashMap<String, String>()));
     HashMap<String, String> headers = gson.fromJson(headerJson, new HashMap<String, String>().getClass());
@@ -160,18 +160,18 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
         // 如果有 timestamp，获取 timestamp
         Long timestamp = null;
         if (timeIndexBroad.getValue() != -99) {
-          timestamp = Long.valueOf(fields[timeIndexBroad.getValue()]);
+          timestamp = Long.valueOf(fields[timeIndexBroad.getValue()].trim());
         }
 
         // 如果有 startTime，endTime，获取
         Long startTime = null;
         if (startTimeIndexBroad.getValue() != -99) {
-          startTime = Long.valueOf(fields[startTimeIndexBroad.getValue()]);
+          startTime = Long.valueOf(fields[startTimeIndexBroad.getValue()].trim());
         }
 
         Long endTime = null;
         if (endTimeIndexBroad.getValue() != -99) {
-          endTime = Long.valueOf(fields[endTimeIndexBroad.getValue()]);
+          endTime = Long.valueOf(fields[endTimeIndexBroad.getValue()].trim());
         }
 
         // 获取 attributes

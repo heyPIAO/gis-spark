@@ -38,4 +38,6 @@ public class TrajectoryPolylineLayer extends Layer<String, TrajectoryPolyline> {
     this.attributeTypes.put("starttime", long.class.getName());
     this.attributeTypes.put("endtime", long.class.getName());
   }
+
+
 }

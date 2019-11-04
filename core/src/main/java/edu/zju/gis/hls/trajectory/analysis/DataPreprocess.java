@@ -3,36 +3,57 @@ package edu.zju.gis.hls.trajectory.analysis;
 
 import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryPoint;
 import edu.zju.gis.hls.trajectory.analysis.preprocess.GaussianKernel;
-import edu.zju.gis.hls.trajectory.analysis.util.FileUtil;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.locationtech.jts.geom.*;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 
 public class DataPreprocess {
 
     public static void main(String[] args) throws IOException {
-        List<String> pStr = FileUtil.readByLine("D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\rider\\ordre_228493884.txt", null, true);
-
+        String pStr ="D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\rider\\20170920.txt";
+        String oStr = "D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\rider\\20170920_wkt.txt";
+        File out = new File(oStr);
+        File in = new File(pStr);
+        if (!in.exists()) {
+            throw new FileNotFoundException("cannot find file " + pStr);
+        }
+        BufferedReader reader = Files.newBufferedReader(in.toPath());
+        BufferedWriter writer = new BufferedWriter(new FileWriter(out));
         List<String> result = new ArrayList<>();
-
-        for (String p: pStr) {
-            String[] fields = p.split("\t");
+        String line = reader.readLine();
+        int total = 0;
+        while (line != null) {
+            String[] fields = line.split("\t");
             float y = Float.valueOf(fields[4]);
             float x = Float.valueOf(fields[5]);
             Coordinate coordinate = new Coordinate(x, y);
             Point point = new GeometryFactory().createPoint(coordinate);
             String wkt = point.toString();
             List<String> resultFeature = new ArrayList<>();
-            resultFeature.addAll(Arrays.asList(fields));
+            resultFeature.add(fields[0]);
+            resultFeature.add(fields[1]);
+            resultFeature.add(fields[2]);
+            resultFeature.add(fields[3]);
+            resultFeature.add(fields[6]);
             resultFeature.add(wkt);
             String r = String.join("\t", resultFeature);
             result.add(r);
+            writer.write(r + "\r\n");
+            if (result.size() == 100) {
+                writer.flush();
+                total += 100;
+                result.clear();
+                System.out.println("count " + total);
+            }
+            line = reader.readLine();
         }
-
-        FileUtil.write("D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\rider\\order_228493884_wkt.txt", result);
+        writer.flush();
+        total += result.size();
+        System.out.println("Total count " + total);
     }
 
     /**

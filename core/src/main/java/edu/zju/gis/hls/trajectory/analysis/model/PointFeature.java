@@ -1,11 +1,16 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import lombok.Setter;
+import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**

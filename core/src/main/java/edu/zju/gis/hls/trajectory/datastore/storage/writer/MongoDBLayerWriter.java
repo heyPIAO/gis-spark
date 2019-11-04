@@ -28,16 +28,15 @@ public class MongoDBLayerWriter extends LayerWriter <Document> {
 
   public MongoDBLayerWriter(SparkSession ss) {
     super(ss);
-    this.jsc.getConf().set("spark.mongodb.output.uri", "mongodb://localhost:27017");
   }
 
   @Override
-  public Document transform(Feature feature) {
-    return null;
+  public Document transform(Feature f) {
+    return Document.parse(f.toJson());
   }
 
   /**
-   * 注入输出参数，详见官网文档：
+   * 注入 MongoDB 写入输出参数，详见官网文档：
    * https://docs.mongodb.com/spark-connector/v2.3/configuration/#output-configuration
    * @param layer
    */
@@ -45,14 +44,15 @@ public class MongoDBLayerWriter extends LayerWriter <Document> {
   public void write(Layer layer, Properties prop) {
     // Create a custom WriteConfig
     Map<String, String> writeOverrides = new HashMap<String, String>();
+    writeOverrides.put("uri", prop.getProperty("uri", "mongodb://localhost:27017"));
     writeOverrides.put("database", prop.getProperty("database", "default"));
     writeOverrides.put("collection", prop.getProperty("collection", "test"));
     for(Object key: prop.keySet()){
       String keys = (String)key;
-      if (keys.equals("database") || keys.equals("collection")) continue;
+      if (keys.equals("database") || keys.equals("collection") || keys.equals("uri")) continue;
       writeOverrides.put(keys, prop.getProperty(keys));
     }
-    WriteConfig writeConfig = WriteConfig.create(this.jsc).withOptions(writeOverrides);
+    WriteConfig writeConfig = WriteConfig.create(writeOverrides);
 
     if (layer.getAttributes() == null) {
       logger.warn("set layer attributes to empty");
@@ -62,8 +62,7 @@ public class MongoDBLayerWriter extends LayerWriter <Document> {
     JavaRDD<Document> documents = t.map(new Function<Tuple2<String, Feature>, Document>() {
       @Override
       public Document call(Tuple2<String, Feature> t) throws Exception {
-        Feature f = t._2();
-        return null;
+        return transform(t._2);
       }
     });
     MongoSpark.save(documents, writeConfig);

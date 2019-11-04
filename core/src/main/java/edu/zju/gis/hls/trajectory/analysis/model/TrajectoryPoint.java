@@ -1,15 +1,8 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.PointLayer;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import scala.Tuple2;
-
 import java.util.Map;
 
 @Getter
@@ -39,6 +32,12 @@ public class TrajectoryPoint extends PointFeature {
         return sb.toString();
     }
 
+    @Override
+    protected Map<String, Object> getGeometryMap() {
+        Map<String, Object> geometryMap = super.getGeometryMap();
+        geometryMap.put("timestamp", this.timestamp);
+        return geometryMap;
+    }
 
     public String toStringXY() {
         StringBuilder sb = new StringBuilder();
