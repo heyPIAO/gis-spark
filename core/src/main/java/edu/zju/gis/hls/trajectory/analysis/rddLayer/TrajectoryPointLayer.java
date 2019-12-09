@@ -27,6 +27,8 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
 
   private static final Logger logger = LoggerFactory.getLogger(TrajectoryPointLayer.class);
 
+  public TrajectoryPointLayer() {}
+
   public TrajectoryPointLayer(RDD<Tuple2<String, TrajectoryPoint>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(TrajectoryPoint.class));
   }
@@ -40,6 +42,11 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
   }
 
   @Override
+  public TrajectoryPointLayer initialize(RDD<Tuple2<String, TrajectoryPoint>> rdd) {
+    return new TrajectoryPointLayer(rdd);
+  }
+
+  @Override
   public void setAttributes(Map<String, String> attributes) {
     super.setAttributes(attributes);
     this.attributes.put("timestamp", "TIMESTAMP");
@@ -49,19 +56,6 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
   public void setAttributeTypes(Map<String, String> attributeTypes) {
     super.setAttributeTypes(attributeTypes);
     this.attributeTypes.put("timestamp", long.class.getName());
-  }
-
-  @Override
-  public TrajectoryPointLayer shift(double deltaX, double deltaY) {
-    JavaRDD<Tuple2<String, TrajectoryPoint>> t = this.rdd().toJavaRDD();
-    JavaRDD<Tuple2<String, TrajectoryPoint>> r = t.map(new Function<Tuple2<String, TrajectoryPoint>, Tuple2<String, TrajectoryPoint>>() {
-      @Override
-      public Tuple2<String, TrajectoryPoint> call(Tuple2<String, TrajectoryPoint> in) throws Exception {
-        TrajectoryPoint pf = (TrajectoryPoint) in._2.shift(deltaX, deltaY);
-        return new Tuple2<>(pf.getFid(), pf);
-      }
-    });
-    return new TrajectoryPointLayer(r.rdd());
   }
 
   /**
@@ -79,16 +73,16 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
     Broadcast<String[]> attrsKeptBroad = jsc.broadcast(attrsKept);
 
     JavaRDD<Tuple2<String, TrajectoryPoint>> t = this.rdd().toJavaRDD();
-    JavaPairRDD<Object, Iterable<Tuple2<String, TrajectoryPoint>>> tg = t.groupBy(new Function<Tuple2<String, TrajectoryPoint>, Object>() {
+    JavaPairRDD<String, Iterable<Tuple2<String, TrajectoryPoint>>> tg = t.groupBy(new Function<Tuple2<String, TrajectoryPoint>, String>() {
       @Override
-      public Object call(Tuple2<String, TrajectoryPoint> in) throws Exception {
-        return in._2.getAttribute(attrBroad.getValue());
+      public String call(Tuple2<String, TrajectoryPoint> in) throws Exception {
+        return (String) in._2.getAttribute(attrBroad.getValue());
       }
     });
 
-    JavaRDD<Tuple2<String, TrajectoryPolyline>> tl = tg.map(new Function<Tuple2<Object, Iterable<Tuple2<String, TrajectoryPoint>>>, Tuple2<String, TrajectoryPolyline>>() {
+    JavaRDD<Tuple2<String, TrajectoryPolyline>> tl = tg.map(new Function<Tuple2<String, Iterable<Tuple2<String, TrajectoryPoint>>>, Tuple2<String, TrajectoryPolyline>>() {
       @Override
-      public Tuple2<String, TrajectoryPolyline> call(Tuple2<Object, Iterable<Tuple2<String, TrajectoryPoint>>> in) throws Exception {
+      public Tuple2<String, TrajectoryPolyline> call(Tuple2<String, Iterable<Tuple2<String, TrajectoryPoint>>> in) throws Exception {
         List<TrajectoryPoint> ps = new ArrayList<>();
         for (Tuple2<String, TrajectoryPoint> tp: in._2) {
           ps.add(tp._2);
@@ -109,11 +103,13 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
         for (int i=0; i<ps.size(); i++){
           coordinates[i] = ps.get(i).getGeometry().getCoordinate();
         }
+        LineString pl;
         if (coordinates.length < 2) {
-          logger.warn(String.format("Only_One point for %s, abort", ps.get(0).toString()));
-          return null;
+          logger.warn(String.format("Only One point for %s, abort", ps.get(0).toString()));
+          return new Tuple2<>("EMPTY", null);
         }
-        LineString pl = new GeometryFactory().createLineString(coordinates);
+
+        pl = new GeometryFactory().createLineString(coordinates);
 
         Map<String, Object> attributes = new HashMap<>();
         TrajectoryPoint plast = ps.get(ps.size()-1);
@@ -126,9 +122,10 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
 
         TrajectoryPolyline l = new TrajectoryPolyline(String.valueOf(in._1), pl, attributes, startTime, endTime);
         l.setFid(UUID.randomUUID().toString());
-        return new Tuple2<>(String.valueOf(in._1), l);
+        return new Tuple2<>(l.getFid(), l);
       }
     });
+    tl = tl.filter(x->!x._1.equals("EMPTY"));
     TrajectoryPolylineLayer result = new TrajectoryPolylineLayer(tl.rdd());
     List<String> keptKeys = Arrays.asList(attrsKept);
     Map<String, String> layerAttributes = new HashMap<>(this.attributes);

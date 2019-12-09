@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.*;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import lombok.Getter;
 
 import java.io.Serializable;

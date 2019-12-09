@@ -32,6 +32,9 @@ public class MongoDBLayerWriter extends LayerWriter <Document> {
 
   @Override
   public Document transform(Feature f) {
+    if (f == null || f.getGeometry() == null) {
+      return null;
+    }
     return Document.parse(f.toJson());
   }
 

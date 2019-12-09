@@ -5,6 +5,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * @author Hu
@@ -17,4 +18,16 @@ public class LayerMetadata implements Serializable {
   public String layerId;
   public String layerName;
   public double[] extent;
+
+  public LayerMetadata() {
+    this.layerId = UUID.randomUUID().toString();
+    this.layerName = this.layerId;
+    this.extent = new double[4];
+  }
+
+  public LayerMetadata(LayerMetadata metadata) {
+    this.layerId = metadata.layerId;
+    this.layerName = metadata.layerName;
+    this.extent = metadata.extent;
+  }
 }

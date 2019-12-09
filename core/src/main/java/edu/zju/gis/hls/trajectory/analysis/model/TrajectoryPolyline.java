@@ -2,7 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.*;
 
 import java.util.Map;
 
@@ -16,11 +16,11 @@ public class TrajectoryPolyline extends PolylineFeature {
 
   @Getter
   @Setter
-  private long startTime;
+  protected long startTime;
 
   @Getter
   @Setter
-  private long endTime;
+  protected long endTime;
 
   public TrajectoryPolyline(String fid, LineString geometry, Map<String, Object> attributes, long startTime, long endTime) {
     super(fid, geometry, attributes);
@@ -42,5 +42,16 @@ public class TrajectoryPolyline extends PolylineFeature {
     return geometryMap;
   }
 
+  public TrajectoryOD extractOD() {
+    GeometryFactory gf = new GeometryFactory();
+    LineString g = this.getGeometry();
+    Coordinate[] coordinates = g.getCoordinates();
+    if (coordinates.length < 2) {
+      return null;
+    }
+    Point start = gf.createPoint(coordinates[0]);
+    Point end = gf.createPoint(coordinates[coordinates.length-1]);
+    return new TrajectoryOD(this.fid, start, end, this.getAttributes(), startTime, endTime);
+  }
 
 }

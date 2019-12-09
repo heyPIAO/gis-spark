@@ -8,7 +8,6 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
 import lombok.ToString;
-import org.apache.hadoop.util.hash.Hash;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.broadcast.Broadcast;
@@ -33,9 +32,9 @@ import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.*
  * 从文本文件中读取数据
  * （1）不支持有 header 的文件
  * （2）若不设置空间列，默认最后一列为空间列 wkt
- * （3）若不设置 fid 列，则 fid 会被自动创建（基于UUID）
+ * （3）若不设置 key(fid) 列，则 key(fid) 会被自动创建（基于UUID）
  * （4）若 T 类型为 TrajectoryPointLayer 或 TrajectoryPolylineLayer，则必须设置对应 timestamp 或者是 startTime, endTime 字段
- * 注： headers 中不应有 fid，timestamp, startTime, endTime，geometry 等字段
+ * 注： headers 中不应有 key(fid)，timestamp, startTime, endTime，geometry 等字段
  **/
 @ToString
 public class FileLayerReader <T extends Layer> extends LayerReader <T> {
@@ -76,7 +75,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
       data = this.ss.read().textFile(path).toJavaRDD();
     }
 
-    // configure fid index
+    // configure shape index
     // 若不设置空间列，默认最后一列为wkt空间列
     Integer shapeIndex = Integer.valueOf(this.prop.getProperty(SHAPE_INDEX, "-1"));
     if (shapeIndex == null) {
@@ -84,9 +83,8 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
       shapeIndex = -1;
     }
 
-    // configure shape index
-    // 若不设置空间列，默认最后一列为wkt空间列
-    Integer fidIndex = Integer.valueOf(this.prop.getProperty(SHAPE_INDEX, "-99"));
+    // configure fid index
+    Integer fidIndex = Integer.valueOf(this.prop.getProperty(KEY_INDEX, "-99"));
     if (fidIndex == null || fidIndex == -99) {
       logger.warn("fid index not set or fid index set error, default set based on UUID()");
       fidIndex = -99;
@@ -119,7 +117,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
     String headerJson = this.prop.getProperty(HEADER_INDEX, gson.toJson(new HashMap<String, String>()));
     HashMap<String, String> headers = gson.fromJson(headerJson, new HashMap<String, String>().getClass());
 
-    // set up attribtue types
+    // set up attribute types
     String attributeTypeJson = this.prop.getProperty(ATTRIBUTE_TYPE, gson.toJson(new HashMap<String, String>()));
     HashMap<String, String> attributeType = gson.fromJson(attributeTypeJson, new  HashMap<String, String>().getClass());
 

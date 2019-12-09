@@ -5,11 +5,15 @@ import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryPoint;
 import edu.zju.gis.hls.trajectory.analysis.preprocess.GaussianKernel;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataPreprocess {
 

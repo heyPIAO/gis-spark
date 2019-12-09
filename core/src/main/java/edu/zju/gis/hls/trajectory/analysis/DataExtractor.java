@@ -1,9 +1,5 @@
 package edu.zju.gis.hls.trajectory.analysis;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-
 import edu.zju.gis.hls.trajectory.analysis.util.DateUtils;
 import edu.zju.gis.hls.trajectory.analysis.util.FileUtil;
 import org.apache.spark.SparkConf;
@@ -14,6 +10,10 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Hu

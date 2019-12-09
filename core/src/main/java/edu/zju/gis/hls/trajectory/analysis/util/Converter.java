@@ -8,6 +8,7 @@ import java.io.Serializable;
 /**
  * @author Hu
  * @date 2019/9/21
+ * 将字符串转为指定类型
  **/
 public class Converter implements Serializable {
 

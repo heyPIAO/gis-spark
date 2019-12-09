@@ -1,3 +1,5 @@
+package edu.zju.gis.hls.test.example;
+
 import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryPointLayer;
@@ -28,7 +30,7 @@ public class trajLine_demo {
     SparkSession ss = SparkSession
       .builder()
       .appName("trajectory_data_loader")
-      .master("local[1]")
+      .master("local[4]")
       .getOrCreate();
 
     // set up data source

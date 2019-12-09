@@ -11,6 +11,8 @@ import scala.reflect.ClassTag;
  **/
 public class PolylineLayer extends Layer<String, PolylineFeature> {
 
+  public PolylineLayer() {}
+
   public PolylineLayer(RDD<Tuple2<String, PolylineFeature>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(PolylineFeature.class));
   }
@@ -21,6 +23,11 @@ public class PolylineLayer extends Layer<String, PolylineFeature> {
 
   private PolylineLayer(RDD<Tuple2<String, PolylineFeature>> rdd, ClassTag<String> kClassTag, ClassTag<PolylineFeature> polylineClassTag, boolean hasIndexed) {
     super(rdd, kClassTag, polylineClassTag, hasIndexed);
+  }
+
+  @Override
+  public PolylineLayer initialize(RDD<Tuple2<String, PolylineFeature>> rdd) {
+    return new PolylineLayer(rdd);
   }
 
 }

@@ -12,7 +12,6 @@ import java.util.Map;
  * @author Hu
  * @date 2019/9/19
  **/
-
 @Getter
 @Setter
 public class PolygonFeature extends Feature<Polygon> {
@@ -23,19 +22,6 @@ public class PolygonFeature extends Feature<Polygon> {
 
   public PolygonFeature(PolygonFeature f) {
     super(f);
-  }
-
-  @Override
-  public PolygonFeature shift(double deltaX, double deltaY) {
-    Polygon p = this.getGeometry();
-    Coordinate[] cs = p.getCoordinates();
-    Coordinate[] csr = new Coordinate[cs.length];
-    for (int i=0; i<cs.length; i++) {
-      Coordinate c = cs[i];
-      csr[i] = new Coordinate(c.getX() + deltaX, c.getY() + deltaY);
-    }
-    this.setGeometry(new GeometryFactory().createPolygon(csr));
-    return this;
   }
 
 }

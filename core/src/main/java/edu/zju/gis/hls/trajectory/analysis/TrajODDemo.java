@@ -1,40 +1,47 @@
+package edu.zju.gis.hls.trajectory.analysis;
+
 import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryODLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryPointLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryPolylineLayer;
+import edu.zju.gis.hls.trajectory.analysis.util.SparkUtil;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.MongoDBLayerWriter;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 /**
  * @author Hu
- * @date 2019/9/20
+ * @date 2019/11/8
  **/
-public class demo {
+public class TrajODDemo {
 
-  public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  public static void main(String[] args) throws Exception {
 
     // setup spark environment
-    SparkSession ss = SparkSession
-      .builder()
-      .appName("trajectory_data_loader")
-      .master("local[4]")
-      .getOrCreate();
-
+    SparkConf sc = new SparkConf();
+    // SparkSession ss = SparkUtil.createRemoteSparkSession("trajOD", sc);
+    // SparkSession ss = SparkUtil.createLocalSparkSession("trajOD", sc);
+    SparkSession ss = SparkUtil.createSparkSession("trajOD", sc);
     // set up data source
-    String file = "D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\rider\\20170920_wkt.txt";
+    String file = "file:///root/hls/data/dwd/hz/20170920_wkt.txt";
+    // String file = "file:///D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\杭州_骑手\\20170920_wkt.txt";
+    // String file = "file:///D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\rider\\228493884_wkt.txt";
 
     // set up layer reader
     Properties prop = new Properties();
     prop.setProperty(ReaderConfig.FILE_PATH, file);
+    prop.setProperty(ReaderConfig.SEPARATOR, "\t");
 
     Map<String, String> headerIndex = new HashMap<>();
     headerIndex.put("orderId", "0");
@@ -57,16 +64,21 @@ public class demo {
     attributes.put("day", "订单日期");
     layer.setAttributes(attributes);
 
+    TrajectoryPolylineLayer polylineLayer = layer.convertToPolylineLayer(JavaSparkContext.fromSparkContext(ss.sparkContext()), "orderId", "status", "riderId", "day");
+    TrajectoryODLayer odLayer = polylineLayer.extractOD();
+    odLayer.getMetadata().setLayerName("TrajectoryOD");
+
     // write data to sink
     Properties sinkProp = new Properties();
-    sinkProp.setProperty("uri", "mongodb://localhost:27017");
+    sinkProp.setProperty("uri", "mongodb://192.168.1.86:27017");
     sinkProp.setProperty("database", "dwd");
-    sinkProp.setProperty("collection", "rider_point");
+    sinkProp.setProperty("collection", "traj_od");
     LayerWriter writer = new MongoDBLayerWriter(ss);
-    writer.write(layer, sinkProp);
+    writer.write(odLayer, sinkProp);
 
     ss.close();
 
   }
+
 
 }

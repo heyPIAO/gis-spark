@@ -1,8 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
 import edu.zju.gis.hls.trajectory.analysis.model.PointFeature;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
 import org.apache.spark.rdd.RDD;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
@@ -14,6 +12,8 @@ import scala.reflect.ClassTag;
  *
  **/
 public class PointLayer extends Layer<String, PointFeature> {
+
+  public PointLayer() {}
 
   public PointLayer(RDD<Tuple2<String, PointFeature>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(PointFeature.class));
@@ -27,22 +27,10 @@ public class PointLayer extends Layer<String, PointFeature> {
     super(rdd, kClassTag, pointClassTag, hasIndexed);
   }
 
-  /**
-   * 点偏移
-   * @param deltaX
-   * @param deltaY
-   * @return
-   */
-  public PointLayer shift(double deltaX, double deltaY) {
-    JavaRDD<Tuple2<String, PointFeature>> t = this.rdd().toJavaRDD();
-    JavaRDD<Tuple2<String, PointFeature>> r = t.map(new Function<Tuple2<String, PointFeature>, Tuple2<String, PointFeature>>() {
-      @Override
-      public Tuple2<String, PointFeature> call(Tuple2<String, PointFeature> in) throws Exception {
-        PointFeature pf = in._2.shift(deltaX, deltaY);
-        return new Tuple2<>(pf.getFid(), pf);
-      }
-    });
-    return new PointLayer(r.rdd());
+  @Override
+  public PointLayer initialize(RDD<Tuple2<String, PointFeature>> rdd) {
+    return new PointLayer(rdd);
   }
+
 
 }

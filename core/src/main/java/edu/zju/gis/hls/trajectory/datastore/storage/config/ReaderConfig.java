@@ -8,6 +8,7 @@ public class ReaderConfig {
   public static String LAYER_NAME = "layerName";
   public static String LAYER_ID = "layerID";
   public static String SHAPE_INDEX = "shape";
+  public static String KEY_INDEX = "key";
   public static String FILE_PATH = "path";
   public static String SEPARATOR = "separator";
   public static String TIME_INDEX = "time";

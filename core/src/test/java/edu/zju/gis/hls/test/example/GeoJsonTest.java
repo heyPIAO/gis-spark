@@ -1,3 +1,5 @@
+package edu.zju.gis.hls.test.example;
+
 import edu.zju.gis.hls.trajectory.analysis.model.PointFeature;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Coordinate;
@@ -30,6 +32,7 @@ public class GeoJsonTest {
     Reader reader = new StringReader(json);
     Geometry geometry = gjson.read(reader);
     System.out.println(geometry.toText());
+
   }
 
 }

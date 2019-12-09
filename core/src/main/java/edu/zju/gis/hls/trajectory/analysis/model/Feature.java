@@ -5,10 +5,9 @@ import com.google.gson.GsonBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.geotools.geojson.feature.FeatureJSON;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.locationtech.jts.geom.util.AffineTransformation;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -27,6 +26,7 @@ public abstract class Feature <T extends Geometry> implements Serializable {
   protected String fid;
   protected T geometry;
   protected Map<String, Object> attributes;
+
   public Object getAttribute(String key){
     return attributes.get(key);
   }
@@ -38,7 +38,11 @@ public abstract class Feature <T extends Geometry> implements Serializable {
   /**
    * 图层偏移
    */
-  public abstract Feature shift(double deltaX, double deltaY);
+  public void shift(double deltaX, double deltaY) {
+    AffineTransformation at = new AffineTransformation();
+    at.setToTranslation(deltaX, deltaY);
+    this.geometry = (T) at.transform(this.geometry);
+  }
 
   @Override
   public String toString() {
@@ -52,7 +56,7 @@ public abstract class Feature <T extends Geometry> implements Serializable {
   }
 
   public String toGeometryJson() throws IOException {
-    GeometryJSON gjson = new GeometryJSON();
+    GeometryJSON gjson = new GeometryJSON(9);
     return gjson.toString(this.geometry);
   }
 

@@ -135,7 +135,7 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     return (Feature) feature;
   }
 
-  private List<Field> getTFields(){
+  private List<Field> getTFields() {
     List<Field> fields = new ArrayList<>();
     Class <T> c = getTClass();
     // 迭代获取类及父类中的所有字段

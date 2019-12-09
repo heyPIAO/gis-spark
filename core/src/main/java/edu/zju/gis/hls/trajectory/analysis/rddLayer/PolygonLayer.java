@@ -11,6 +11,8 @@ import scala.reflect.ClassTag;
  **/
 public class PolygonLayer extends Layer<String, PolygonFeature> {
 
+  public PolygonLayer() {}
+
   public PolygonLayer(RDD<Tuple2<String, PolygonFeature>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(PolygonFeature.class));
   }
@@ -24,4 +26,8 @@ public class PolygonLayer extends Layer<String, PolygonFeature> {
     super(rdd, stringClassTag, polygonFeatureClassTag, hasIndexed);
   }
 
+  @Override
+  public PolygonLayer initialize(RDD<Tuple2<String, PolygonFeature>> rdd) {
+    return new PolygonLayer(rdd);
+  }
 }
