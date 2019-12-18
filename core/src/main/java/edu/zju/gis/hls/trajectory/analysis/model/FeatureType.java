@@ -12,7 +12,7 @@ import java.io.Serializable;
  **/
 public enum FeatureType implements Serializable {
 
-  POINT("point", PointFeature.class.getName()), POLYLINE("polyline", PolylineFeature.class.getName()), POLYGON("polygon", PolygonFeature.class.getName()),
+  POINT("point", Point.class.getName()), POLYLINE("polyline", Polyline.class.getName()), POLYGON("polygon", Polygon.class.getName()),
   TRAJECTORY_POINT("trajectory_point", TrajectoryPoint.class.getName()), TRAJECTORY_POLYLINE("trajectory_polyline", TrajectoryPolyline.class.getName());
 
   @Getter
@@ -44,11 +44,11 @@ public enum FeatureType implements Serializable {
 
   public static FeatureType getType(String name) {
     FeatureType featureType;
-    if (name.equals(PointFeature.class.getName())){
+    if (name.equals(Point.class.getName())){
       featureType = FeatureType.POINT;
-    } else if (name.equals(PolylineFeature.class.getName())) {
+    } else if (name.equals(Polyline.class.getName())) {
       featureType = FeatureType.POLYLINE;
-    } else if (name.equals(PolygonFeature.class.getName())) {
+    } else if (name.equals(Polygon.class.getName())) {
       featureType = FeatureType.POLYGON;
     } else if (name.equals(TrajectoryPoint.class.getName())) {
       featureType = FeatureType.TRAJECTORY_POINT;

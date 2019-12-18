@@ -14,7 +14,7 @@ import java.util.Properties;
 /**
  * @author Hu
  * @date 2019/9/20
- * 图层写出
+ * 图层写出,T 为写出后端的基础逻辑对象
  **/
 public abstract class LayerWriter <T> implements Serializable {
 

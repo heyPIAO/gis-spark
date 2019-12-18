@@ -31,8 +31,4 @@ public enum LayerType {
     this.className = className;
   }
 
-  public static FeatureType getFeatureType(LayerType type) {
-    return type.featureType;
-  }
-
 }

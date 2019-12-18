@@ -23,16 +23,7 @@ public class TrajectoryPolylineLayer extends Layer<String, TrajectoryPolyline> {
   }
 
   private TrajectoryPolylineLayer(RDD<Tuple2<String, TrajectoryPolyline>> rdd, ClassTag<String> kClassTag, ClassTag<TrajectoryPolyline> trajectoryPolylineClassTag) {
-    this(rdd, kClassTag, trajectoryPolylineClassTag, false);
-  }
-
-  public TrajectoryPolylineLayer(RDD<Tuple2<String, TrajectoryPolyline>> rdd, ClassTag<String> stringClassTag, ClassTag<TrajectoryPolyline> trajectoryPolylineClassTag, boolean hasIndexed) {
-    super(rdd, stringClassTag, trajectoryPolylineClassTag, hasIndexed);
-  }
-
-  @Override
-  public TrajectoryPolylineLayer initialize(RDD<Tuple2<String, TrajectoryPolyline>> rdd) {
-    return new TrajectoryPolylineLayer(rdd);
+    super(rdd, kClassTag, trajectoryPolylineClassTag);
   }
 
   @Override

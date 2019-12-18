@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Geometry;
@@ -20,6 +21,7 @@ import java.util.Map;
  **/
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public abstract class Feature <T extends Geometry> implements Serializable {
 
@@ -36,7 +38,7 @@ public abstract class Feature <T extends Geometry> implements Serializable {
   }
 
   /**
-   * 图层偏移
+   * 偏移
    */
   public void shift(double deltaX, double deltaY) {
     AffineTransformation at = new AffineTransformation();

@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.test.example;
 
-import edu.zju.gis.hls.trajectory.analysis.model.PointFeature;
+import edu.zju.gis.hls.trajectory.analysis.model.Point;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -23,7 +23,7 @@ public class GeoJsonTest {
     // geojson 写出
     Map<String, Object> props = new HashMap<>();
     props.put("test", "test");
-    PointFeature pointFeature = new PointFeature("123", new GeometryFactory().createPoint(new Coordinate(120.00, 30.00)), props);
+    Point pointFeature = new Point("123", new GeometryFactory().createPoint(new Coordinate(120.00, 30.00)), props);
     String json = pointFeature.toJson();
     System.out.println(json);
 

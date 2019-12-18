@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * @author Hu
  * @date 2019/9/18
  * MongoDB 数据库操作
- * 使用方法：获取单例MongoHelper，选择数据库，操作数据库
+ * 使用方法：获取单例 MongoHelper，选择数据库，操作数据库
  **/
 public class MongoHelper extends StorageHelper {
 

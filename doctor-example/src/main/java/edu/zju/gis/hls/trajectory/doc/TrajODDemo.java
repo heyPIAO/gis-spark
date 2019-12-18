@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.analysis;
+package edu.zju.gis.hls.trajectory.doc;
 
 import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;

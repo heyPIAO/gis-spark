@@ -3,17 +3,22 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader;
 import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
+import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
 import lombok.ToString;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
+import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -52,7 +57,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
 
     if (obj == null) {
       logger.error("has not set file path yet");
-      return null;
+      throw new DataReaderException("has not set file path yet");
     }
 
     // configure shape type
@@ -60,7 +65,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
     if (featureType.getName().toLowerCase().contains("trajectory")) {
       boolean check = checkTrajectoryConfig(featureType);
       if (!check) {
-        return null;
+        throw new DataReaderException("unvalid configuration for data reader");
       }
     }
 
@@ -95,6 +100,26 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
     if (separator.trim().length() == 0) {
       logger.warn("field separator set error, default set to tab");
       separator = "\t";
+    }
+
+    // configure coordinate reference
+    CoordinateReferenceSystem crs = Term.DEFAULT_CRS;
+    Object ocrs = this.prop.getProperty(CRS_INDEX, "");
+    try {
+      if (ocrs instanceof String) {
+        if (((String) ocrs).startsWith("epsg")) {
+          crs = CRS.decode((String) ocrs);
+        } else {
+          crs = CRS.parseWKT((String) ocrs);
+        }
+      } else if (ocrs instanceof CoordinateReferenceSystem) {
+        crs = (CoordinateReferenceSystem) ocrs;
+      } else {
+        logger.warn("Unvalid coordinate reference system prop, set default to wgs84");
+      }
+    } catch (FactoryException e) {
+      logger.error(e.getMessage());
+      logger.warn("Unvalid coordinate reference system prop. set default to wgs84");
     }
 
     // if trajectory point feature, needs to set timestamp field
@@ -194,6 +219,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
     T layer = this.rddToLayer(features.rdd());
     LayerMetadata lm = new LayerMetadata();
     lm.setLayerId(UUID.randomUUID().toString());
+    lm.setCrs(crs);
     lm.setLayerName(this.prop.getProperty(ReaderConfig.LAYER_NAME, lm.getLayerId()));
     layer.setAttributeTypes(attributeType);
     layer.setMetadata(lm);

@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.analysis;
+package edu.zju.gis.hls.trajectory.doc;
 
 import edu.zju.gis.hls.trajectory.analysis.util.DateUtils;
 import edu.zju.gis.hls.trajectory.analysis.util.FileUtil;

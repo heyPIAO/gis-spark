@@ -2,16 +2,19 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.locationtech.jts.geom.Point;
+
 import java.util.Map;
 
+/**
+ * 轨迹点：相较于普通的Point，多时间戳这个属性
+ */
 @Getter
 @Setter
-public class TrajectoryPoint extends PointFeature {
+public class TrajectoryPoint extends Point {
 
     protected long timestamp;
 
-    public TrajectoryPoint(String fid, Point geometry, Map<String, Object> attributes, long timestamp) {
+    public TrajectoryPoint(String fid, org.locationtech.jts.geom.Point geometry, Map<String, Object> attributes, long timestamp) {
         super(fid, geometry, attributes);
         this.timestamp = timestamp;
     }
@@ -36,6 +39,7 @@ public class TrajectoryPoint extends PointFeature {
     protected Map<String, Object> getGeometryMap() {
         Map<String, Object> geometryMap = super.getGeometryMap();
         geometryMap.put("timestamp", this.timestamp);
+        geometryMap.put("type", "TPoint"); // TPoint: Timed-Point
         return geometryMap;
     }
 

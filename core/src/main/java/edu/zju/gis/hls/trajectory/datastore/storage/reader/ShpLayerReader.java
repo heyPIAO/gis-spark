@@ -5,14 +5,18 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
+import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.util.ShpDataReader;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
+import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -29,6 +33,7 @@ import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.H
  * @author Hu
  * @date 2019/11/12
  * 从 shapefile 文件中读取数据，并转为为 Layer
+ * 各个文件路径以“;”分隔
  * TODO 暂时不支持存储在HDFS中的shapefile文件
  **/
 public class ShpLayerReader <T extends Layer> extends LayerReader <T> {
@@ -45,7 +50,7 @@ public class ShpLayerReader <T extends Layer> extends LayerReader <T> {
     Object obj = this.prop.getProperty(FILE_PATH);
     if (obj == null) {
       logger.error("has not set file path yet");
-      return null;
+      throw new DataReaderException("has not set file path yet");
     }
 
     // configure shape type
@@ -53,7 +58,7 @@ public class ShpLayerReader <T extends Layer> extends LayerReader <T> {
     if (featureType.getName().toLowerCase().contains("trajectory")) {
       boolean check = checkTrajectoryConfig(featureType);
       if (!check) {
-        return null;
+        throw new DataReaderException("unvalid configuration for data reader");
       }
     }
 
@@ -159,17 +164,33 @@ public class ShpLayerReader <T extends Layer> extends LayerReader <T> {
 
           sf = reader.nextFeature();
         }
+        result.add(new Tuple2<>("PRJ: " + reader.getCrs(), null));
         return result.iterator();
       }
     });
 
-    T layer = this.rddToLayer(features.rdd());
+    features.cache();
+
+    T layer = this.rddToLayer(features.filter(x->!x._1.startsWith("PRJ:")).rdd());
+    String prjwkt = features.filter(x->x._1.startsWith("PRJ:")).collect().get(0)._1.substring(4);
+
+    // TODO: I don't really know if it can release the memory
+    features.unpersist();
+
     LayerMetadata lm = new LayerMetadata();
+    try {
+      CoordinateReferenceSystem crs = CRS.decode(prjwkt);
+      lm.setCrs(crs);
+    } catch (FactoryException e) {
+      logger.error(e.getMessage());
+      logger.warn("Set coordinate reference default to wgs84");
+    }
+
     lm.setLayerId(UUID.randomUUID().toString());
     lm.setLayerName(this.prop.getProperty(ReaderConfig.LAYER_NAME, lm.getLayerId()));
+
     layer.setAttributeTypes(attributeType);
     layer.setMetadata(lm);
-
     return layer;
   }
 

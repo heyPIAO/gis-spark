@@ -11,7 +11,7 @@
 
     <modules>
         <module>core</module>
-        <module>land-analysis</module>
+        <module>doctor-example</module>
     </modules>
 
     <properties>

@@ -20,16 +20,7 @@ public class TrajectoryODLayer extends Layer<String, TrajectoryOD> {
   }
 
   private TrajectoryODLayer(RDD<Tuple2<String, TrajectoryOD>> rdd, ClassTag<String> kClassTag, ClassTag<TrajectoryOD> trajectoryODClassTag) {
-    this(rdd, kClassTag, trajectoryODClassTag, false);
-  }
-
-  public TrajectoryODLayer(RDD<Tuple2<String, TrajectoryOD>> rdd, ClassTag<String> stringClassTag, ClassTag<TrajectoryOD> trajectoryODClassTag, boolean hasIndexed) {
-    super(rdd, stringClassTag, trajectoryODClassTag, hasIndexed);
-  }
-
-  @Override
-  public TrajectoryODLayer initialize(RDD<Tuple2<String, TrajectoryOD>> rdd) {
-    return new TrajectoryODLayer(rdd);
+    super(rdd, kClassTag, trajectoryODClassTag);
   }
 
 }

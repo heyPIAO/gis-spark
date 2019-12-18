@@ -16,4 +16,5 @@ public class ReaderConfig {
   public static String START_TIME_INDEX = "start";
   public static String END_TIME_INDEX = "end";
   public static String ATTRIBUTE_TYPE = "attributeType";
+  public static String CRS_INDEX = "crs";
 }

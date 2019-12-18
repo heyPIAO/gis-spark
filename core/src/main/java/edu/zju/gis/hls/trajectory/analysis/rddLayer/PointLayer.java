@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
-import edu.zju.gis.hls.trajectory.analysis.model.PointFeature;
+import edu.zju.gis.hls.trajectory.analysis.model.Point;
 import org.apache.spark.rdd.RDD;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
@@ -11,26 +11,16 @@ import scala.reflect.ClassTag;
  * @date 2019/9/19
  *
  **/
-public class PointLayer extends Layer<String, PointFeature> {
+public class PointLayer extends Layer<String, Point> {
 
   public PointLayer() {}
 
-  public PointLayer(RDD<Tuple2<String, PointFeature>> rdd){
-    this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(PointFeature.class));
+  public PointLayer(RDD<Tuple2<String, Point>> rdd){
+    this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(Point.class));
   }
 
-  private PointLayer(RDD<Tuple2<String, PointFeature>> rdd, ClassTag<String> kClassTag, ClassTag<PointFeature> pointClassTag) {
-    this(rdd, kClassTag, pointClassTag, false);
+  private PointLayer(RDD<Tuple2<String, Point>> rdd, ClassTag<String> kClassTag, ClassTag<Point> pointClassTag) {
+    super(rdd, kClassTag, pointClassTag);
   }
-
-  private PointLayer(RDD<Tuple2<String, PointFeature>> rdd, ClassTag<String> kClassTag, ClassTag<PointFeature> pointClassTag, boolean hasIndexed) {
-    super(rdd, kClassTag, pointClassTag, hasIndexed);
-  }
-
-  @Override
-  public PointLayer initialize(RDD<Tuple2<String, PointFeature>> rdd) {
-    return new PointLayer(rdd);
-  }
-
 
 }

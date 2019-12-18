@@ -34,16 +34,7 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
   }
 
   private TrajectoryPointLayer(RDD<Tuple2<String, TrajectoryPoint>> rdd, ClassTag<String> kClassTag, ClassTag<TrajectoryPoint> trajectoryPointClassTag) {
-    this(rdd, kClassTag, trajectoryPointClassTag, false);
-  }
-
-  public TrajectoryPointLayer(RDD<Tuple2<String, TrajectoryPoint>> rdd, ClassTag<String> stringClassTag, ClassTag<TrajectoryPoint> trajectoryPointClassTag, boolean hasIndexed) {
-    super(rdd, stringClassTag, trajectoryPointClassTag, hasIndexed);
-  }
-
-  @Override
-  public TrajectoryPointLayer initialize(RDD<Tuple2<String, TrajectoryPoint>> rdd) {
-    return new TrajectoryPointLayer(rdd);
+    super(rdd, kClassTag, trajectoryPointClassTag);
   }
 
   @Override

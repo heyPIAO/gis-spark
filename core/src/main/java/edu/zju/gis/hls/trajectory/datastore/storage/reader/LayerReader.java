@@ -31,7 +31,7 @@ import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.*
  * @author Hu
  * @date 2019/9/19
  * 分布式环境下数据读取基类
- * 原理：基于SparkSession对于各类datasource的读取API封装，以支持更多业务操作
+ * 原理：基于 SparkSession 对于各类datasource的读取API封装，以支持更多业务操作
  **/
 public abstract class LayerReader<T extends Layer> implements Closeable, Serializable {
 
@@ -97,7 +97,6 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
   }
 
   protected T rddToLayer(RDD<Tuple2<String, Feature>> features) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-    // 通过 java reflect 获取
     Class<T> resultClass = this.getTClass();
     Constructor resultClassConstructor = resultClass.getConstructor(RDD.class);
     T result = (T) resultClassConstructor.newInstance(features);
