@@ -1,2 +1,2 @@
 # trajectory-spark
-Spark extension for nomal spatial data and trajectory data
+Spark extension for normal spatial data and trajectory data
