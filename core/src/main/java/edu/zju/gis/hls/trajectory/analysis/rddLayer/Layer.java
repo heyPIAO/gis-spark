@@ -61,7 +61,7 @@ public abstract class Layer<K,V extends Feature> extends JavaPairRDD<K, V> imple
     this.attributes = new HashMap<>();
   }
 
-  private <T extends Layer> T initialize(T layer, RDD<Tuple2<K, V>> rdd) {
+  private <T extends Layer<K,V>> T initialize(T layer, RDD<Tuple2<K, V>> rdd) {
     try {
       Constructor c = layer.getConstructor(RDD.class);
       T t = (T) c.newInstance(rdd);
@@ -76,7 +76,7 @@ public abstract class Layer<K,V extends Feature> extends JavaPairRDD<K, V> imple
    * only copy meta info of the layer
    * @return
    */
-  protected <T extends Layer> T copy(T from, T to) {
+  protected <T extends Layer<K,V>> T copy(T from, T to) {
     to.metadata = from.metadata;
     to.attributes = from.attributes;
     to.attributeTypes = from.attributeTypes;
@@ -102,7 +102,11 @@ public abstract class Layer<K,V extends Feature> extends JavaPairRDD<K, V> imple
    * @param deltaY
    * @return
    */
-  public Layer shift(double deltaX, double deltaY) {
+  public <T extends Layer<K,V>> T shift(double deltaX, double deltaY) {
+
+    if (this.metadata.getExtent() != null) {
+      this.metadata.shift(deltaX, deltaY);
+    }
 
     Function shiftFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
       @Override
@@ -113,29 +117,39 @@ public abstract class Layer<K,V extends Feature> extends JavaPairRDD<K, V> imple
       }
     };
 
-    Layer result = this.mapToLayer(shiftFunction);
+    T result = (T) this.mapToLayer(shiftFunction);
 
-    if (this.metadata.getExtent() != null) {
-      this.metadata.shift(deltaX, deltaY);
-    }
-
-    return this.mapToLayer(shiftFunction);
+    return result;
   }
 
   public Constructor getConstructor(Class<?>... parameterTypes) throws NoSuchMethodException {
     return this.getClass().getConstructor(parameterTypes);
   }
 
-  public Layer<K, V> flatMapToLayer(PairFlatMapFunction<Tuple2<K, V>, K, V> f) {
-    return this.initialize(this, this.flatMapToPair(f).rdd());
+  /**
+   * 重写 RDD 的 map/flatMap/mapToPair/filter 等方法，继承图层的元数据信息
+   * 通过强制类型转换，保留了图层的类型信息
+   * @param f
+   * @return
+   */
+  public <L extends Layer<K,V>> L flatMapToLayer(PairFlatMapFunction<Tuple2<K, V>, K, V> f) {
+    return (L) this.initialize(this, this.flatMapToPair(f).rdd());
   }
 
-  public Layer<K, V> mapToLayer(Function<Tuple2<K, V>, Tuple2<K, V>> f) {
-    return this.initialize(this, this.map(f).rdd());
+  public <L extends Layer<K,V>> L mapToLayer(Function<Tuple2<K, V>, Tuple2<K, V>> f) {
+    return (L) this.initialize(this, this.map(f).rdd());
   }
 
-  public Layer<K, V> flatMapToLayer(FlatMapFunction<Tuple2<K, V>, Tuple2<K, V>> f) {
-    return this.initialize(this, this.flatMap(f).rdd());
+  public <L extends Layer<K,V>> L flatMapToLayer(FlatMapFunction<Tuple2<K, V>, Tuple2<K, V>> f) {
+    return (L) this.initialize(this, this.flatMap(f).rdd());
+  }
+
+  public <L extends Layer<K,V>> L filterToLayer(Function<Tuple2<K, V>, Boolean> f) {
+    return (L) this.initialize(this, this.filter(f).rdd());
+  }
+
+  public <L extends Layer<K,V>> L repartitionToLayer(int num) {
+    return (L) this.initialize(this, this.repartition(num).rdd());
   }
 
 }

@@ -5,8 +5,6 @@ import org.apache.spark.rdd.RDD;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 
-import java.util.Map;
-
 /**
  * @author Hu
  * @date 2019/11/8

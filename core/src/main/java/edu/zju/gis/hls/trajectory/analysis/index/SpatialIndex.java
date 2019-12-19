@@ -9,5 +9,5 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
  * 空间索引
  **/
 public interface SpatialIndex {
-  <T extends IndexedLayer> T index(Layer layer);
+  <T extends IndexedLayer, L extends Layer> T index(L layer);
 }

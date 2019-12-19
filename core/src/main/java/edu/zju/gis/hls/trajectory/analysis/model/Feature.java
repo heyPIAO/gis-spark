@@ -23,7 +23,7 @@ import java.util.Map;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class Feature <T extends Geometry> implements Serializable {
+public class Feature <T extends Geometry> implements Serializable {
 
   protected String fid;
   protected T geometry;
