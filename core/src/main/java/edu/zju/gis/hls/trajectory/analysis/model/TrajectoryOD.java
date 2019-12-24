@@ -19,7 +19,7 @@ import java.util.Map;
 @Setter
 public class TrajectoryOD extends TrajectoryPolyline {
 
-  public TrajectoryOD(String fid, Point start, Point end, Map<String, Object> attributes, long startTime, long endTime) {
+  public TrajectoryOD(String fid, Point start, Point end, Map<Field, Object> attributes, long startTime, long endTime) {
     super(fid, new GeometryFactory().createLineString(new Coordinate[]{start.getCoordinate(), end.getCoordinate()}), attributes, startTime, endTime);
   }
 

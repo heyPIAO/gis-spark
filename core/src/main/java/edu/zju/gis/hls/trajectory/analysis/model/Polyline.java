@@ -14,7 +14,7 @@ import java.util.Map;
 @Setter
 public class Polyline extends Feature<LineString> {
 
-  public Polyline(String fid, LineString geometry, Map<String, Object> attributes) {
+  public Polyline(String fid, LineString geometry, Map<Field, Object> attributes) {
     super(fid, geometry, attributes);
   }
 

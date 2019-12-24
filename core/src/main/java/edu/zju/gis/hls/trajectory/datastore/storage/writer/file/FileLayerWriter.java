@@ -1,7 +1,11 @@
-package edu.zju.gis.hls.trajectory.datastore.storage.writer;
+package edu.zju.gis.hls.trajectory.datastore.storage.writer.file;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriter;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SparkSession;
@@ -15,12 +19,17 @@ import java.util.*;
  * @author Hu
  * @date 2019/11/8
  **/
-public class FileLayerWriter extends LayerWriter <String> {
+public class FileLayerWriter extends LayerWriter<String> {
 
-  private static final Logger logger = LoggerFactory.getLogger(MongoDBLayerWriter.class);
+  private static final Logger logger = LoggerFactory.getLogger(MongoLayerWriter.class);
 
-  public FileLayerWriter(SparkSession ss) {
+  @Getter
+  @Setter
+  private FileLayerWriterConfig writerConfig;
+
+  public FileLayerWriter(SparkSession ss, FileLayerWriterConfig writerConfig) {
     super(ss);
+    this.writerConfig = writerConfig;
   }
 
   @Override
@@ -33,11 +42,10 @@ public class FileLayerWriter extends LayerWriter <String> {
    * TODO 写出成 Parquet 文件
    * TODO 从 hdfs 环境中读取默认输出路径
    * @param layer
-   * @param prop
    */
   @Override
-  public void write(Layer layer, Properties prop) {
-    String outDir = prop.getProperty("uri");
+  public void write(Layer layer) {
+    String outDir = this.writerConfig.getSinkPath();
     JavaRDD<Tuple2<String, Feature>> t = layer.rdd().toJavaRDD();
     JavaRDD<String> outputData = t.mapPartitions(new FlatMapFunction<Iterator<Tuple2<String, Feature>>, String>() {
       @Override

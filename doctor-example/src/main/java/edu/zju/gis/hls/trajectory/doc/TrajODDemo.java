@@ -6,12 +6,11 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryODLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryPointLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryPolylineLayer;
 import edu.zju.gis.hls.trajectory.analysis.util.SparkUtil;
-import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.MongoDBLayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriter;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
@@ -40,8 +39,8 @@ public class TrajODDemo {
 
     // set up layer reader
     Properties prop = new Properties();
-    prop.setProperty(ReaderConfig.FILE_PATH, file);
-    prop.setProperty(ReaderConfig.SEPARATOR, "\t");
+    prop.setProperty(ReaderConfigTerm.FILE_PATH, file);
+    prop.setProperty(ReaderConfigTerm.SEPARATOR, "\t");
 
     Map<String, String> headerIndex = new HashMap<>();
     headerIndex.put("orderId", "0");
@@ -49,8 +48,8 @@ public class TrajODDemo {
     headerIndex.put("riderId", "3");
     headerIndex.put("day", "4");
     Gson gson = new Gson();
-    prop.setProperty(ReaderConfig.HEADER_INDEX, gson.toJson(headerIndex));
-    prop.setProperty(ReaderConfig.TIME_INDEX, "1");
+    prop.setProperty(ReaderConfigTerm.HEADER_INDEX, gson.toJson(headerIndex));
+    prop.setProperty(ReaderConfigTerm.TIME_INDEX, "1");
 
     LayerReader<TrajectoryPointLayer> reader = LayerReaderFactory.getReader(ss, FeatureType.TRAJECTORY_POINT, SourceType.FILE);
     reader.setProp(prop);
@@ -73,7 +72,7 @@ public class TrajODDemo {
     sinkProp.setProperty("uri", "mongodb://192.168.1.86:27017");
     sinkProp.setProperty("database", "dwd");
     sinkProp.setProperty("collection", "traj_od");
-    LayerWriter writer = new MongoDBLayerWriter(ss);
+    LayerWriter writer = new MongoLayerWriter(ss);
     writer.write(odLayer, sinkProp);
 
     ss.close();

@@ -9,11 +9,13 @@ import lombok.Setter;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.util.AffineTransformation;
+import scala.Tuple2;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Hu
@@ -27,10 +29,19 @@ public class Feature <T extends Geometry> implements Serializable {
 
   protected String fid;
   protected T geometry;
-  protected Map<String, Object> attributes;
+  protected Map<Field, Object> attributes;
 
   public Object getAttribute(String key){
-    return attributes.get(key);
+    for (Map.Entry<Field, Object> a: attributes.entrySet()) {
+      if (a.getKey().getName().equals(key)) {
+        return a.getValue();
+      }
+    }
+    return null;
+  }
+
+  public Object getAttribute(Field key){
+    return this.getAttribute(key.getName());
   }
 
   public Feature(Feature f){
@@ -50,7 +61,7 @@ public class Feature <T extends Geometry> implements Serializable {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("%s \t", fid));
-    for(String k: attributes.keySet()){
+    for(Field k: attributes.keySet()){
       sb.append(String.valueOf(attributes.get(k)) + "\t");
     }
     sb.append(geometry.toString());
@@ -86,8 +97,11 @@ public class Feature <T extends Geometry> implements Serializable {
   public String toJson() {
     Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
     Map<String, Object> result = new HashMap<>();
-    Map<String, Object> properties = this.attributes;
+    Map<String, Object> properties = new HashMap<>();
     properties.put("fid", this.fid);
+    for (Map.Entry<Field, Object> f: this.attributes.entrySet()) {
+      properties.put(f.getKey().getName(), f.getValue().toString());
+    }
     result.put("type", "Feature");
     result.put("properties", properties);
     result.put("geometry", this.getGeometryMap());

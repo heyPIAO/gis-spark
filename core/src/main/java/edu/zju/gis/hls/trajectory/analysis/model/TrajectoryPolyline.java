@@ -28,7 +28,7 @@ public class TrajectoryPolyline extends Polyline {
   @Setter
   protected long endTime;
 
-  public TrajectoryPolyline(String fid, LineString geometry, Map<String, Object> attributes, long startTime, long endTime) {
+  public TrajectoryPolyline(String fid, LineString geometry, Map<Field, Object> attributes, long startTime, long endTime) {
     super(fid, geometry, attributes);
     this.startTime = startTime;
     this.endTime = endTime;

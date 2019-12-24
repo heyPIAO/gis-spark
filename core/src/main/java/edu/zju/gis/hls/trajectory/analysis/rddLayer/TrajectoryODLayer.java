@@ -11,8 +11,6 @@ import scala.reflect.ClassTag;
  **/
 public class TrajectoryODLayer extends Layer<String, TrajectoryOD> {
 
-  public TrajectoryODLayer() {}
-
   public TrajectoryODLayer(RDD<Tuple2<String, TrajectoryOD>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(TrajectoryOD.class));
   }

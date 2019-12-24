@@ -10,11 +10,11 @@ import lombok.Getter;
  **/
 public enum LayerType {
 
-  POINT_LAYER(0, FeatureType.POINT, PointLayer.class.getName()),
-  POLYLINE_LAYER(1, FeatureType.POLYLINE, PolylineLayer.class.getName()),
-  POLYGON_LAYER(2, FeatureType.POLYGON, PolygonLayer.class.getName()),
-  TRAJECTORY_POINT_LAYER(3, FeatureType.TRAJECTORY_POINT, TrajectoryPointLayer.class.getName()),
-  TRAJECTORY_POLYLINR_LAYER(4, FeatureType.TRAJECTORY_POLYLINE, TrajectoryPolylineLayer.class.getName());
+  POINT_LAYER(0, FeatureType.POINT, PointLayer.class),
+  POLYLINE_LAYER(1, FeatureType.POLYLINE, PolylineLayer.class),
+  POLYGON_LAYER(2, FeatureType.POLYGON, PolygonLayer.class),
+  TRAJECTORY_POINT_LAYER(3, FeatureType.TRAJECTORY_POINT, TrajectoryPointLayer.class),
+  TRAJECTORY_POLYLINR_LAYER(4, FeatureType.TRAJECTORY_POLYLINE, TrajectoryPolylineLayer.class);
 
   @Getter
   private int type;
@@ -23,12 +23,12 @@ public enum LayerType {
   private FeatureType featureType;
 
   @Getter
-  private String className;
+  private Class<? extends Layer> layerClass;
 
-  LayerType(int type, FeatureType featureType, String className) {
+  LayerType(int type, FeatureType featureType, Class<? extends Layer> layerClass) {
     this.type = type;
     this.featureType = featureType;
-    this.className = className;
+    this.layerClass = layerClass;
   }
 
 }

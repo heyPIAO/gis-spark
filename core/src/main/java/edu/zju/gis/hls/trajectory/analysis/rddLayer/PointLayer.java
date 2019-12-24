@@ -13,8 +13,6 @@ import scala.reflect.ClassTag;
  **/
 public class PointLayer extends Layer<String, Point> {
 
-  public PointLayer() {}
-
   public PointLayer(RDD<Tuple2<String, Point>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(Point.class));
   }

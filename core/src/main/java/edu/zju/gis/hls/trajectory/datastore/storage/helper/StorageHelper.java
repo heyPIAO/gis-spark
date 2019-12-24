@@ -8,37 +8,37 @@ import java.util.Map;
  * @date 2019/9/18
  * 每一个子类都必须实现单例
  **/
-public abstract class StorageHelper {
+public interface StorageHelper {
 
-  public abstract void useDB(String databaseName);
+  void useDB(String databaseName);
 
-  public abstract long insert(String tableName, Map<String, ?> data);
+  long insert(String tableName, Map<String, ?> data);
 
-  public abstract long insert(String tableName, List<Map<String, ?>> data);
+  long insert(String tableName, List<Map<String, ?>> data);
 
-  public abstract long getSize(String tableName);
+  long getSize(String tableName);
 
   /**
    * 打开数据 reader
    * @param tableName
    */
-  public abstract void initReader(String tableName);
+  void initReader(String tableName);
 
   /**
    * 是否还有值
    * @return
    */
-  public abstract boolean hasNext();
+  boolean hasNext();
 
   /**
    * 返回一个JsonString
    * @return
    */
-  public abstract String next();
+  String next();
 
   /**
    * 关闭 reader
    */
-  public abstract void closeReader();
+  void closeReader();
 
 }

@@ -3,13 +3,15 @@ package edu.zju.gis.hls.trajectory.datastore.storage.config;
 
 import lombok.Getter;
 
+import java.io.Serializable;
+
 /**
  * @author Hu
  * @date 2019/9/18
  * mongoDB 数据库连接配置
  **/
 @Getter
-public class MongoConfig {
+public class MongoConfig implements DataSourceConfig, Serializable {
 
   private String[] ip;
   private int[] port;
@@ -20,11 +22,11 @@ public class MongoConfig {
     this.port = new int[] { 27017 };
   }
 
-  private static class MongoConfigInstance{
+  private static class MongoConfigInstance {
     private static final MongoConfig instance = new MongoConfig();
   }
 
-  public static MongoConfig getInstance(){
+  public static MongoConfig getInstance() {
     return MongoConfigInstance.instance;
   }
 
@@ -38,4 +40,5 @@ public class MongoConfig {
     sb.deleteCharAt(sb.length()-1);
     return sb.toString();
   }
+
 }

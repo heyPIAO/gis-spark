@@ -1,13 +1,12 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
+import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryPoint;
 import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryPolyline;
 import edu.zju.gis.hls.trajectory.datastore.exception.WriterException;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.rdd.RDD;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -27,8 +26,6 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
 
   private static final Logger logger = LoggerFactory.getLogger(TrajectoryPointLayer.class);
 
-  public TrajectoryPointLayer() {}
-
   public TrajectoryPointLayer(RDD<Tuple2<String, TrajectoryPoint>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(TrajectoryPoint.class));
   }
@@ -37,37 +34,22 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
     super(rdd, kClassTag, trajectoryPointClassTag);
   }
 
-  @Override
-  public void setAttributes(Map<String, String> attributes) {
-    super.setAttributes(attributes);
-    this.attributes.put("timestamp", "TIMESTAMP");
-  }
-
-  @Override
-  public void setAttributeTypes(Map<String, String> attributeTypes) {
-    super.setAttributeTypes(attributeTypes);
-    this.attributeTypes.put("timestamp", long.class.getName());
-  }
-
   /**
    * 将轨迹点根据指定 id 构成轨迹线
-   * 默认保留最后一个点的指定属性作为轨迹线的属性
+   * 默认保留最后一个点属性作为轨迹线的属性
    * @return
    */
-  public TrajectoryPolylineLayer convertToPolylineLayer (JavaSparkContext jsc, String attr, String... attrsKept) {
+  public TrajectoryPolylineLayer convertToPolylineLayer (String attr) {
 
-    if (!this.attributes.keySet().contains(attr)) {
-      throw new WriterException(String.format("Unvaild attribute %s, not exists", attr));
+    if (this.findAttribute(attr) == null) {
+      throw new WriterException(String.format("attribute named after %s, not exists", attr));
     }
-
-    Broadcast<String> attrBroad = jsc.broadcast(attr);
-    Broadcast<String[]> attrsKeptBroad = jsc.broadcast(attrsKept);
 
     JavaRDD<Tuple2<String, TrajectoryPoint>> t = this.rdd().toJavaRDD();
     JavaPairRDD<String, Iterable<Tuple2<String, TrajectoryPoint>>> tg = t.groupBy(new Function<Tuple2<String, TrajectoryPoint>, String>() {
       @Override
       public String call(Tuple2<String, TrajectoryPoint> in) throws Exception {
-        return (String) in._2.getAttribute(attrBroad.getValue());
+        return (String) in._2.getAttribute(attr);
       }
     });
 
@@ -102,36 +84,19 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
 
         pl = new GeometryFactory().createLineString(coordinates);
 
-        Map<String, Object> attributes = new HashMap<>();
         TrajectoryPoint plast = ps.get(ps.size()-1);
-        for(String attrKept: attrsKeptBroad.getValue()) {
-          Object v = plast.getAttribute(attrKept);
-          if (v != null) {
-            attributes.put(attrKept, v);
-          }
-        }
+        Map<Field, Object> attributes = plast.getAttributes();
 
         TrajectoryPolyline l = new TrajectoryPolyline(String.valueOf(in._1), pl, attributes, startTime, endTime);
         l.setFid(UUID.randomUUID().toString());
         return new Tuple2<>(l.getFid(), l);
       }
     });
+
     tl = tl.filter(x->!x._1.equals("EMPTY"));
     TrajectoryPolylineLayer result = new TrajectoryPolylineLayer(tl.rdd());
-    List<String> keptKeys = Arrays.asList(attrsKept);
-    Map<String, String> layerAttributes = new HashMap<>(this.attributes);
-    Map<String, String> layerAttributesType = new HashMap<>(this.attributeTypes);
-    for(String key: this.attributes.keySet()){
-      if (!keptKeys.contains(key)) {
-        layerAttributes.remove(key);
-        layerAttributesType.remove(key);
-      }
-    }
-    result.setAttributes(layerAttributes);
-    result.setAttributeTypes(layerAttributesType);
-    LayerMetadata lm = new LayerMetadata();
-    lm.setLayerId(UUID.randomUUID().toString());
-    result.setMetadata(lm);
+    result.setMetadata(this.metadata);
+
     return result;
   }
 

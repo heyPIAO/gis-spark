@@ -13,7 +13,7 @@ import java.util.Map;
 @Setter
 public class Polygon extends Feature<org.locationtech.jts.geom.Polygon> {
 
-  public Polygon(String fid, org.locationtech.jts.geom.Polygon geometry, Map<String, Object> attributes) {
+  public Polygon(String fid, org.locationtech.jts.geom.Polygon geometry, Map<Field, Object> attributes) {
     super(fid, geometry, attributes);
   }
 

@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.Map;
 
 /**
  * @author Hu
@@ -57,8 +56,8 @@ public abstract class IndexedLayer<L extends Layer> implements Serializable {
     return this.layer.metadata;
   }
 
-  public Map<Integer, Field> getFields() {
-    return this.layer.fields;
+  public Field[] getAttributes() {
+    return this.layer.metadata.getAttributes().keySet().toArray(new Field[]{});
   }
 
   public L toLayer() {

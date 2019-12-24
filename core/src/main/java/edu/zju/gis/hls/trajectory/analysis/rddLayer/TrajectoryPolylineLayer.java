@@ -8,15 +8,11 @@ import org.apache.spark.rdd.RDD;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 
-import java.util.*;
-
 /**
  * @author Hu
  * @date 2019/9/19
  **/
 public class TrajectoryPolylineLayer extends Layer<String, TrajectoryPolyline> {
-
-  public TrajectoryPolylineLayer() {}
 
   public TrajectoryPolylineLayer(RDD<Tuple2<String, TrajectoryPolyline>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(TrajectoryPolyline.class));
@@ -24,20 +20,6 @@ public class TrajectoryPolylineLayer extends Layer<String, TrajectoryPolyline> {
 
   private TrajectoryPolylineLayer(RDD<Tuple2<String, TrajectoryPolyline>> rdd, ClassTag<String> kClassTag, ClassTag<TrajectoryPolyline> trajectoryPolylineClassTag) {
     super(rdd, kClassTag, trajectoryPolylineClassTag);
-  }
-
-  @Override
-  public void setAttributes(Map<String, String> attributes) {
-    super.setAttributes(attributes);
-    this.attributes.put("starttime", "STARTTIME");
-    this.attributes.put("endtime", "ENDTIME");
-  }
-
-  @Override
-  public void setAttributeTypes(Map<String, String> attributeTypes) {
-    super.setAttributeTypes(attributeTypes);
-    this.attributeTypes.put("starttime", long.class.getName());
-    this.attributeTypes.put("endtime", long.class.getName());
   }
 
   public TrajectoryODLayer extractOD() {
@@ -52,13 +34,15 @@ public class TrajectoryPolylineLayer extends Layer<String, TrajectoryPolyline> {
         return new Tuple2<>(in._1, tpOD);
       }
     });
+
     tOD = tOD.filter(f -> !f._1.equals("EMPTY"));
     TrajectoryODLayer result = new TrajectoryODLayer(tOD.rdd());
-    LayerMetadata lm = new LayerMetadata(metadata);
-    lm.setLayerId("OD_" + metadata.getLayerId());
-    lm.setLayerName("OD_" + metadata.getLayerName());
-    // TODO 继承了原始轨迹线图层的四至，但并不一定准确
-    result.setMetadata(this.metadata);
+
+    // 继承了原始轨迹线图层的四至，但并不一定准确，如果要有准确的四至，需要重新 analysis layer
+    result.copy(this);
+    result.getMetadata().setLayerId("OD_" + metadata.getLayerId());
+    result.getMetadata().setLayerName("OD_" + metadata.getLayerName());
+
     return result;
   }
 

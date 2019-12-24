@@ -1,18 +1,19 @@
 package edu.zju.gis.hls.test.example;
 
-import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
+import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryPointLayer;
-import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderFactory;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReader;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.MongoDBLayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriterConfig;
 import org.apache.spark.sql.SparkSession;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
@@ -20,18 +21,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author Hu
  * @date 2019/9/20
  **/
-public class demo {
+public class Demo {
 
-  private static final Logger logger = LoggerFactory.getLogger(demo.class);
+  private static final Logger logger = LoggerFactory.getLogger(Demo.class);
 
   public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
 
@@ -46,20 +44,21 @@ public class demo {
     String file = "D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\杭州_骑手\\head_20_20170920_wkt.txt";
 
     // set up layer reader
-    Properties prop = new Properties();
-    prop.setProperty(ReaderConfig.FILE_PATH, file);
+    Field orderIdf = new Field("orderId","订单ID", 0, FieldType.NORMA_FIELD);
+    Field statusf = new Field("status", "订单状态", 2, FieldType.NORMA_FIELD);
+    Field riderIdf = new Field("riderId", "骑手ID",3, FieldType.NORMA_FIELD);
+    Field dayf = new Field("day", "订单日期" ,4, FieldType.NORMA_FIELD);
 
-    Map<String, String> headerIndex = new HashMap<>();
-    headerIndex.put("orderId", "0");
-    headerIndex.put("status", "2");
-    headerIndex.put("riderId", "3");
-    headerIndex.put("day", "4");
-    Gson gson = new Gson();
-    prop.setProperty(ReaderConfig.HEADER_INDEX, gson.toJson(headerIndex));
-    prop.setProperty(ReaderConfig.TIME_INDEX, "1");
+    Field[] fields = new Field[]{orderIdf, statusf, riderIdf, dayf};
 
-    LayerReader<TrajectoryPointLayer> reader = LayerReaderFactory.getReader(ss, FeatureType.TRAJECTORY_POINT, SourceType.FILE);
-    reader.setProp(prop);
+    Field timef = Term.FIELD_DEFAULT_TIME;
+    timef.setIndex(1);
+
+    FileLayerReaderConfig readerConfig = new FileLayerReaderConfig(UUID.randomUUID().toString(), file, LayerType.TRAJECTORY_POINT_LAYER);
+    readerConfig.setTimeField(timef);
+    readerConfig.setAttributes(fields);
+
+    FileLayerReader<TrajectoryPointLayer> reader = new FileLayerReader<TrajectoryPointLayer>(ss, readerConfig);
 
     // read data from source
     TrajectoryPointLayer layer = reader.read();
@@ -77,20 +76,10 @@ public class demo {
     List m = layer.collect();
     logger.info(String.format("result size: %d", m.size()));
 
-    Map<String, String> attributes = new HashMap<>();
-    attributes.put("orderId", "订单ID");
-    attributes.put("status", "订单状态");
-    attributes.put("riderId", "骑手ID");
-    attributes.put("day", "订单日期");
-    layer.setAttributes(attributes);
-
     // write data to sink
-    Properties sinkProp = new Properties();
-    sinkProp.setProperty("uri", "mongodb://localhost:27017");
-    sinkProp.setProperty("database", "dwd");
-    sinkProp.setProperty("collection", "index_rider_point");
-    LayerWriter writer = new MongoDBLayerWriter(ss);
-    writer.write(layer, sinkProp);
+    MongoLayerWriterConfig writerConfig = new MongoLayerWriterConfig("mongodb://localhost:27017", "dwd", "index_rider_point");
+    LayerWriter writer = new MongoLayerWriter(ss, writerConfig);
+    writer.write(layer);
 
     // close the project
     ss.close();

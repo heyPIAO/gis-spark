@@ -11,8 +11,6 @@ import scala.reflect.ClassTag;
  **/
 public class PolygonLayer extends Layer<String, Polygon> {
 
-  public PolygonLayer() {}
-
   public PolygonLayer(RDD<Tuple2<String, Polygon>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(Polygon.class));
   }

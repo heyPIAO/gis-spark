@@ -42,6 +42,6 @@ public abstract class LayerWriter <T> implements Serializable {
    * 图层写出
    * @param layer
    */
-  public abstract void write(Layer layer, Properties prop);
+  public abstract void write(Layer layer);
 
 }

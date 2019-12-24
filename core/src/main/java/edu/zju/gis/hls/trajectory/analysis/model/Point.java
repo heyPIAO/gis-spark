@@ -14,7 +14,7 @@ import java.util.Map;
 @Setter
 public class Point extends Feature<org.locationtech.jts.geom.Point> {
 
-  public Point(String fid, org.locationtech.jts.geom.Point geometry, Map<String, Object> attributes) {
+  public Point(String fid, org.locationtech.jts.geom.Point geometry, Map<Field, Object> attributes) {
     super(fid, geometry, attributes);
   }
 

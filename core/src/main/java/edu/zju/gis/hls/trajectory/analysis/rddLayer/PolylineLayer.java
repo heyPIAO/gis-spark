@@ -11,8 +11,6 @@ import scala.reflect.ClassTag;
  **/
 public class PolylineLayer extends Layer<String, Polyline> {
 
-  public PolylineLayer() {}
-
   public PolylineLayer(RDD<Tuple2<String, Polyline>> rdd){
     this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(Polyline.class));
   }

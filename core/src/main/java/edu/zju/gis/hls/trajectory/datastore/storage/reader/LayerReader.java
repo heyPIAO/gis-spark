@@ -19,19 +19,16 @@ import scala.Tuple2;
 
 import java.io.Closeable;
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.*;
 import java.util.*;
 
-import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.*;
 
 
 /**
  * @author Hu
  * @date 2019/9/19
  * 分布式环境下数据读取基类
- * 原理：基于 SparkSession 对于各类datasource的读取API封装，以支持更多业务操作
+ * 原理：基于 SparkSession 对于各类 datasource 的读取API封装，以支持更多业务操作
  **/
 public abstract class LayerReader<T extends Layer> implements Closeable, Serializable {
 
@@ -43,57 +40,19 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
   @Getter
   transient protected JavaSparkContext jsc;
 
-  @Getter
-  protected Class featureType;
-
-  @Getter
   @Setter
-  protected Properties prop; // 数据源配置
+  protected LayerType layerType;
 
-  public LayerReader(SparkSession ss, Class featureType) {
+  public LayerReader(SparkSession ss, LayerType layerType) {
     this.ss = ss;
     this.jsc = JavaSparkContext.fromSparkContext(this.ss.sparkContext());
-    this.featureType = featureType;
+    this.layerType = layerType;
   }
 
   public abstract T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException;
 
-  /**
-   * 如果是trajectory图层，检查图层配置参数
-   * @param featureType
-   * @return
-   */
-  protected boolean checkTrajectoryConfig(FeatureType featureType) {
-    if (featureType.equals(FeatureType.TRAJECTORY_POLYLINE)){
-      Object startTime = this.prop.getProperty(START_TIME_INDEX);
-      Object endTime = this.prop.getProperty(END_TIME_INDEX);
-      if (startTime != null && endTime != null) {
-        return true;
-      } else {
-        logger.error("trajectory polyline layer needs to specify start time field index and end time field index");
-      }
-    } else if (featureType.equals(FeatureType.TRAJECTORY_POINT)) {
-      Object timestamp = this.prop.getProperty(TIME_INDEX);
-      if (timestamp != null) {
-        return true;
-      } else {
-        logger.error("trajectory point layer needs to specify timestamp field index");
-      }
-    } else {
-      logger.error("unsupport trajectory geometry type");
-    }
-    return false;
-  }
-
   protected Class<T> getTClass() {
-    FeatureType featureType = FeatureType.getType(this.featureType.getName());
-    LayerType layerType = featureType.getLayerType();
-    try {
-      return (Class<T>) Class.forName(layerType.getClassName());
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-      return null;
-    }
+    return (Class<T>) this.layerType.getLayerClass();
   }
 
   protected T rddToLayer(RDD<Tuple2<String, Feature>> features) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -103,7 +62,7 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     return result;
   }
 
-  protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, Map<String, Object> attributes, Long timestamp, Long startTime, Long endTime) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+  protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, Map<edu.zju.gis.hls.trajectory.analysis.model.Field, Object> attributes, Long timestamp, Long startTime, Long endTime) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
     // 基于 java reflect 实现动态类 Feature 构造
     String className = featureType.getClassName();
@@ -111,7 +70,7 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     Object feature;
     Constructor c;
 
-    // 根据不同的geometryType获取对应的构造函数并获取对应实例
+    // 根据不同的 geometryType 获取对应的构造函数并获取对应实例
     if (featureType.equals(FeatureType.POINT)) {
       c = featureClass.getConstructor(String.class, Point.class, Map.class);
       feature = c.newInstance(fid, (Point)geometry, attributes);
@@ -136,7 +95,7 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
 
   private List<Field> getTFields() {
     List<Field> fields = new ArrayList<>();
-    Class <T> c = getTClass();
+    Class<T> c = getTClass();
     // 迭代获取类及父类中的所有字段
     while(c!=null){
       fields.addAll(Arrays.asList(c.getDeclaredFields()));

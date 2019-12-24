@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.datastore.storage.reader;
+package edu.zju.gis.hls.trajectory.datastore.storage.reader.mongo;
 
 /**
  * @author Hu

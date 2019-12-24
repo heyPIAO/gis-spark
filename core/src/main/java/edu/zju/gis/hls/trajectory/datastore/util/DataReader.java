@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.trajectory.datastore.util;
 
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +24,7 @@ public abstract class DataReader implements Closeable, Serializable {
 
   protected String[] headers;
 
-  protected String crs;
+  protected String crs = Term.DEFAULT_CRS.toWKT();
 
   public DataReader filename(String filename){
     this.filename = filename;
@@ -74,7 +75,7 @@ public abstract class DataReader implements Closeable, Serializable {
   }
 
   protected String readCRS() {
-    return null;
+    return this.crs;
   }
 
   protected abstract String[] readHeader();

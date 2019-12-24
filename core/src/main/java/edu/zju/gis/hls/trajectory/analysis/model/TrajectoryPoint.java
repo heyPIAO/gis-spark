@@ -14,7 +14,7 @@ public class TrajectoryPoint extends Point {
 
     protected long timestamp;
 
-    public TrajectoryPoint(String fid, org.locationtech.jts.geom.Point geometry, Map<String, Object> attributes, long timestamp) {
+    public TrajectoryPoint(String fid, org.locationtech.jts.geom.Point geometry, Map<Field, Object> attributes, long timestamp) {
         super(fid, geometry, attributes);
         this.timestamp = timestamp;
     }
@@ -28,7 +28,7 @@ public class TrajectoryPoint extends Point {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("%d \t", timestamp));
-        for(String k: attributes.keySet()){
+        for(Field k: attributes.keySet()){
             sb.append(String.valueOf(attributes.get(k)) + "\t");
         }
         sb.append(geometry.toString());
@@ -46,7 +46,7 @@ public class TrajectoryPoint extends Point {
     public String toStringXY() {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("%d \t", timestamp));
-        for(String k: attributes.keySet()){
+        for(Field k: attributes.keySet()){
             sb.append(String.valueOf(attributes.get(k)) + "\t");
         }
         sb.append(String.format("%.12f \t %.12f", this.geometry.getX(), this.geometry.getY()));
