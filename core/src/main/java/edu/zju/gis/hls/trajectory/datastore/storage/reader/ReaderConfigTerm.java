@@ -4,7 +4,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.config;
  * @author Hu
  * @date 2019/9/19
  **/
-public class ReaderConfig {
+public class ReaderConfigTerm {
   public static String LAYER_NAME = "layerName";
   public static String LAYER_ID = "layerID";
   public static String SHAPE_INDEX = "shape";

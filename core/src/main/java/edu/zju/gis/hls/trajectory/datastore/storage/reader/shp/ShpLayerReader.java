@@ -6,7 +6,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
-import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.util.ShpDataReader;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -25,9 +24,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.*;
-import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.ATTRIBUTE_TYPE;
-import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.HEADER_INDEX;
+import static edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm.*;
+import static edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm.ATTRIBUTE_TYPE;
+import static edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm.HEADER_INDEX;
 
 /**
  * @author Hu
@@ -187,7 +186,7 @@ public class ShpLayerReader <T extends Layer> extends LayerReader <T> {
     }
 
     lm.setLayerId(UUID.randomUUID().toString());
-    lm.setLayerName(this.prop.getProperty(ReaderConfig.LAYER_NAME, lm.getLayerId()));
+    lm.setLayerName(this.prop.getProperty(ReaderConfigTerm.LAYER_NAME, lm.getLayerId()));
 
     layer.setAttributeTypes(attributeType);
     layer.setMetadata(lm);

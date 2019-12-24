@@ -8,7 +8,6 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
-import edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig;
 import lombok.ToString;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -29,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static edu.zju.gis.hls.trajectory.datastore.storage.config.ReaderConfig.*;
+import static edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm.*;
 
 /**
  * @author Hu
@@ -220,7 +219,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader <T> {
     LayerMetadata lm = new LayerMetadata();
     lm.setLayerId(UUID.randomUUID().toString());
     lm.setCrs(crs);
-    lm.setLayerName(this.prop.getProperty(ReaderConfig.LAYER_NAME, lm.getLayerId()));
+    lm.setLayerName(this.prop.getProperty(ReaderConfigTerm.LAYER_NAME, lm.getLayerId()));
     layer.setAttributeTypes(attributeType);
     layer.setMetadata(lm);
 

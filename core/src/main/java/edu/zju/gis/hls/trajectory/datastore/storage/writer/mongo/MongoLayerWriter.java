@@ -1,9 +1,10 @@
-package edu.zju.gis.hls.trajectory.datastore.storage.writer;
+package edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo;
 
 import com.mongodb.spark.MongoSpark;
 import com.mongodb.spark.config.WriteConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.SparkSession;
@@ -22,7 +23,7 @@ import java.util.Properties;
  * 将图层数据写到 MongoDB
  * 默认新建表。如果表已经存在，则构建失败
  **/
-public class MongoDBLayerWriter extends LayerWriter <Document> {
+public class MongoDBLayerWriter extends LayerWriter<Document> {
 
   private static final Logger logger = LoggerFactory.getLogger(MongoDBLayerWriter.class);
 
