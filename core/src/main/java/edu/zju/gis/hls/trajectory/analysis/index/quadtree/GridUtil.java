@@ -7,7 +7,7 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.SCREEN_TILE_SIZE;
 /**
  * Created by ylj on 2017/10/10.
  */
-public class TileUtil {
+public class GridUtil {
 
     /**
      * 获取地图数据在基准地图中所覆盖的所有瓦片信息，且是每一层级的瓦片信息
@@ -37,38 +37,38 @@ public class TileUtil {
      * @param zLevelInfos       地图数据的层级信息
      * @return
      */
-    public static TileID getTileID(long index,int zMin, ZLevelInfo[] zLevelInfos){
-        TileID tileId = null;
+    public static GridID getTileID(long index, int zMin, ZLevelInfo[] zLevelInfos){
+        GridID gridId = null;
         int leng = zLevelInfos.length;
         for (int z = 0; z < leng; z ++){
             if (index >= zLevelInfos[z].getTotalCount()){
                 index -= zLevelInfos[z].getTotalCount();
             }else{
-                tileId = new TileID();
-                tileId.setzLevel(z + zMin);
+                gridId = new GridID();
+                gridId.setzLevel(z + zMin);
                 int width = (zLevelInfos[z].getTileRanges()[1]-zLevelInfos[z].getTileRanges()[0]);
                 int x = (int)(index  % width);
                 int y = (int)((index - x) / width);
-                tileId.setX(x + zLevelInfos[z].getTileRanges()[0]);
-                tileId.setY(y + zLevelInfos[z].getTileRanges()[2]);
+                gridId.setX(x + zLevelInfos[z].getTileRanges()[0]);
+                gridId.setY(y + zLevelInfos[z].getTileRanges()[2]);
                 break;
             }
         }
-        return tileId;
+        return gridId;
     }
 
     /**
      * 构建瓦片所对应的空间范围
-     * @param tileID
+     * @param gridID
      * @param pyramidConfig
      * @return
      */
-    public static Envelope createTileBox(TileID tileID, PyramidConfig pyramidConfig){
+    public static Envelope createTileBox(GridID gridID, PyramidConfig pyramidConfig){
         Envelope baseEnv = pyramidConfig.getBaseMapEnv();
-        double minX = baseEnv.getMinX() + pyramidConfig.getGridSize(tileID.getzLevel()) * tileID.getX();
-        double maxX = baseEnv.getMinX() + pyramidConfig.getGridSize(tileID.getzLevel()) * (tileID.getX() + 1);
-        double minY = baseEnv.getMinY() + pyramidConfig.getGridSize(tileID.getzLevel()) * tileID.getY();
-        double maxY = baseEnv.getMinY() + pyramidConfig.getGridSize(tileID.getzLevel()) * (tileID.getY() + 1);
+        double minX = baseEnv.getMinX() + pyramidConfig.getGridSize(gridID.getzLevel()) * gridID.getX();
+        double maxX = baseEnv.getMinX() + pyramidConfig.getGridSize(gridID.getzLevel()) * (gridID.getX() + 1);
+        double minY = baseEnv.getMinY() + pyramidConfig.getGridSize(gridID.getzLevel()) * gridID.getY();
+        double maxY = baseEnv.getMinY() + pyramidConfig.getGridSize(gridID.getzLevel()) * (gridID.getY() + 1);
         return new Envelope(minX, maxX, minY, maxY);
     }
 

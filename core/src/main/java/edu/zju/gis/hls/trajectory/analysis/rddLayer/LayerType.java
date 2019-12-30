@@ -31,4 +31,13 @@ public enum LayerType {
     this.layerClass = layerClass;
   }
 
+  public static LayerType findLayerType(FeatureType featureType) {
+    for (LayerType lt: values()) {
+      if (lt.featureType.equals(featureType)) {
+        return lt;
+      }
+    }
+    return null;
+  }
+
 }

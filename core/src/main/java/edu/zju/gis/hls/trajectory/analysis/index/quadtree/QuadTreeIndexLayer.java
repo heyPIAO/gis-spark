@@ -2,7 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.index.quadtree;
 
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +24,7 @@ import java.util.List;
  **/
 @Getter
 @Setter
-public class QuadTreeIndexLayer<L extends Layer> extends IndexedLayer<L> {
+public class QuadTreeIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
 
   private static final Logger logger = LoggerFactory.getLogger(QuadTreeIndexLayer.class);
 
@@ -38,16 +38,9 @@ public class QuadTreeIndexLayer<L extends Layer> extends IndexedLayer<L> {
   }
 
   @Override
-  public QuadTreeIndexLayer query(Geometry geometry) {
+  public QuadTreeIndexLayer<L> query(Geometry geometry) {
 
-    ReferencedEnvelope envelope = JTS.toEnvelope(geometry);
-    ZLevelInfo tZLevelInfo = TileUtil.initZLevelInfoPZ(pc, envelope)[qz - pc.getZLevelRange()[0]];
-    List<String> tiles = new ArrayList<>();
-    for (int tile_x = tZLevelInfo.getTileRanges()[0]; tile_x <= tZLevelInfo.getTileRanges()[1]; tile_x++) {
-      for (int tile_y = tZLevelInfo.getTileRanges()[2]; tile_y <= tZLevelInfo.getTileRanges()[3]; tile_y++) {
-        tiles.add((new TileID(qz, tile_x, tile_y)).toString());
-      }
-    }
+    List<String> tiles = this.queryPartitionsIds(geometry);
 
     int partitionNum = this.layer.getNumPartitions();
 
@@ -69,6 +62,18 @@ public class QuadTreeIndexLayer<L extends Layer> extends IndexedLayer<L> {
     });
 
     return this;
+  }
+
+  public List<String> queryPartitionsIds(Geometry geometry) {
+    ReferencedEnvelope envelope = JTS.toEnvelope(geometry);
+    ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[qz - pc.getZLevelRange()[0]];
+    List<String> tiles = new ArrayList<>();
+    for (int tile_x = tZLevelInfo.getTileRanges()[0]; tile_x <= tZLevelInfo.getTileRanges()[1]; tile_x++) {
+      for (int tile_y = tZLevelInfo.getTileRanges()[2]; tile_y <= tZLevelInfo.getTileRanges()[3]; tile_y++) {
+        tiles.add((new GridID(qz, tile_x, tile_y)).toString());
+      }
+    }
+    return tiles;
   }
 
 }

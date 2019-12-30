@@ -4,15 +4,19 @@ import java.io.Serializable;
 
 /**
  * Created by ylj on 2017/10/10.
+ * Updated by Hu
  */
-public class TileID implements Comparable,Serializable {
+public class GridID implements Comparable,Serializable {
+
     private int zLevel;
     private int x;
     private int y;
-    public TileID(){}
+
+    public GridID(){}
 
     /**
-     * 对于单层运算, z都是一样的
+     * TODO A better hashcode for having a more balanced distribution
+     * hint: z,x,y has it's own limitation, maybe it's a way
      * @return
      */
     @Override
@@ -20,13 +24,13 @@ public class TileID implements Comparable,Serializable {
         // int result = getzLevel();
         // result = 31 * result + getX();
         // result = 31 * result + getY();
-        return String.format("%d%d", x, y).hashCode();
+        return String.format("%d%d%d", zLevel, x, y).hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != TileID.class) return false;
-        TileID objId = (TileID) obj;
+        if (obj == null || obj.getClass() != GridID.class) return false;
+        GridID objId = (GridID) obj;
         if (objId.x == this.x && objId.y == this.y && objId.zLevel == this.zLevel){
             return true;
         }else{
@@ -34,7 +38,7 @@ public class TileID implements Comparable,Serializable {
         }
     }
 
-    public TileID(int zLevel, int x, int y){
+    public GridID(int zLevel, int x, int y){
         this.zLevel = zLevel;
         this.x = x;
         this.y = y;
@@ -71,14 +75,14 @@ public class TileID implements Comparable,Serializable {
         return sb.toString();
     }
 
-    public static TileID fromString(String str) {
+    public static GridID fromString(String str) {
         String[] zxy = str.split("_");
-        TileID tileID = new TileID();
+        GridID gridID = new GridID();
         try {
-            tileID.setzLevel(Integer.valueOf(zxy[0]));
-            tileID.setX(Integer.valueOf(zxy[1]));
-            tileID.setY(Integer.valueOf(zxy[2]));
-            return tileID;
+            gridID.setzLevel(Integer.valueOf(zxy[0]));
+            gridID.setX(Integer.valueOf(zxy[1]));
+            gridID.setY(Integer.valueOf(zxy[2]));
+            return gridID;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -87,7 +91,7 @@ public class TileID implements Comparable,Serializable {
 
     @Override
     public int compareTo(Object o) {
-        TileID objId = (TileID) o;
+        GridID objId = (GridID) o;
         if (this.zLevel > objId.zLevel){
             return 1;
         }else if(this.zLevel < objId.zLevel){

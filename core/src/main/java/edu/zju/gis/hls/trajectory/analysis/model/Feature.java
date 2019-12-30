@@ -13,6 +13,9 @@ import scala.Tuple2;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +49,28 @@ public class Feature <T extends Geometry> implements Serializable {
 
   public Feature(Feature f){
     this(f.getFid(), (T)f.getGeometry(), f.getAttributes());
+  }
+
+  public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException {
+    return this.getClass().getMethod(name, parameterTypes);
+  }
+
+  /**
+   * 获取对象拷贝方法
+   * @return
+   */
+  public Constructor getSelfCopyConstructor() throws NoSuchMethodException {
+    return this.getClass().getConstructor(this.getClass());
+  }
+
+  public <F extends Feature> F getSelfCopyObject() {
+    try {
+      Constructor c = this.getSelfCopyConstructor();
+      return (F) c.newInstance(this);
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   /**

@@ -27,6 +27,8 @@ public class LayerMetadata extends Feature<Polygon> {
   private String layerId;
   private String layerName;
   private CoordinateReferenceSystem crs;
+  private double startTime;
+  private double endTime;
 
   public LayerMetadata(String fid, Polygon geometry, Map<Field, Object> attributes, String layerId, String layerName, CoordinateReferenceSystem crs) {
     super(fid, geometry, attributes);

@@ -2,7 +2,6 @@ package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
-import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.api.java.JavaPairRDD;
