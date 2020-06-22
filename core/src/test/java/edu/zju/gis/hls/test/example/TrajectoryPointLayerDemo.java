@@ -27,9 +27,9 @@ import java.util.*;
  * @author Hu
  * @date 2019/9/20
  **/
-public class Demo {
+public class TrajectoryPointLayerDemo {
 
-  private static final Logger logger = LoggerFactory.getLogger(Demo.class);
+  private static final Logger logger = LoggerFactory.getLogger(TrajectoryPointLayerDemo.class);
 
   public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
 
