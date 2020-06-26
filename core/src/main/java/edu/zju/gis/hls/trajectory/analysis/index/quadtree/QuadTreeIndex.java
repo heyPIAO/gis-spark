@@ -89,14 +89,14 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
       List<Tuple2<String, V>> result = new ArrayList<>();
       Geometry geom = in._2.getGeometry();
       ReferencedEnvelope envelope = JTS.toEnvelope(geom);
-      int zmin = pc.getZLevelRange()[0];
-      int zmax = pc.getZLevelRange()[1];
+      int zmin = pc.getZMin();
+      int zmax = pc.getZMax();
       int z = Math.min(Math.max(zmin, indexConfig.getIndexLevel()), zmax);
       ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[z - zmin];
-      int tx_min = tZLevelInfo.getTileRanges()[0];
-      int tx_max = tZLevelInfo.getTileRanges()[1];
-      int ty_min = tZLevelInfo.getTileRanges()[2];
-      int ty_max = tZLevelInfo.getTileRanges()[3];
+      int tx_min = tZLevelInfo.getMinX();
+      int tx_max = tZLevelInfo.getMaxX();
+      int ty_min = tZLevelInfo.getMinY();
+      int ty_max = tZLevelInfo.getMaxY();
       for (int tile_x = tx_min; tile_x <= tx_max; tile_x++) {
         for (int tile_y = ty_min; tile_y <= ty_max; tile_y++) {
           GridID gridID = new GridID();

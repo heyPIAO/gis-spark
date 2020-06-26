@@ -68,6 +68,14 @@ public class PyramidConfig implements Serializable{
         return this.zLevelRange;
     }
 
+    public int getZMin() {
+        return this.zLevelRange[0];
+    }
+
+    public int getZMax() {
+        return this.zLevelRange[1];
+    }
+
     public CoordinateReferenceSystem getCrs() {
         return this.crs;
     }

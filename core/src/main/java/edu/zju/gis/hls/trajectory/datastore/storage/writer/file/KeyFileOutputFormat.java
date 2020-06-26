@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.writer.file;
 
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm;
 import org.apache.hadoop.mapred.lib.MultipleTextOutputFormat;
 
 /**
@@ -12,9 +13,8 @@ import org.apache.hadoop.mapred.lib.MultipleTextOutputFormat;
       return String.valueOf(key);
     }
 
-    @Override
-    protected Object generateActualValue(Object key, Object value) {
-    return super.generateActualValue(key, value);
-    }
-
+  @Override
+  protected Object generateActualValue(Object key, Object value) {
+    return key + ReaderConfigTerm.DEFAULT_FILE_SEPARATOR + value;
+  }
 }

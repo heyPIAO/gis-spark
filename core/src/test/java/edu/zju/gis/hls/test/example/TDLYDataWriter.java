@@ -45,6 +45,7 @@ public class TDLYDataWriter {
     // set up data source
     String dltbFile = "D:\\Work\\STCoding\\测试数据\\净面积计算测试数据\\DLTB";
     // String dltbFile = "D:\\Work\\STCoding\\测试数据\\JIASHAN_2018_DLTB.wkt";
+    // String dltbFile = "D:\\Work\\STCoding\\测试数据\\error_polygon.txt";
     String lxdwFile = "D:\\Work\\STCoding\\测试数据\\净面积计算测试数据\\LXDW";
     String xzdwFile = "D:\\Work\\STCoding\\测试数据\\净面积计算测试数据\\XZDW";
 
@@ -86,17 +87,22 @@ public class TDLYDataWriter {
     // write to file with grid index
     IndexedLayer<MultiPolygonLayer> dltb = si.index(dltbLayer);
 
-    writerConfig.setSinkPath("/dltb");
+    MultiPolygonLayer l = dltb.toLayer();
+    l.makeSureCached();
+    logger.info("Temp Layer Size = " + l.count());
+    l.unpersist();
+
+    writerConfig.setSinkPath("D:\\Work\\STCoding\\净面积计算\\grid\\dltb");
     LayerWriter writer = new FileLayerWriter(ss, writerConfig);
     writer.write(dltb);
 
     IndexedLayer<PolylineLayer> xzdw = si.index(xzdwLayer);
-    writerConfig.setSinkPath("/xzdw");
+    writerConfig.setSinkPath("D:\\Work\\STCoding\\净面积计算\\grid\\xzdw");
     writer = new FileLayerWriter(ss, writerConfig);
     writer.write(xzdw);
 
     IndexedLayer<PointLayer> lxdw = si.index(lxdwLayer);
-    writerConfig.setSinkPath("/lxdw");
+    writerConfig.setSinkPath("D:\\Work\\STCoding\\净面积计算\\grid\\lxdw");
     writer = new FileLayerWriter(ss, writerConfig);
     writer.write(lxdw);
 
