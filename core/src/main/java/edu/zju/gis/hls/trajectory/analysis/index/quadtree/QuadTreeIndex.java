@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.index.quadtree;
 
-import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndex;
+import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
@@ -13,6 +13,7 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
@@ -20,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import scala.Serializable;
 import scala.Tuple2;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -32,18 +32,18 @@ import java.util.List;
  **/
 @Getter
 @Setter
-public class QuadTreeIndex implements SpatialIndex, Serializable {
+public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
 
   private static final Logger logger = LoggerFactory.getLogger(QuadTreeIndex.class);
 
-  private int z;
+  private QuadTreeIndexConfig c;
 
   public QuadTreeIndex() {
-    this.z = Term.QUADTREE_DEFAULT_LEVEL;
+    this.c = new QuadTreeIndexConfig();
   }
 
-  public QuadTreeIndex(int z) {
-    this.z = z;
+  public QuadTreeIndex(QuadTreeIndexConfig c) {
+    this.c = c;
   }
 
   /**
@@ -55,8 +55,8 @@ public class QuadTreeIndex implements SpatialIndex, Serializable {
   public <L extends Layer, T extends IndexedLayer<L>> T index(L layer) {
     CoordinateReferenceSystem crs = layer.getMetadata().getCrs();
     PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build();
-    QuadTreeIndexBuiler builder = new QuadTreeIndexBuiler(pc, z);
-    QuadTreeIndexLayer result = new QuadTreeIndexLayer(pc, z);
+    QuadTreeIndexBuiler builder = new QuadTreeIndexBuiler(pc, c);
+    QuadTreeIndexLayer result = new QuadTreeIndexLayer(pc, c);
     result.setLayer(layer.flatMapToLayer(builder));
     return (T) result;
   }
@@ -72,11 +72,16 @@ public class QuadTreeIndex implements SpatialIndex, Serializable {
   private class QuadTreeIndexBuiler<K, V extends Feature> implements FlatMapFunction<Tuple2<K, V>, Tuple2<String, V>> {
 
     private PyramidConfig pc;
-    private int qz;
+    private QuadTreeIndexConfig indexConfig;
 
-    public QuadTreeIndexBuiler(PyramidConfig pc, int z) {
+    public QuadTreeIndexBuiler(PyramidConfig pc, QuadTreeIndexConfig conf) {
       this.pc = pc;
-      this.qz = z;
+      this.indexConfig = conf;
+    }
+
+    public QuadTreeIndexBuiler(PyramidConfig pc) {
+      this.pc = pc;
+      this.indexConfig = new QuadTreeIndexConfig();
     }
 
     @Override
@@ -86,7 +91,7 @@ public class QuadTreeIndex implements SpatialIndex, Serializable {
       ReferencedEnvelope envelope = JTS.toEnvelope(geom);
       int zmin = pc.getZLevelRange()[0];
       int zmax = pc.getZLevelRange()[1];
-      int z = Math.min(Math.max(zmin, qz), zmax);
+      int z = Math.min(Math.max(zmin, indexConfig.getIndexLevel()), zmax);
       ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[z - zmin];
       int tx_min = tZLevelInfo.getTileRanges()[0];
       int tx_max = tZLevelInfo.getTileRanges()[1];
@@ -102,9 +107,25 @@ public class QuadTreeIndex implements SpatialIndex, Serializable {
           V f = (V) in._2.getSelfCopyObject();
           // 得到在每一个瓦片中对应的 geometry
           Geometry tileGeometry = JTS.toGeometry(tileEnvelope);
-          Geometry finalGeom = EnhancedPrecisionOp.intersection(geom, tileGeometry);
-          f.setGeometry(finalGeom);
-          result.add(new Tuple2<>(gridID.toString(), f));
+          Geometry finalGeom;
+          if (tileGeometry.contains(geom)) {
+            finalGeom = geom;
+          } else {
+            try {
+              finalGeom = EnhancedPrecisionOp.intersection(tileGeometry, geom);
+            } catch (TopologyException e) {
+              // 对于自相交图形，计算 intersection 会产生拓扑错误
+              // TODO 用 buffer 方法解决会导致一部分的图斑缺失，待支持MultiPolygon//MultiLineString的时候需要改成将图斑自动切分的方法
+              // TODO https://stackoverflow.com/questions/31473553/is-there-a-way-to-convert-a-self-intersecting-polygon-to-a-multipolygon-in-jts
+              tileGeometry = tileGeometry.buffer(0);
+              geom = geom.buffer(0);
+              finalGeom = EnhancedPrecisionOp.intersection(tileGeometry, geom);
+            }
+          }
+          if (!finalGeom.isEmpty()) {
+            f.setGeometry(finalGeom);
+            result.add(new Tuple2<>(gridID.toString(), f));
+          }
         }
       }
       return result.iterator();

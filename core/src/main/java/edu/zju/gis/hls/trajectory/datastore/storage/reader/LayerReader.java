@@ -9,10 +9,7 @@ import lombok.Setter;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.SparkSession;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -80,6 +77,15 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     } else if (featureType.equals(FeatureType.POLYGON)) {
       c = featureClass.getConstructor(String.class, Polygon.class, Map.class);
       feature = c.newInstance(fid, (Polygon)geometry, attributes);
+    } else if (featureType.equals(FeatureType.MULTI_POINT)) {
+      c = featureClass.getConstructor(String.class, MultiPoint.class, Map.class);
+      feature = c.newInstance(fid, (MultiPoint)transformToMulti(geometry), attributes);
+    } else if (featureType.equals(FeatureType.MULTI_POLYLINE)) {
+      c = featureClass.getConstructor(String.class, MultiLineString.class, Map.class);
+      feature = c.newInstance(fid, (MultiLineString)transformToMulti(geometry), attributes);
+    } else if (featureType.equals(FeatureType.MULTI_POLYGON)) {
+      c = featureClass.getConstructor(String.class, MultiPolygon.class, Map.class);
+      feature = c.newInstance(fid, (MultiPolygon)transformToMulti(geometry), attributes);
     } else if (featureType.equals(FeatureType.TRAJECTORY_POINT)) {
       c = featureClass.getConstructor(String.class, Point.class, Map.class, long.class);
       feature = c.newInstance(fid, (Point)geometry, attributes, timestamp.longValue());
@@ -102,6 +108,25 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
       c = (Class <T>)c.getSuperclass();
     }
     return fields;
+  }
+
+  private Geometry transformToMulti(Geometry geometry) {
+    GeometryFactory gf = new GeometryFactory();
+    if (geometry instanceof Point) {
+      Point[] ps = new Point[1];
+      ps[0] = (Point) geometry;
+      return gf.createMultiPoint(ps);
+    } else if (geometry instanceof LineString) {
+      LineString[] ls = new LineString[1];
+      ls[0] = (LineString) geometry;
+      return gf.createMultiLineString(ls);
+    } else if (geometry instanceof Polygon) {
+      Polygon[] pls = new Polygon[1];
+      pls[0] = (Polygon) geometry;
+      return gf.createMultiPolygon(pls);
+    } else {
+      return geometry;
+    }
   }
 
 }

@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Hu
  * @date 2019/12/16
- * 基于Key构建索引
+ * 基于 Key 构建索引，用于数据分区
  **/
 public abstract class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
 

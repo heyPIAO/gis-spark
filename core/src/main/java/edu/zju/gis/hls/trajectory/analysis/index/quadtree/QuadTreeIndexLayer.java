@@ -29,12 +29,12 @@ public class QuadTreeIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
   private static final Logger logger = LoggerFactory.getLogger(QuadTreeIndexLayer.class);
 
   private PyramidConfig pc;
-  private int qz;
+  private QuadTreeIndexConfig conf;
 
-  public QuadTreeIndexLayer(PyramidConfig pc, int qz) {
+  public QuadTreeIndexLayer(PyramidConfig pc, QuadTreeIndexConfig conf) {
     this.indexType = IndexType.QUADTREE;
     this.pc = pc;
-    this.qz = qz;
+    this.conf = conf;
   }
 
   @Override
@@ -66,11 +66,11 @@ public class QuadTreeIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
 
   public List<String> queryPartitionsIds(Geometry geometry) {
     ReferencedEnvelope envelope = JTS.toEnvelope(geometry);
-    ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[qz - pc.getZLevelRange()[0]];
+    ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[conf.getIndexLevel() - pc.getZLevelRange()[0]];
     List<String> tiles = new ArrayList<>();
     for (int tile_x = tZLevelInfo.getTileRanges()[0]; tile_x <= tZLevelInfo.getTileRanges()[1]; tile_x++) {
       for (int tile_y = tZLevelInfo.getTileRanges()[2]; tile_y <= tZLevelInfo.getTileRanges()[3]; tile_y++) {
-        tiles.add((new GridID(qz, tile_x, tile_y)).toString());
+        tiles.add((new GridID(conf.getIndexLevel(), tile_x, tile_y)).toString());
       }
     }
     return tiles;

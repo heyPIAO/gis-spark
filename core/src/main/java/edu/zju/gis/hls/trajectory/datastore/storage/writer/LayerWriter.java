@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.writer;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import lombok.Getter;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -43,5 +44,9 @@ public abstract class LayerWriter <T> implements Serializable {
    * @param layer
    */
   public abstract void write(Layer layer);
+
+  public void write(IndexedLayer layer) {
+    this.write(layer.toLayer());
+  }
 
 }

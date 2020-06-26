@@ -9,7 +9,6 @@ import lombok.Setter;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.util.AffineTransformation;
-import scala.Tuple2;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -18,11 +17,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+
+import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIMAL;
 
 /**
  * @author Hu
  * @date 2019/9/19
+ * 封装Geometry，构筑含ID和属性信息的Feature
  **/
 @Getter
 @Setter
@@ -94,7 +95,7 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   public String toGeometryJson() throws IOException {
-    GeometryJSON gjson = new GeometryJSON(9);
+    GeometryJSON gjson = new GeometryJSON(GEOMETRY_JSON_DECIMAL);
     return gjson.toString(this.geometry);
   }
 

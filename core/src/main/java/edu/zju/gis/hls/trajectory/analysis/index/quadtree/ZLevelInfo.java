@@ -26,4 +26,21 @@ public class ZLevelInfo implements Serializable{
         this.totalCount = totalCount;
         this.tileRanges = new int[]{tileX1,tileX2,tileY1,tileY2};
     }
+
+    public int getMinX() {
+        return this.tileRanges[0];
+    }
+
+    public int getMaxX() {
+        return this.tileRanges[1];
+    }
+
+    public int getMinY() {
+        return this.tileRanges[2];
+    }
+
+    public int getMaxY() {
+        return this.tileRanges[3];
+    }
+
 }

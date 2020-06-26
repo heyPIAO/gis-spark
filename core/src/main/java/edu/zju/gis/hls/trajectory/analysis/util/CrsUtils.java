@@ -26,7 +26,8 @@ public class CrsUtils implements Serializable {
   public enum SupportedCRS {
 
     WGS84("4326", -180, -90, 180, 90),
-    WGS84_Pseudo_Mercator("3857", -20026376.39, -20048966.10, 20026376.39, 20048966.10);
+    WGS84_Pseudo_Mercator("3857", -20026376.39, -20048966.10, 20026376.39, 20048966.10),
+    CGCS2000_3_40("4528", 40347872.25, 2703739.74, 40599933.05, 5912395.20); // CGCS2000 3-degree Gauss-Kruger zone 40
 
     private String epsg;
     private double xmin;

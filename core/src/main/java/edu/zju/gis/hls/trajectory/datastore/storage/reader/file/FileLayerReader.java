@@ -68,9 +68,9 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
     JavaRDD<String> data = null;
     if (path.contains(";")){
       String[] paths = path.split(";");
-      data = this.ss.read().textFile(paths).toJavaRDD();
+      data = this.ss.read().textFile(paths).toJavaRDD().filter(x->x.trim().length()>0);
     } else {
-      data = this.ss.read().textFile(path).toJavaRDD();
+      data = this.ss.read().textFile(path).toJavaRDD().filter(x->x.trim().length()>0);
     }
 
     JavaRDD<Tuple2<String, Feature>> features = data.map(new Function<String, Tuple2<String, Feature>>() {
@@ -142,7 +142,6 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
     lm.setAttributes(readerConfig.getAllAttributes());
 
     layer.setMetadata(lm);
-
     return layer;
   }
 

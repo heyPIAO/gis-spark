@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.test.example;
 
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
-import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndex;
+import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
@@ -76,7 +76,7 @@ public class TrajectoryPointLayerDemo {
     Envelope e = new Envelope(120.0826484129990348, 120.2443047286111408, 30.2467093379181975, 30.3120984094017416);
 
     // construct spatial index
-    SpatialIndex si = SpatialIndexFactory.getSpatialIndex(IndexType.QUADTREE);
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE);
     IndexedLayer<TrajectoryPointLayer> til = si.index(layer);
     til = til.query(JTS.toGeometry(e));
     TrajectoryPointLayer layer0 = til.toLayer();
@@ -87,7 +87,7 @@ public class TrajectoryPointLayerDemo {
       logger.info(t._2.toString());
     }
 
-    SpatialIndex si2 = SpatialIndexFactory.getSpatialIndex(IndexType.RTREE);
+    DistributeSpatialIndex si2 = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RTREE);
     IndexedLayer<TrajectoryPointLayer> til2 = si2.index(layer);
     til2 = til2.query(JTS.toGeometry(e));
     TrajectoryPointLayer layer2 = til2.toLayer();

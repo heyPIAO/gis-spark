@@ -57,7 +57,7 @@ public abstract class LayerReaderConfig implements Serializable {
       throw new LayerReaderException("time index needs to be set for trajectory point layer");
     }
 
-    if (this.layerType.equals(LayerType.TRAJECTORY_POLYLINR_LAYER) && (startTimeField == null || endTimeField == null)) {
+    if (this.layerType.equals(LayerType.TRAJECTORY_POLYLINE_LAYER) && (startTimeField == null || endTimeField == null)) {
       throw new LayerReaderException("start time index or end time index needs to be set for trajectory polyline layer");
     }
 

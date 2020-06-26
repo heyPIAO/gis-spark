@@ -11,6 +11,8 @@ import java.util.List;
 /**
  * @author Hu
  * @date 2019/12/30
+ * TODO 目前RTree索引是用geotools的STRTree实现的
+ * TODO 有点纠结要不要将RTree直接extends Feature，方便 RTreeIndexLayer 的 indexPartition，直接构建 RTreeLayer？，RTreeLayer的Geometry类型与Feature的Geometry类型一致，但是好像有点过于复杂？
  **/
 public class RTree {
 

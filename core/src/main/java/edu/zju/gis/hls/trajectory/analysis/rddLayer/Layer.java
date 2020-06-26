@@ -4,17 +4,24 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.rdd.RDD;
+import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Hu
@@ -123,6 +130,26 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
 
   public <L extends Layer<K,V>> L repartitionToLayer(int num) {
     return (L) this.initialize(this, this.repartition(num).rdd());
+  }
+
+  public boolean isCached() {
+    return !this.getStorageLevel().equals(StorageLevel.NONE());
+  }
+
+  // TODO 默认的 distinct 效率太低了，先偷懒重写一下
+  public List<String> distinctKeys() {
+    // 分区内部先去重
+    JavaRDD<String> keys = this.keys().map(x->(String) x).mapPartitions(new FlatMapFunction<Iterator<String>, String>() {
+      @Override
+      public Iterator<String> call(Iterator<String> it) throws Exception {
+        List<String> m = IteratorUtils.toList(it);
+        List<String> r = m.stream().distinct().collect(Collectors.toList());
+        return r.iterator();
+      }
+    });
+
+    // collect 之后再去重
+    return keys.collect().stream().distinct().collect(Collectors.toList());
   }
 
 }

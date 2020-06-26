@@ -18,7 +18,7 @@ public class Term implements Serializable {
   public static CoordinateReferenceSystem DEFAULT_CRS = getDefaultCrs();
   public static int QUADTREE_MIN_Z = 4;
   public static int QUADTREE_MAX_Z = 16;
-  public static int QUADTREE_DEFAULT_LEVEL = 12;
+  public static int QUADTREE_DEFAULT_LEVEL = 10;
   public static int SCREEN_TILE_SIZE = 256;
 
   public static Field FIELD_DEFAULT_SHAPE =  new Field(SHAPE_FIELD.name(), SHAPE_FIELD.name().toLowerCase(), Geometry.class.getName(), 0, -1, SHAPE_FIELD);
@@ -26,6 +26,11 @@ public class Term implements Serializable {
   public static Field FIELD_DEFAULT_TIME = new Field(TIME_FIELD.name(), TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, -99, TIME_FIELD);
   public static Field FIELD_DEFAULT_START_TIME = new Field(START_TIME_FIELD.name(), START_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, -99, START_TIME_FIELD);
   public static Field FIELD_DEFAULT_END_TIME = new Field(END_TIME_FIELD.name(), END_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, -99, END_TIME_FIELD);
+
+  // Geometry 转 GeoJSON 的坐标精度
+  public static Integer GEOMETRY_JSON_DECIMAL = 9;
+
+  public static String WKT_4528 = "PROJCS[\"CGCS2000 / 3-degree Gauss-Kruger zone 40\",GEOGCS[\"China Geodetic Coordinate System 2000\",DATUM[\"China_2000\",SPHEROID[\"CGCS2000\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"1024\"]],AUTHORITY[\"EPSG\",\"1043\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4490\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",120],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",40500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"4528\"]]";
 
   public static CoordinateReferenceSystem getDefaultCrs() {
     try {

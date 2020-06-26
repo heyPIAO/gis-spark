@@ -25,7 +25,6 @@ import java.util.List;
 /**
  * @author Hu
  * @date 2019/12/24
- * TODO 目前RTree索引是用geotools的STRTree实现的
  **/
 public class RTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, QuadTreeIndexLayer<L>> {
 

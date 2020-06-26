@@ -1,10 +1,9 @@
 package edu.zju.gis.hls.trajectory.analysis.index.rtree;
 
-import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndex;
-import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndex;
-import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndexLayer;
+import edu.zju.gis.hls.trajectory.analysis.index.InnerSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import lombok.Getter;
@@ -21,18 +20,19 @@ import java.util.*;
  * @author Hu
  * @date 2019/12/24
  * 每个partition内部的R树索引
+ * TODO 待测
  **/
-public class RTreeIndex implements SpatialIndex, Serializable {
+public class RTreeIndex implements InnerSpatialIndex, Serializable {
 
   private static final Logger logger = LoggerFactory.getLogger(RTreeIndex.class);
-  private QuadTreeIndex qti;
+  private RTreeIndexConfig conf;
 
   public RTreeIndex() {
-    this.qti = new QuadTreeIndex();
+    this(new RTreeIndexConfig());
   }
 
-  public RTreeIndex(int z) {
-    this.qti = new QuadTreeIndex(z);
+  public RTreeIndex(RTreeIndexConfig conf) {
+    this.conf = conf;
   }
 
   /**
@@ -41,16 +41,11 @@ public class RTreeIndex implements SpatialIndex, Serializable {
    * @return
    */
   @Override
-  public RTreeIndexLayer index(Layer layer) {
-    return this.indexRTree(this.indexQuadTree(layer));
+  public RTreeIndexLayer index(KeyIndexedLayer layer) {
+    return this.indexRTree(layer);
   }
 
-  private QuadTreeIndexLayer indexQuadTree(Layer layer) {
-    logger.info("Construct quad tree index first");
-    return (QuadTreeIndexLayer) qti.index(layer);
-  }
-
-  private RTreeIndexLayer indexRTree(QuadTreeIndexLayer layer) {
+  private RTreeIndexLayer indexRTree(KeyIndexedLayer layer) {
     Layer l = layer.getLayer();
     RTreeIndexLayer result = new RTreeIndexLayer();
     result.setLayer(layer);

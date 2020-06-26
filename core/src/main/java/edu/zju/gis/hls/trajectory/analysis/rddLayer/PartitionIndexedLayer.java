@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Hu
  * @date 2019/12/30
+ * 分区内部二层索引的图层
  **/
 public abstract class PartitionIndexedLayer<L extends Layer, K extends KeyIndexedLayer<L>> extends IndexedLayer<L> {
 

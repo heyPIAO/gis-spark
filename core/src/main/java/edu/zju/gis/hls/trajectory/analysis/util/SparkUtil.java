@@ -9,31 +9,38 @@ import org.apache.spark.sql.SparkSession;
  **/
 public class SparkUtil {
 
+  private static SparkConf coverSC(SparkConf conf) {
+    conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "false"); // 不输出 _success
+    return conf;
+  }
+
   public static SparkSession createLocalSparkSession(String appName, SparkConf conf) {
     SparkSession ss = SparkSession
       .builder()
       .appName(appName)
       .master("local[4]")
-      .config(conf)
+      .config(coverSC(conf))
       .getOrCreate();
     return ss;
   }
 
   public static SparkSession createRemoteSparkSession(String appName, SparkConf conf) {
+    conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "false");
     SparkSession ss = SparkSession
       .builder()
       .appName(appName)
       .master("spark://192.168.1.5:7077")
-      .config(conf)
+      .config(coverSC(conf))
       .getOrCreate();
     return ss;
   }
 
   public static SparkSession createSparkSession(String appName, SparkConf conf) {
+    conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "false");
     SparkSession ss = SparkSession
       .builder()
       .appName(appName)
-      .config(conf)
+      .config(coverSC(conf))
       .getOrCreate();
     return ss;
   }

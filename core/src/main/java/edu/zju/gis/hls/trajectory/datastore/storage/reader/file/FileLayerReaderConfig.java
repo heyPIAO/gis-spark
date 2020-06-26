@@ -1,7 +1,6 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.reader.file;
 
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
-import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm;
 import lombok.Getter;
