@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -28,7 +29,7 @@ public class TrajectoryPolyline extends Polyline {
   @Setter
   protected long endTime;
 
-  public TrajectoryPolyline(String fid, LineString geometry, Map<Field, Object> attributes, long startTime, long endTime) {
+  public TrajectoryPolyline(String fid, LineString geometry, LinkedHashMap<Field, Object> attributes, long startTime, long endTime) {
     super(fid, geometry, attributes);
     this.startTime = startTime;
     this.endTime = endTime;

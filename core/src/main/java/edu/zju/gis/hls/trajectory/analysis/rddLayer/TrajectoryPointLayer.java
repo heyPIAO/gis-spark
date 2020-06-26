@@ -85,7 +85,7 @@ public class TrajectoryPointLayer extends Layer<String, TrajectoryPoint> {
         pl = new GeometryFactory().createLineString(coordinates);
 
         TrajectoryPoint plast = ps.get(ps.size()-1);
-        Map<Field, Object> attributes = plast.getAttributes();
+        LinkedHashMap<Field, Object> attributes = plast.getAttributes();
 
         TrajectoryPolyline l = new TrajectoryPolyline(String.valueOf(in._1), pl, attributes, startTime, endTime);
         l.setFid(UUID.randomUUID().toString());

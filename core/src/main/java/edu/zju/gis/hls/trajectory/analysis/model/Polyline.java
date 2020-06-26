@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.locationtech.jts.geom.LineString;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Map;
 @Setter
 public class Polyline extends Feature<LineString> {
 
-  public Polyline(String fid, LineString geometry, Map<Field, Object> attributes) {
+  public Polyline(String fid, LineString geometry, LinkedHashMap<Field, Object> attributes) {
     super(fid, geometry, attributes);
   }
 

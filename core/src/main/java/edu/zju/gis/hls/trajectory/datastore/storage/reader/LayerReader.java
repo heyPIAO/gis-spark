@@ -20,7 +20,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-
 /**
  * @author Hu
  * @date 2019/9/19
@@ -59,7 +58,7 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     return result;
   }
 
-  protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, Map<edu.zju.gis.hls.trajectory.analysis.model.Field, Object> attributes, Long timestamp, Long startTime, Long endTime) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+  protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, LinkedHashMap<edu.zju.gis.hls.trajectory.analysis.model.Field, Object> attributes, Long timestamp, Long startTime, Long endTime) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
     // 基于 java reflect 实现动态类 Feature 构造
     String className = featureType.getClassName();
@@ -69,28 +68,28 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
 
     // 根据不同的 geometryType 获取对应的构造函数并获取对应实例
     if (featureType.equals(FeatureType.POINT)) {
-      c = featureClass.getConstructor(String.class, Point.class, Map.class);
+      c = featureClass.getConstructor(String.class, Point.class, LinkedHashMap.class);
       feature = c.newInstance(fid, (Point)geometry, attributes);
     } else if (featureType.equals(FeatureType.POLYLINE)) {
-      c = featureClass.getConstructor(String.class, LineString.class, Map.class);
+      c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class);
       feature = c.newInstance(fid, (LineString)geometry, attributes);
     } else if (featureType.equals(FeatureType.POLYGON)) {
-      c = featureClass.getConstructor(String.class, Polygon.class, Map.class);
+      c = featureClass.getConstructor(String.class, Polygon.class, LinkedHashMap.class);
       feature = c.newInstance(fid, (Polygon)geometry, attributes);
     } else if (featureType.equals(FeatureType.MULTI_POINT)) {
-      c = featureClass.getConstructor(String.class, MultiPoint.class, Map.class);
+      c = featureClass.getConstructor(String.class, MultiPoint.class, LinkedHashMap.class);
       feature = c.newInstance(fid, (MultiPoint)transformToMulti(geometry), attributes);
     } else if (featureType.equals(FeatureType.MULTI_POLYLINE)) {
-      c = featureClass.getConstructor(String.class, MultiLineString.class, Map.class);
+      c = featureClass.getConstructor(String.class, MultiLineString.class, LinkedHashMap.class);
       feature = c.newInstance(fid, (MultiLineString)transformToMulti(geometry), attributes);
     } else if (featureType.equals(FeatureType.MULTI_POLYGON)) {
-      c = featureClass.getConstructor(String.class, MultiPolygon.class, Map.class);
+      c = featureClass.getConstructor(String.class, MultiPolygon.class, LinkedHashMap.class);
       feature = c.newInstance(fid, (MultiPolygon)transformToMulti(geometry), attributes);
     } else if (featureType.equals(FeatureType.TRAJECTORY_POINT)) {
-      c = featureClass.getConstructor(String.class, Point.class, Map.class, long.class);
+      c = featureClass.getConstructor(String.class, Point.class, LinkedHashMap.class, long.class);
       feature = c.newInstance(fid, (Point)geometry, attributes, timestamp.longValue());
     } else if (featureType.equals(FeatureType.TRAJECTORY_POLYLINE)) {
-      c = featureClass.getConstructor(String.class, LineString.class, Map.class, long.class, long.class);
+      c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class, long.class, long.class);
       feature = c.newInstance(fid, (LineString)geometry, attributes, startTime.longValue(), endTime.longValue());
     } else {
       logger.error("Unsupport feature type: " + featureType.getName());

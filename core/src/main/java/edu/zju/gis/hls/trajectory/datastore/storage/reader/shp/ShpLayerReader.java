@@ -97,7 +97,7 @@ public class ShpLayerReader <T extends Layer> extends LayerReader<T> {
             endTime = Long.valueOf(String.valueOf(sf.getAttribute(endTimeField.getName())));
           }
 
-          Map<Field, Object> attributes = new HashMap<>();
+          LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
 
           Field[] keys = readerConfig.getAttributes();
 

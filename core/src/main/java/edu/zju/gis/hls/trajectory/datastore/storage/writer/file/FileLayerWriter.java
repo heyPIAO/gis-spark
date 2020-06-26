@@ -1,32 +1,20 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.writer.file;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
-import edu.zju.gis.hls.trajectory.datastore.exception.WriterException;
-import edu.zju.gis.hls.trajectory.datastore.storage.helper.file.HDFSHelper;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriter;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.lib.MultipleTextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -63,14 +51,13 @@ public class FileLayerWriter extends LayerWriter<String> {
   public void write(Layer layer) {
     String outDir = this.writerConfig.getSinkPath();
     if (this.writerConfig.isKeepKey()) {
-      layer.cache();
+      layer.makeSureCached();
       int partitionNum = layer.distinctKeys().size();
       JavaPairRDD<String, String> t = layer.mapToPair(x-> {
         Tuple2<String, Feature> m = (Tuple2<String, Feature>) x;
         return new Tuple2<>(m._1, m._2.toString());
       }).repartition(partitionNum);
       t.saveAsHadoopFile(outDir, String.class, String.class, KeyFileOutputFormat.class);
-      layer.unpersist();
       logger.info("Write layer to directory " + outDir + " with partition key as file name successfully");
     } else {
       JavaRDD<Tuple2<String, Feature>> t = layer.rdd().toJavaRDD();

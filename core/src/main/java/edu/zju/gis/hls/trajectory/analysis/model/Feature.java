@@ -16,6 +16,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIMAL;
@@ -33,7 +34,7 @@ public class Feature <T extends Geometry> implements Serializable {
 
   protected String fid;
   protected T geometry;
-  protected Map<Field, Object> attributes;
+  protected LinkedHashMap<Field, Object> attributes; // HashMap的KeySet是乱序的，在数据输出时会导致顺序混乱，故使用 LinkedHashMap
 
   public Object getAttribute(String key){
     for (Map.Entry<Field, Object> a: attributes.entrySet()) {
@@ -87,6 +88,7 @@ public class Feature <T extends Geometry> implements Serializable {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("%s \t", fid));
+
     for(Field k: attributes.keySet()){
       sb.append(String.valueOf(attributes.get(k)) + "\t");
     }

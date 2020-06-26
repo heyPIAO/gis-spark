@@ -132,6 +132,23 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
     return (L) this.initialize(this, this.repartition(num).rdd());
   }
 
+  /**
+   * 如果图层未被缓存，则缓存
+   * TODO 换个名字.. 太丑了..  @HLS
+   * @return
+   */
+  public void makeSureCached() {
+    if (!isCached()) {
+      this.cache();
+    }
+  }
+
+  public void release() {
+    if (isCached()) {
+      this.unpersist();
+    }
+  }
+
   public boolean isCached() {
     return !this.getStorageLevel().equals(StorageLevel.NONE());
   }

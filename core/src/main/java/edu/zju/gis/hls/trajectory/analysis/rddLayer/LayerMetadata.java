@@ -12,6 +12,7 @@ import org.locationtech.jts.geom.Polygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class LayerMetadata extends Feature<Polygon> {
   private double startTime;
   private double endTime;
 
-  public LayerMetadata(String fid, Polygon geometry, Map<Field, Object> attributes, String layerId, String layerName, CoordinateReferenceSystem crs) {
+  public LayerMetadata(String fid, Polygon geometry, LinkedHashMap<Field, Object> attributes, String layerId, String layerName, CoordinateReferenceSystem crs) {
     super(fid, geometry, attributes);
     this.layerId = layerId;
     this.layerName = layerName;
@@ -58,7 +59,7 @@ public class LayerMetadata extends Feature<Polygon> {
   }
 
   public void setAttributes(Field[] attributes) {
-    Map<Field, Object> a = new HashMap<>();
+    LinkedHashMap<Field, Object> a = new LinkedHashMap<>();
     for (Field f: attributes) {
       a.put(f, null);
     }

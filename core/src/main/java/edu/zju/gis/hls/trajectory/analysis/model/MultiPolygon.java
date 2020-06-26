@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Map;
  **/
 public class MultiPolygon extends Feature<org.locationtech.jts.geom.MultiPolygon> {
 
-  public MultiPolygon(String fid, org.locationtech.jts.geom.MultiPolygon geometry, Map<Field, Object> attributes) {
+  public MultiPolygon(String fid, org.locationtech.jts.geom.MultiPolygon geometry, LinkedHashMap<Field, Object> attributes) {
     super(fid, geometry, attributes);
   }
 

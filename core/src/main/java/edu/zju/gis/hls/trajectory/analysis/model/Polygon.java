@@ -3,6 +3,7 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -13,7 +14,7 @@ import java.util.Map;
 @Setter
 public class Polygon extends Feature<org.locationtech.jts.geom.Polygon> {
 
-  public Polygon(String fid, org.locationtech.jts.geom.Polygon geometry, Map<Field, Object> attributes) {
+  public Polygon(String fid, org.locationtech.jts.geom.Polygon geometry, LinkedHashMap<Field, Object> attributes) {
     super(fid, geometry, attributes);
   }
 

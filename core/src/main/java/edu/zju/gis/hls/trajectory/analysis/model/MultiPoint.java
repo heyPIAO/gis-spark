@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Map;
  **/
 public class MultiPoint extends Feature<org.locationtech.jts.geom.MultiPoint> {
 
-  public MultiPoint(String fid, org.locationtech.jts.geom.MultiPoint geometry, Map<Field, Object> attributes) {
+  public MultiPoint(String fid, org.locationtech.jts.geom.MultiPoint geometry, LinkedHashMap<Field, Object> attributes) {
     super(fid, geometry, attributes);
   }
 

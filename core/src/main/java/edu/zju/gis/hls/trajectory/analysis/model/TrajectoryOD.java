@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -19,7 +20,7 @@ import java.util.Map;
 @Setter
 public class TrajectoryOD extends TrajectoryPolyline {
 
-  public TrajectoryOD(String fid, Point start, Point end, Map<Field, Object> attributes, long startTime, long endTime) {
+  public TrajectoryOD(String fid, Point start, Point end, LinkedHashMap<Field, Object> attributes, long startTime, long endTime) {
     super(fid, new GeometryFactory().createLineString(new Coordinate[]{start.getCoordinate(), end.getCoordinate()}), attributes, startTime, endTime);
   }
 

@@ -3,6 +3,7 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -14,7 +15,7 @@ public class TrajectoryPoint extends Point {
 
     protected long timestamp;
 
-    public TrajectoryPoint(String fid, org.locationtech.jts.geom.Point geometry, Map<Field, Object> attributes, long timestamp) {
+    public TrajectoryPoint(String fid, org.locationtech.jts.geom.Point geometry, LinkedHashMap<Field, Object> attributes, long timestamp) {
         super(fid, geometry, attributes);
         this.timestamp = timestamp;
     }

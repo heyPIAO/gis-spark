@@ -21,11 +21,14 @@ public class Term implements Serializable {
   public static int QUADTREE_DEFAULT_LEVEL = 10;
   public static int SCREEN_TILE_SIZE = 256;
 
-  public static Field FIELD_DEFAULT_SHAPE =  new Field(SHAPE_FIELD.name(), SHAPE_FIELD.name().toLowerCase(), Geometry.class.getName(), 0, -1, SHAPE_FIELD);
-  public static Field FIELD_DEFAULT_ID = new Field(ID_FIELD.name(), ID_FIELD.name().toLowerCase(), String.class.getName(), 0, -99, SHAPE_FIELD);
-  public static Field FIELD_DEFAULT_TIME = new Field(TIME_FIELD.name(), TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, -99, TIME_FIELD);
-  public static Field FIELD_DEFAULT_START_TIME = new Field(START_TIME_FIELD.name(), START_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, -99, START_TIME_FIELD);
-  public static Field FIELD_DEFAULT_END_TIME = new Field(END_TIME_FIELD.name(), END_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, -99, END_TIME_FIELD);
+  public static Integer FIELD_NOT_EXIST = -99;
+  public static Integer FIELD_LAST = -1;
+
+  public static Field FIELD_DEFAULT_SHAPE =  new Field(SHAPE_FIELD.name(), SHAPE_FIELD.name().toLowerCase(), Geometry.class.getName(), 0, FIELD_LAST, SHAPE_FIELD);
+  public static Field FIELD_DEFAULT_ID = new Field(ID_FIELD.name(), ID_FIELD.name().toLowerCase(), String.class.getName(), 0, FIELD_NOT_EXIST, SHAPE_FIELD);
+  public static Field FIELD_DEFAULT_TIME = new Field(TIME_FIELD.name(), TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, TIME_FIELD);
+  public static Field FIELD_DEFAULT_START_TIME = new Field(START_TIME_FIELD.name(), START_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, START_TIME_FIELD);
+  public static Field FIELD_DEFAULT_END_TIME = new Field(END_TIME_FIELD.name(), END_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, END_TIME_FIELD);
 
   // Geometry 转 GeoJSON 的坐标精度
   public static Integer GEOMETRY_JSON_DECIMAL = 9;

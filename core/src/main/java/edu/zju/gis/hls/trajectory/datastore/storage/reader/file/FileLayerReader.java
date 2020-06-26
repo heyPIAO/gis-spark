@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.file;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
@@ -83,7 +84,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
 
         // 获取 fid
         String fid = null;
-        if (readerConfig.getIdField().getIndex() == -99) {
+        if (readerConfig.getIdField().getIndex() == Term.FIELD_NOT_EXIST) {
           fid = UUID.randomUUID().toString();
         } else {
           fid = fields[readerConfig.getIdField().getIndex()];
@@ -91,7 +92,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
 
         // 获取 geometry
         String wkt;
-        if (readerConfig.getShapeField().getIndex() == -1) {
+        if (readerConfig.getShapeField().getIndex() == Term.FIELD_LAST) {
           wkt = fields[fields.length - 1];
         } else {
           wkt = fields[readerConfig.getShapeField().getIndex()];
@@ -102,23 +103,23 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
 
         // 如果有 timestamp，获取 timestamp
         Long timestamp = null;
-        if (readerConfig.getTimeField().getIndex() != -99) {
+        if (readerConfig.getTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
           timestamp = Long.valueOf(fields[readerConfig.getTimeField().getIndex()].trim());
         }
 
         // 如果有 startTime，endTime，获取
         Long startTime = null;
-        if (readerConfig.getStartTimeField().getIndex() != -99) {
+        if (readerConfig.getStartTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
           startTime = Long.valueOf(fields[readerConfig.getStartTimeField().getIndex()].trim());
         }
 
         Long endTime = null;
-        if (readerConfig.getEndTimeField().getIndex() != -99) {
+        if (readerConfig.getEndTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
           endTime = Long.valueOf(fields[readerConfig.getEndTimeField().getIndex()].trim());
         }
 
         // 获取 attributes
-        Map<Field, Object> attributes = new HashMap<>();
+        LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
 
         for (Field f: fs) {
           int index = f.getIndex();
