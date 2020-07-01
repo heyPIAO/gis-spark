@@ -12,6 +12,7 @@
     <modules>
         <module>core</module>
         <module>doctor-example</module>
+        <module>viz</module>
     </modules>
 
     <properties>

@@ -64,47 +64,6 @@ public class FileLayerWriter extends LayerWriter<String> {
         Tuple2<String, Feature> m = (Tuple2<String, Feature>) x;
         return new Tuple2<>(m._1, m._2.toString());
       }).partitionBy(new HashPartitioner(partitionNum));
-
-//      JavaRDD<String> re = t.mapPartitions(new FlatMapFunction<Iterator<Tuple2<String, String>>, String>() {
-//        @Override
-//        public Iterator<String> call(Iterator<Tuple2<String, String>> iter) throws Exception {
-//
-//          // t.saveAsTextFile(outDir);
-//          // TODO 这种重写方式有点蠢，搞清楚 saveAsHadoopFile 原理后还是要用 FileOutputFormat 重写
-//          List<String> result = new ArrayList<>();
-//
-//          if (iter.hasNext()) {
-//
-//            Tuple2<String, String> m = iter.next();
-//            String gridId = m._1;
-//            String value = gridId + ReaderConfigTerm.DEFAULT_FILE_SEPARATOR + m._2 + "\n";
-//
-//            result.add("success: " + gridId);
-//
-//            // 创建输出文件
-//            File file = new File(writerConfig.getSinkPath() + File.separator + gridId);
-////            if (file.exists()) {
-////              file.delete();
-////            }
-//            file.createNewFile();
-//            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-//            bos.write(value.getBytes());
-//
-//            while (iter.hasNext()) {
-//              m = iter.next();
-//              bos.write((m._1 + ReaderConfigTerm.DEFAULT_FILE_SEPARATOR + m._2 + "\n").getBytes());
-//            }
-//
-//            bos.flush();
-//            bos.close();
-//          }
-//
-//          return result.iterator();
-//        }
-//      });
-//
-//      List<String> r = re.collect();
-
       t.saveAsHadoopFile(writerConfig.getSinkPath(), String.class, String.class, KeyFileOutputFormat.class);
       logger.info("Write layer to directory " + writerConfig.getSinkPath() + " with partition key as file name successfully");
     } else {
