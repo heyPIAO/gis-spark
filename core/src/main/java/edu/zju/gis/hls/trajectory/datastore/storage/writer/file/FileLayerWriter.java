@@ -3,8 +3,6 @@ package edu.zju.gis.hls.trajectory.datastore.storage.writer.file;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
-import edu.zju.gis.hls.trajectory.analysis.util.FileUtil;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriter;
 import lombok.Getter;
@@ -13,15 +11,11 @@ import org.apache.spark.HashPartitioner;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.*;
 
 /**
