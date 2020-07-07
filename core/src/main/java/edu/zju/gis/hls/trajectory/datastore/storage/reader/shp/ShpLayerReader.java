@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -137,11 +136,6 @@ public class ShpLayerReader <T extends Layer> extends LayerReader<T> {
 
     layer.setMetadata(lm);
     return layer;
-  }
-
-  @Override
-  public void close() throws IOException {
-
   }
 
 }

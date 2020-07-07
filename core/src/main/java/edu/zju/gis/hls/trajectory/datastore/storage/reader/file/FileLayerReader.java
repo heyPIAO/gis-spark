@@ -11,6 +11,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.SparkSession;
@@ -36,9 +37,8 @@ import java.util.*;
  * 注： headers 中不应有 key(fid)，timestamp, startTime, endTime，geometry 等字段
  **/
 @ToString
+@Slf4j
 public class FileLayerReader <T extends Layer> extends LayerReader<T> {
-
-  private static final Logger logger = LoggerFactory.getLogger(FileLayerReader.class);
 
   @Getter
   @Setter
@@ -144,11 +144,6 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
 
     layer.setMetadata(lm);
     return layer;
-  }
-
-  @Override
-  public void close() throws IOException {
-    logger.info("close file reader " + this.toString());
   }
 
 }

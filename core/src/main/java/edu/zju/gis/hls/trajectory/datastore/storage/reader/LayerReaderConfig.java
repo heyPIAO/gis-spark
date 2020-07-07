@@ -6,6 +6,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
@@ -19,24 +20,32 @@ import java.util.UUID;
  **/
 @Getter
 @Setter
+@ToString
 public abstract class LayerReaderConfig implements Serializable {
 
   private String layerId = UUID.randomUUID().toString();
   private String layerName;
   protected String sourcePath;
   protected LayerType layerType;
+  protected Field[] attributes; // 不包括 shape, id, startTime, endTime, Time 的所有需要读取的 Field 信息
   protected Field shapeField = Term.FIELD_DEFAULT_SHAPE;
   protected Field idField = Term.FIELD_DEFAULT_ID;
   protected Field startTimeField = Term.FIELD_DEFAULT_START_TIME;
   protected Field endTimeField = Term.FIELD_DEFAULT_END_TIME;
   protected Field timeField = Term.FIELD_DEFAULT_TIME;
   protected CoordinateReferenceSystem crs = Term.DEFAULT_CRS;
-  protected Field[] attributes; // 不包括 shape, id, startTime, endTime, Time 的所有需要读取的 Field 信息
 
   public LayerReaderConfig(String layerName, String sourcePath, LayerType layerType) {
     this.sourcePath = sourcePath;
     this.layerType = layerType;
     this.layerName = layerName;
+  }
+
+  public Field[] getAttributes() {
+    if (this.attributes == null) {
+      return new Field[0];
+    }
+    return this.attributes;
   }
 
   /**
@@ -64,10 +73,16 @@ public abstract class LayerReaderConfig implements Serializable {
     return true;
   }
 
+  /**
+   * 获取包含 ID，时间，空间字段的的所有图层字段
+   * @return
+   */
   public Field[] getAllAttributes() {
     List<Field> fs = new ArrayList<>();
-    for (Field f: attributes) {
-      fs.add(f);
+    if (attributes != null && attributes.length > 0) {
+      for (Field f: attributes) {
+        fs.add(f);
+      }
     }
     fs.add(idField);
     fs.add(shapeField);

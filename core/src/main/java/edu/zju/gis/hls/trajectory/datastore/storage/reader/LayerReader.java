@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
@@ -47,6 +48,10 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
 
   public abstract T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException;
 
+  /**
+   * 获取图层类型对应的类
+   * @return
+   */
   protected Class<T> getTClass() {
     return (Class<T>) this.layerType.getLayerClass();
   }
@@ -109,6 +114,11 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     return fields;
   }
 
+  /**
+   * 统一 Multi 图层的 Geometry 类型
+   * @param geometry
+   * @return
+   */
   private Geometry transformToMulti(Geometry geometry) {
     GeometryFactory gf = new GeometryFactory();
     if (geometry instanceof Point) {
@@ -126,6 +136,11 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     } else {
       return geometry;
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+
   }
 
 }

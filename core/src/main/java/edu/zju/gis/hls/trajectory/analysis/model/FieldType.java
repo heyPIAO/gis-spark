@@ -1,10 +1,12 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
+import java.io.Serializable;
+
 /**
  * @author Hu
  * @date 2019/12/19
  **/
-public enum FieldType {
+public enum FieldType implements Serializable {
 
   ID_FIELD("FID"),
   SHAPE_FIELD("GEOM"),

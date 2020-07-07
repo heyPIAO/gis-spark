@@ -20,10 +20,11 @@ import java.util.stream.Collectors;
  **/
 public class MongoHelper implements StorageHelper {
 
-  private final Logger logger = LoggerFactory.getLogger(MongoHelper.class);
+  private static final Logger logger = LoggerFactory.getLogger(MongoHelper.class);
 
-  private static MongoHelper instance = new MongoHelper();
+  private static MongoHelper instance = null;
 
+  @Getter
   private MongoClient client;
 
   @Getter
@@ -34,14 +35,33 @@ public class MongoHelper implements StorageHelper {
 
   private MongoCursor<Document> reader;
 
-  private MongoHelper() {
-    this.config = MongoConfig.getInstance();
+  private MongoHelper(MongoConfig config) {
+    this.config = config;
     this.client = MongoClients.create(config.toString());
     logger.info("init MongoDB client with url: " + config.toString());
   }
 
-  public static MongoHelper getClient() {
+  private MongoHelper() {
+    this(new MongoConfig());
+  }
+
+  public static MongoHelper getHelper(MongoConfig config) {
+    if (instance != null) {
+      if (config == null) {
+        logger.warn("MongoHelper has already inited, configuration abort");
+      }
+    } else {
+      if (config == null) {
+        instance = new MongoHelper();
+      } else {
+        instance = new MongoHelper(config);
+      }
+    }
     return instance;
+  }
+
+  public static MongoHelper getHelper() {
+    return getHelper(null);
   }
 
   @Override

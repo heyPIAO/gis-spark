@@ -1,10 +1,8 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
-import edu.zju.gis.hls.trajectory.datastore.exception.DataQueryException;
 import lombok.Getter;
 import lombok.Setter;
-import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

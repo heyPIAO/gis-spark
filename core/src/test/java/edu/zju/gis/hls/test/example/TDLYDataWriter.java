@@ -49,7 +49,7 @@ public class TDLYDataWriter {
 
     Field shapeField = Term.FIELD_DEFAULT_SHAPE;
     shapeField.setIndex(0);
-    Field fid = new Field("FID","FeatureID", 1, FieldType.NORMA_FIELD);
+    Field fid = new Field("FID","FeatureID", 1, FieldType.ID_FIELD);
 
     // 地类图斑数据属性字段设置
     FileLayerReaderConfig dltbReaderConfig = new FileLayerReaderConfig(UUID.randomUUID().toString(), dltbFile, LayerType.MULTI_POLYGON_LAYER);

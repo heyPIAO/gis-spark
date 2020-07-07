@@ -23,9 +23,11 @@ public class Term implements Serializable {
 
   public static Integer FIELD_NOT_EXIST = -99;
   public static Integer FIELD_LAST = -1;
+  public static Integer FIELD_EXIST = 99;
+  public static Integer FIELD_LENGTH = 255;
 
   public static Field FIELD_DEFAULT_SHAPE =  new Field(SHAPE_FIELD.name(), SHAPE_FIELD.name().toLowerCase(), Geometry.class.getName(), 0, FIELD_LAST, SHAPE_FIELD);
-  public static Field FIELD_DEFAULT_ID = new Field(ID_FIELD.name(), ID_FIELD.name().toLowerCase(), String.class.getName(), 0, FIELD_NOT_EXIST, SHAPE_FIELD);
+  public static Field FIELD_DEFAULT_ID = new Field(ID_FIELD.name(), ID_FIELD.name().toLowerCase(), String.class.getName(), 0, FIELD_NOT_EXIST, ID_FIELD);
   public static Field FIELD_DEFAULT_TIME = new Field(TIME_FIELD.name(), TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, TIME_FIELD);
   public static Field FIELD_DEFAULT_START_TIME = new Field(START_TIME_FIELD.name(), START_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, START_TIME_FIELD);
   public static Field FIELD_DEFAULT_END_TIME = new Field(END_TIME_FIELD.name(), END_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, END_TIME_FIELD);

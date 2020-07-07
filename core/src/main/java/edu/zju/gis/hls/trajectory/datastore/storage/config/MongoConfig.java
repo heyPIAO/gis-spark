@@ -17,18 +17,35 @@ public class MongoConfig implements DataSourceConfig, Serializable {
   private int[] port;
 
   // TODO 配置放到配置文件里去
-  private MongoConfig(){
-    this.ip = new String[]{ "localhost" };
-    this.port = new int[] { 27017 };
+  public MongoConfig(){
+    this(new String[]{"localhost"}, new int[]{27017});
   }
 
-  private static class MongoConfigInstance {
-    private static final MongoConfig instance = new MongoConfig();
+  public MongoConfig(String[] ips){
+    this(ips, 27017);
   }
 
-  public static MongoConfig getInstance() {
-    return MongoConfigInstance.instance;
+  public MongoConfig(String[] ips, int port) {
+    int size = ips.length;
+    int[] m = new int[ips.length];
+    for (int i=0; i<size; i++) {
+      m[i] = port;
+    }
+    this.port = m;
   }
+
+  public MongoConfig(String[] ips, int[] ports) {
+    this.ip = ips;
+    this.port = ports;
+  }
+
+//  private static class MongoConfigInstance {
+//    private static final MongoConfig instance = new MongoConfig();
+//  }
+
+//  public static MongoConfig getInstance() {
+//    return MongoConfigInstance.instance;
+//  }
 
   @Override
   public String toString() {
