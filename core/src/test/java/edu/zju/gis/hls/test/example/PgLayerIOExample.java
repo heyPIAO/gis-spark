@@ -28,17 +28,53 @@ import java.util.List;
 public class PgLayerIOExample {
 
     public static void main(String[] args) throws Exception {
+        // setup spark environment
+        SparkSession ss = SparkSession
+                .builder()
+                .appName("PostgreSQL Layer Reader Demo")
+                .master("local[4]")
+                .getOrCreate();
 
-//        PgLayerReaderConfig config_hls = setConfig_HLS();
-        PgLayerReaderConfig config_czd = setConfig_CZD();
+        String source = "jdbc:postgresql://localhost:5432/postgres";
+        String user = "postgres";
+        String password = "root";
+        String schema = "public";
+        String dbtable = "test";
 
-        getDataFromPg(config_czd);
+        Field fid = new Field("id", FieldType.ID_FIELD);
+        Field shapeField = new Field("shape", FieldType.SHAPE_FIELD);
+
+        // set up layer reader config
+        PgLayerReaderConfig config = new PgLayerReaderConfig("point_layer_test", source, LayerType.MULTI_POLYGON_LAYER);
+        config.setDbtable(dbtable);
+        config.setUsername(user);
+        config.setPassword(password);
+        config.setSchema(schema);
+        config.setIdField(fid);
+        config.setShapeField(shapeField);
+
+        // read layer
+        PgLayerReader<MultiPolygonLayer> layerReader = new PgLayerReader<MultiPolygonLayer>(ss, config);
+        MultiPolygonLayer layer = layerReader.read();
+
+        // check if success
+        layer.makeSureCached();
+        log.info("Layer count: " + layer.count());
+
+        List<Tuple2<String, MultiPolygon>> features = layer.collect();
+        features.forEach(x -> log.info(x._2.toJson()));
+
+        PgLayerWriterConfig wconfig = new PgLayerWriterConfig(source, "public", "test2", user, password);
+        PgLayerWriter layerWriter = new PgLayerWriter(ss, wconfig);
+        layerWriter.write(layer);
+
+        layer.release();
     }
 
     private static PgLayerReaderConfig setConfig_CZD() throws Exception {
         DataFactory pgDf = new DataFactory(PlatFormStorageType.PF, "2fa7d456-0d60-48ba-881b-bace9c47a005");
         PgConnectInfo pgConnectInfo = (PgConnectInfo) pgDf.getSchema();
-        String source = "jdbc:postgresql://" + pgConnectInfo.getIP() + ":" + pgConnectInfo.getPort() + "/" + pgConnectInfo.getDatabase();
+        String source = pgConnectInfo.toString();
         String user = pgConnectInfo.getUserName();
         String password = pgConnectInfo.getPassword();
         String schema = pgConnectInfo.getSchemaName();
@@ -72,62 +108,8 @@ public class PgLayerIOExample {
         return config;
     }
 
-    private static PgLayerReaderConfig setConfig_HLS() {
-        String source = "jdbc:postgresql://localhost:5432/postgres";
-        String user = "postgres";
-        String password = "root";
-        String schema = "public";
-        String dbtable = "test";
-
-        Field fid = new Field("id", FieldType.ID_FIELD);
-        fid.setType(Integer.class);
-        Field shapeField = new Field("shape", FieldType.SHAPE_FIELD);
-    Field fid = new Field("id", FieldType.ID_FIELD);
-    Field shapeField = new Field("shape", FieldType.SHAPE_FIELD);
-
-        // set up layer reader config
-        PgLayerReaderConfig config = new PgLayerReaderConfig("point_layer_test", source, LayerType.MULTI_POLYGON_LAYER);
-        config.setDbtable(dbtable);
-        config.setUsername(user);
-        config.setPassword(password);
-        config.setSchema(schema);
-        config.setIdField(fid);
-        config.setShapeField(shapeField);
-
-        return config;
-    }
-
-    private static void getDataFromPg(PgLayerReaderConfig config) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        // setup spark environment
-        SparkSession ss = SparkSession
-                .builder()
-                .appName("PostgreSQL Layer Reader Demo")
-                .master("local[4]")
-                .getOrCreate();
-
-        // read layer
-        PgLayerReader<MultiPolygonLayer> layerReader = new PgLayerReader<MultiPolygonLayer>(ss, config);
-        MultiPolygonLayer layer = layerReader.read();
-
-        // check if success
-        layer.makeSureCached();
-        log.info("Layer count: " + layer.count());
-
-        List<Tuple2<String, MultiPolygon>> features = layer.collect();
-        features.forEach(x -> log.info(x._2.toJson()));
-
-        layer.release();
-    }
-    PgLayerWriterConfig wconfig = new PgLayerWriterConfig(source,"public", "test2", user, password);
-    PgLayerWriter layerWriter = new PgLayerWriter(ss, wconfig);
-    layerWriter.write(layer);
-
-    layer.release();
-  }
-
-    private static Class dbClass2JavaClass(String fieldType)
-    {
-        if(fieldType.contains("int"))
+    private static Class dbClass2JavaClass(String fieldType) {
+        if (fieldType.contains("int"))
             return Integer.class;
         return String.class;
     }
