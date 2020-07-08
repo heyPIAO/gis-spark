@@ -2,13 +2,17 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.geotools.geometry.jts.WKTWriter2;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.util.AffineTransformation;
 
 import java.io.IOException;
@@ -29,11 +33,16 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIM
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Feature <T extends Geometry> implements Serializable {
+@Slf4j
+public abstract class Feature <T extends Geometry> implements Serializable {
 
   protected String fid;
   protected T geometry;
   protected LinkedHashMap<Field, Object> attributes; // HashMap的KeySet是乱序的，在数据输出时会导致顺序混乱，故使用 LinkedHashMap
+
+  public static Feature empty() {
+    return new Point(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+  }
 
   public Object getAttribute(String key){
     for (Map.Entry<Field, Object> a: attributes.entrySet()) {
@@ -81,6 +90,23 @@ public class Feature <T extends Geometry> implements Serializable {
     AffineTransformation at = new AffineTransformation();
     at.setToTranslation(deltaX, deltaY);
     this.geometry = (T) at.transform(this.geometry);
+  }
+
+  public boolean isMulti() {
+    return this.geometry instanceof  org.locationtech.jts.geom.MultiPoint
+      || this.geometry instanceof  org.locationtech.jts.geom.MultiLineString
+      || this.geometry instanceof org.locationtech.jts.geom.MultiPolygon;
+  }
+
+  public Feature buffer(double radius) {
+    if (!this.isMulti()) {
+      org.locationtech.jts.geom.Polygon p = (org.locationtech.jts.geom.Polygon) this.geometry.buffer(radius);
+      return new Polygon(fid, p, attributes);
+    } else {
+      org.locationtech.jts.geom.MultiPolygon mp =
+        (org.locationtech.jts.geom.MultiPolygon) Converter.convertToMulti(this.geometry.buffer(radius));
+      return new MultiPolygon(fid, mp, attributes);
+    }
   }
 
   @Override
