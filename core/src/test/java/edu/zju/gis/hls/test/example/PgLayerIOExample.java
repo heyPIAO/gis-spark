@@ -5,6 +5,8 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
@@ -20,7 +22,7 @@ import java.util.List;
  * (1) timestamp 类型读取测试
  **/
 @Slf4j
-public class PgLayerReaderExample {
+public class PgLayerIOExample {
 
   public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
 
@@ -38,8 +40,6 @@ public class PgLayerReaderExample {
     String dbtable = "test";
 
     Field fid = new Field("id", FieldType.ID_FIELD);
-    fid.setType(Integer.class);
-
     Field shapeField = new Field("shape", FieldType.SHAPE_FIELD);
 
     // set up layer reader config
@@ -61,6 +61,10 @@ public class PgLayerReaderExample {
 
     List<Tuple2<String, MultiPolygon>> features = layer.collect();
     features.forEach(x->log.info(x._2.toJson()));
+
+    PgLayerWriterConfig wconfig = new PgLayerWriterConfig(source,"public", "test2", user, password);
+    PgLayerWriter layerWriter = new PgLayerWriter(ss, wconfig);
+    layerWriter.write(layer);
 
     layer.release();
   }

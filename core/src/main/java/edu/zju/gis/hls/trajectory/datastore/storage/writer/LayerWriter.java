@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.Properties;
 
 /**
  * @author Hu
@@ -18,8 +17,6 @@ import java.util.Properties;
  * 图层写出,T 为写出后端的基础逻辑对象
  **/
 public abstract class LayerWriter <T> implements Serializable {
-
-  private static final Logger logger = LoggerFactory.getLogger(LayerWriter.class);
 
   @Getter
   transient protected SparkSession ss;

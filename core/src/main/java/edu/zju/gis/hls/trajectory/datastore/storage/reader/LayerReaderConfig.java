@@ -70,6 +70,11 @@ public abstract class LayerReaderConfig implements Serializable {
       throw new LayerReaderException("start time index or end time index needs to be set for trajectory polyline layer");
     }
 
+    // ID字段必须为String类型
+    if (!this.idField.getType().equals(String.class.getName())) {
+      throw new LayerReaderException("Id field class type must be String");
+    }
+
     return true;
   }
 
@@ -79,16 +84,16 @@ public abstract class LayerReaderConfig implements Serializable {
    */
   public Field[] getAllAttributes() {
     List<Field> fs = new ArrayList<>();
+    fs.add(idField);
     if (attributes != null && attributes.length > 0) {
       for (Field f: attributes) {
         fs.add(f);
       }
     }
-    fs.add(idField);
-    fs.add(shapeField);
     fs.add(startTimeField);
     fs.add(endTimeField);
     fs.add(timeField);
+    fs.add(shapeField);
     return fs.toArray(new Field[0]);
   }
 

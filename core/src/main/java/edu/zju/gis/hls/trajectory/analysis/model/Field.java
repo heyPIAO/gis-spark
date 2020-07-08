@@ -9,6 +9,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.locationtech.jts.geom.Geometry;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -104,24 +105,59 @@ public class Field implements Serializable {
    * @param sourceClass
    * @param uClass
    * @return
+   * reference: #{org.apache.spark.sql.Row}
    */
   public static boolean equalFieldClass(DataType sourceClass, String uClass) {
     if (sourceClass.sameType(DataTypes.StringType)) {
       return uClass.equals(String.class.getName()) || uClass.equals(Geometry.class.getName());
     } else if (sourceClass.sameType(DataTypes.IntegerType)) {
-      return uClass.equals(Integer.class.getName());
+      return uClass.equals(Integer.class.getName()) || uClass.equals(String.class.getName());
     } else if (sourceClass.sameType(DataTypes.LongType)) {
-      return uClass.equals(Long.class.getName());
+      return uClass.equals(Long.class.getName()) || uClass.equals(String.class.getName());
     } else if (sourceClass.sameType(DataTypes.DoubleType)){
-      return uClass.equals(Double.class.getName());
+      return uClass.equals(Double.class.getName()) || uClass.equals(String.class.getName());
     } else if (sourceClass.sameType(DataTypes.FloatType)){
-      return uClass.equals(Float.class.getName());
+      return uClass.equals(Float.class.getName()) || uClass.equals(String.class.getName());
     } else if (sourceClass.sameType(DataTypes.BooleanType)) {
-      return uClass.equals(Boolean.class.getName());
-    } else if (sourceClass.sameType(DataTypes.TimestampType)) {
+      return uClass.equals(Boolean.class.getName()) || uClass.equals(String.class.getName());
+    } else if (sourceClass.sameType(DataTypes.DateType)) {
       return uClass.equals(Date.class.getName()) || uClass.equals(String.class.getName());
+    } else if (sourceClass.sameType(DataTypes.TimestampType)) {
+      return uClass.equals(Timestamp.class.getName()) || uClass.equals(String.class.getName());
     } else {
       throw new GISSparkException("Unsupport DataType: " + sourceClass.typeName());
+    }
+  }
+
+  /**
+   * 将用户定义的图层字段类型转为SparkSQL的DataType
+   * TODO 扩写 DataType，自定义 Geometry 对应的 DataType
+   * @param field
+   * @return
+   * reference: #{org.apache.spark.sql.Row}
+   */
+  public static DataType converFieldTypeToDataType(Field field) {
+    String fieldType = field.getType();
+    if (fieldType.equals(String.class.getName())) {
+      return DataTypes.StringType;
+    } else if (fieldType.equals(Geometry.class.getName())) {
+      return DataTypes.StringType;
+    } else if (fieldType.equals(Integer.class.getName())) {
+      return DataTypes.IntegerType;
+    } else if (fieldType.equals(Long.class.getName())) {
+      return DataTypes.LongType;
+    } else if (fieldType.equals(Double.class.getName())) {
+      return DataTypes.DoubleType;
+    } else if (fieldType.equals(Float.class.getName())) {
+      return DataTypes.FloatType;
+    } else if (fieldType.equals(Boolean.class.getName())) {
+      return DataTypes.BooleanType;
+    } else if (fieldType.equals(Date.class.getName())) {
+      return DataTypes.DateType;
+    } else if (fieldType.equals(Timestamp.class.getName())){
+      return DataTypes.TimestampType;
+    } else {
+      throw new GISSparkException("Unsupport Field Type: " + fieldType);
     }
   }
 }

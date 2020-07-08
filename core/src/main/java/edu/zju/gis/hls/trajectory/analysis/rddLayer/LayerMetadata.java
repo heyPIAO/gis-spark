@@ -2,7 +2,9 @@ package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -11,9 +13,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -56,6 +56,20 @@ public class LayerMetadata extends Feature<Polygon> {
 
   public ReferencedEnvelope getReferencedExtent() {
     return new ReferencedEnvelope(this.geometry.getEnvelopeInternal(), crs);
+  }
+
+  public Field getIdField() {
+    for (Field f: this.attributes.keySet()) {
+      if (f.getFieldType().equals(FieldType.ID_FIELD)) return f;
+    }
+    throw new GISSparkException("Unvalid layer metadata: ID field not exist");
+  }
+
+  public Field getShapeField() {
+    for (Field f: this.attributes.keySet()) {
+      if (f.getFieldType().equals(FieldType.SHAPE_FIELD)) return f;
+    }
+    throw new GISSparkException("Unvalid layer metadata: Shape field not exist");
   }
 
   public void setAttributes(Field[] attributes) {

@@ -24,4 +24,9 @@ public class ShpLayerReaderConfig extends LayerReaderConfig {
     super(layerName, sourcePath, layerType);
   }
 
+  @Override
+  public boolean check() {
+    return super.check();
+  }
+
 }
