@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.writer;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serializable;
 
@@ -11,6 +12,7 @@ import java.io.Serializable;
  **/
 @Getter
 @Setter
+@ToString
 public abstract class LayerWriterConfig implements Serializable {
   protected String sinkPath;
 }

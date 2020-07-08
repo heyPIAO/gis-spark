@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.geotools.geojson.geom.GeometryJSON;
+import org.geotools.geometry.jts.WKTWriter2;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.util.AffineTransformation;
 
@@ -15,9 +16,7 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIMAL;
 
@@ -90,15 +89,22 @@ public class Feature <T extends Geometry> implements Serializable {
     sb.append(String.format("%s \t", fid));
 
     for(Field k: attributes.keySet()){
-      sb.append(String.valueOf(attributes.get(k)) + "\t");
+      if (k.isExist()) {
+        sb.append(String.valueOf(attributes.get(k)) + "\t");
+      }
     }
     sb.append(geometry.toString());
     return sb.toString();
   }
 
-  public String toGeometryJson() throws IOException {
+  public String getGeometryJson() throws IOException {
     GeometryJSON gjson = new GeometryJSON(GEOMETRY_JSON_DECIMAL);
     return gjson.toString(this.geometry);
+  }
+
+  public String getGeometryWkt() {
+    WKTWriter2 wktWriter = new WKTWriter2(2);
+    return wktWriter.write(geometry);
   }
 
   protected Map<String, Object> getGeometryMap() {
@@ -106,6 +112,16 @@ public class Feature <T extends Geometry> implements Serializable {
     geometryMap.put("type",this.geometry.getGeometryType());
     geometryMap.put("coordinates", this.geometry.getCoordinates());
     return geometryMap;
+  }
+
+  public LinkedHashMap<Field, Object> getExistAttributes() {
+    LinkedHashMap<Field, Object> a = new LinkedHashMap<>();
+    for (Field f: this.attributes.keySet()) {
+      if (f.isExist()) {
+        a.put(f, null);
+      }
+    }
+    return a;
   }
 
   /**
@@ -128,7 +144,9 @@ public class Feature <T extends Geometry> implements Serializable {
     Map<String, Object> properties = new HashMap<>();
     properties.put("fid", this.fid);
     for (Map.Entry<Field, Object> f: this.attributes.entrySet()) {
-      properties.put(f.getKey().getName(), f.getValue().toString());
+      if (f.getKey().isExist()) {
+        properties.put(f.getKey().getName(), f.getValue().toString());
+      }
     }
     result.put("type", "Feature");
     result.put("properties", properties);
@@ -136,6 +154,32 @@ public class Feature <T extends Geometry> implements Serializable {
     String resultStr = gson.toJson(result);
     resultStr = resultStr.replace(",\"z\":NaN", "");
     return resultStr;
+  }
+
+  public String[] toStringArray() {
+    List<String> values = new LinkedList<>();
+    values.add(this.fid);
+    Set<Field> fields = this.getExistAttributes().keySet();
+    for (Field f: fields) {
+      values.add(String.valueOf(this.getAttribute(f)));
+    }
+    values.add(this.getGeometryWkt());
+    String[] result = new String[values.size()];
+    values.toArray(result);
+    return result;
+  }
+
+  public Object[] toObjectArray() {
+    List<Object> values = new LinkedList<>();
+    values.add(this.fid);
+    Set<Field> fields = this.getExistAttributes().keySet();
+    for (Field f: fields) {
+      values.add(this.getAttribute(f));
+    }
+    values.add(this.getGeometryWkt());
+    Object[] result = new Object[values.size()];
+    values.toArray(result);
+    return result;
   }
 
 }

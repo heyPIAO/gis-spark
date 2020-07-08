@@ -140,6 +140,8 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
     lm.setLayerId(readerConfig.getLayerId());
     lm.setCrs(crs);
     lm.setLayerName(readerConfig.getLayerName());
+
+    this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
     lm.setAttributes(readerConfig.getAllAttributes());
 
     layer.setMetadata(lm);

@@ -2,8 +2,10 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.shp;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
+import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.util.ShpDataReader;
 import lombok.Getter;
@@ -46,6 +48,14 @@ public class ShpLayerReader <T extends Layer> extends LayerReader<T> {
 
   @Override
   public T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+
+    if (this.readerConfig == null) {
+      throw new LayerReaderException("set layer reader config");
+    }
+
+    if (!this.readerConfig.check()) {
+      throw new LayerReaderException("reader config is not set correctly");
+    }
 
     String path = readerConfig.getSourcePath();
 
@@ -132,6 +142,8 @@ public class ShpLayerReader <T extends Layer> extends LayerReader<T> {
 
     lm.setLayerId(readerConfig.getLayerId());
     lm.setLayerName(readerConfig.getLayerName());
+
+    this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
     lm.setAttributes(readerConfig.getAllAttributes());
 
     layer.setMetadata(lm);

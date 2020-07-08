@@ -36,7 +36,7 @@ import java.util.*;
 /**
  * @author Hu
  * @date 2020/7/1
- * 读取 PostgreSQL 数据源中的数据图层
+ * 读取 Postgis 数据源中的数据图层
  * Hint：
  * （1）虽然Pg支持每张表可以有多种空间类型字段，但是框架目前每个图层仅支持一种空间类型
  * （2）Postgis中Geometry类型读取到SparkSQL中为StringType，值为wkb
@@ -72,11 +72,6 @@ public class PgLayerReader <T extends Layer> extends LayerReader<T> {
 
     if (!this.readerConfig.check()) {
       throw new LayerReaderException("reader config is not set correctly");
-    }
-
-    // 如果ID字段不存在，那么ID字段只能为String类型
-    if(!this.readerConfig.getIdField().isExist()) {
-      this.readerConfig.getIdField().setType(String.class);
     }
 
     Dataset<Row> df = this.ss.read().format("jdbc")
@@ -177,6 +172,8 @@ public class PgLayerReader <T extends Layer> extends LayerReader<T> {
     lm.setLayerId(readerConfig.getLayerId());
     lm.setCrs(readerConfig.getCrs());
     lm.setLayerName(readerConfig.getLayerName());
+
+    this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
     lm.setAttributes(readerConfig.getAllAttributes());
 
     layer.setMetadata(lm);
