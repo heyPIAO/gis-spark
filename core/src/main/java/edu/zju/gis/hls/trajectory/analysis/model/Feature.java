@@ -3,6 +3,7 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.WKTWriter2;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.util.AffineTransformation;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -46,6 +48,10 @@ public abstract class Feature <T extends Geometry> implements Serializable {
 
   public static Feature empty() {
     return new Point(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+  }
+
+  public boolean isEmpty() {
+    return this.geometry.isEmpty() || this.geometry == null;
   }
 
   public Object getAttribute(String key){
@@ -115,6 +121,24 @@ public abstract class Feature <T extends Geometry> implements Serializable {
       org.locationtech.jts.geom.MultiPolygon mp =
         (org.locationtech.jts.geom.MultiPolygon) Converter.convertToMulti(this.geometry.buffer(radius));
       return new MultiPolygon(fid, mp, attributes);
+    }
+  }
+
+  public static Feature buildFeature(String fid, Geometry g, LinkedHashMap<Field, Object> attrs) {
+    if (g instanceof org.locationtech.jts.geom.Point) {
+      return new Point(fid, (org.locationtech.jts.geom.Point)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.LineString) {
+      return new Polyline(fid, (org.locationtech.jts.geom.LineString)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.Polygon) {
+      return new Polygon(fid, (org.locationtech.jts.geom.Polygon)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.MultiPoint) {
+      return new MultiPoint(fid, (org.locationtech.jts.geom.MultiPoint)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.MultiLineString) {
+      return new MultiPolyline(fid, (org.locationtech.jts.geom.MultiLineString)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.MultiPolygon) {
+      return new MultiPolygon(fid, (org.locationtech.jts.geom.MultiPolygon)g, attrs);
+    } else {
+      throw new GISSparkException("Unsupport geometry type for method: edu.zju.gis.hls.trajectory.analysis.model.Feature.buildFeature()");
     }
   }
 

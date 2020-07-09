@@ -1,19 +1,18 @@
 package edu.zju.gis.hls.trajectory.analysis.index.rtree;
 
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
-import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndexLayer;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.PartitionIndexedLayer;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.rdd.RDD;
 import org.locationtech.jts.geom.Geometry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.lang.reflect.Constructor;
@@ -26,9 +25,8 @@ import java.util.List;
  * @author Hu
  * @date 2019/12/24
  **/
-public class RTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, QuadTreeIndexLayer<L>> {
-
-  private static final Logger logger = LoggerFactory.getLogger(RTreeIndexLayer.class);
+@Slf4j
+public class RTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, KeyIndexedLayer<L>> {
 
   @Getter
   @Setter

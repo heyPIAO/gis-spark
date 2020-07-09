@@ -6,6 +6,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.SparkSession;
@@ -29,9 +30,8 @@ import static edu.zju.gis.hls.trajectory.analysis.util.Converter.convertToMulti;
  * 分布式环境下数据读取基类
  * 原理：基于 SparkSession 对于各类 datasource 的读取API封装，以支持更多业务操作
  **/
+@Slf4j
 public abstract class LayerReader<T extends Layer> implements Closeable, Serializable {
-
-  private static final Logger logger = LoggerFactory.getLogger(LayerReader.class);
 
   @Getter
   transient protected SparkSession ss;
@@ -99,7 +99,7 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
       c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class, long.class, long.class);
       feature = c.newInstance(fid, (LineString)geometry, attributes, startTime.longValue(), endTime.longValue());
     } else {
-      logger.error("Unsupport feature type: " + featureType.getName());
+      log.error("Unsupport feature type: " + featureType.getName());
       return null;
     }
     return (Feature) feature;

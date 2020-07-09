@@ -1,4 +1,4 @@
-package edu.zju.gis.dbfg.model.util;
+package edu.zju.gis.hls.gisspark.model.util;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;

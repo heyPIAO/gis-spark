@@ -11,8 +11,9 @@
 
     <modules>
         <module>core</module>
-        <module>doctor-example</module>
+        <module>example</module>
         <module>viz</module>
+        <module>tool</module>
     </modules>
 
     <properties>

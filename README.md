@@ -13,7 +13,9 @@ This repository is still under developing.
 - [x] CSV (wkt)
 - [x] Shp (only read)
 - [x] MongoDB (only write)
+- [x] ES
 
+- [ ] layer 转成 Typed Dataset
 
 ## Gis Functions：  
 ### 1. Layer type preserved function
@@ -28,8 +30,8 @@ This repository is still under developing.
 
 ### 3. Layer interaction function
 
-- [ ] clip
-- [ ] intersect
+- [x] clip
+- [x] intersect
 - [ ] erase
 
 ### 4. Layer visualization

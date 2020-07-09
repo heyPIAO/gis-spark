@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.gisspark.tool.args;
+package edu.zju.gis.hls.gisspark.model.args;
 
 import com.sun.deploy.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;

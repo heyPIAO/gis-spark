@@ -51,7 +51,7 @@ public class BufferOperExample {
     layer.makeSureCached();
     layer.print();
 
-    BufferOperator bo = new BufferOperator(0.02);
+    BufferOperator bo = new BufferOperator(ss, 0.02);
     MultiPolygonLayer bufferedLayer = (MultiPolygonLayer) bo.operate(layer);
     bufferedLayer.print();
 

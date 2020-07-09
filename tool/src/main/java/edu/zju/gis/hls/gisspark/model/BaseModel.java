@@ -1,8 +1,11 @@
-package edu.zju.gis.hls.gisspark.tool;
+package edu.zju.gis.hls.gisspark.model;
 
-import edu.zju.gis.hls.gisspark.tool.args.BaseArgs;
-import edu.zju.gis.hls.gisspark.tool.exception.ModelFailedException;
+import edu.zju.gis.hls.gisspark.model.args.BaseArgs;
+import edu.zju.gis.hls.gisspark.model.exception.ModelFailedException;
+import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
+import edu.zju.gis.hls.gisspark.model.util.SparkUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
@@ -72,6 +75,7 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
 
   protected void close() {
     this.ss.stop();
+    this.ss.close();
   }
 
 }

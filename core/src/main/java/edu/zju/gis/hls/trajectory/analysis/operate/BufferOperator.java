@@ -6,25 +6,28 @@ import edu.zju.gis.hls.trajectory.analysis.model.Polygon;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.PolygonLayer;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 
 /**
  * @author Hu
  * @date 2020/7/8
+ * 缓冲区操作
  **/
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class BufferOperator extends Operator {
+public class BufferOperator extends OperatorImpl {
 
   private double radius;
+
+  public BufferOperator(SparkSession ss, double radius) {
+    super(ss);
+    this.radius = radius;
+  }
 
   @Override
   public Layer operate(Layer layer) {
@@ -32,7 +35,7 @@ public class BufferOperator extends Operator {
       @Override
       public Tuple2 call(Object o) throws Exception {
         Tuple2<String, Feature> f = (Tuple2<String, Feature>)o;
-        return new Tuple2<String, Feature>(f._1, f._2.buffer(radius));
+        return new Tuple2<>(f._1, f._2.buffer(radius));
       }
     });
 

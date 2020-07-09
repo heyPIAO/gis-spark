@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.gisspark.tool.exception;
+package edu.zju.gis.hls.gisspark.model.exception;
 
 import java.util.Arrays;
 

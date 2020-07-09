@@ -3,18 +3,16 @@ package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Geometry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Hu
  * @date 2019/12/30
  * 分区内部二层索引的图层
  **/
+@Slf4j
 public abstract class PartitionIndexedLayer<L extends Layer, K extends KeyIndexedLayer<L>> extends IndexedLayer<L> {
-
-  private static final Logger logger = LoggerFactory.getLogger(PartitionIndexedLayer.class);
 
   @Getter
   @Setter
