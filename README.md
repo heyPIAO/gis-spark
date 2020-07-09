@@ -1,31 +1,37 @@
-# trajectory-spark
-Spark extension for normal spatial data and trajectory data
+# gis-spark
+Spark extension for normal spatio-temporal data
 
-## 数据读取与写出：
+This project aims to make the most out of spark framework for professional GIS operation.
+
+Unlike the previous framework (like GeoSpark, SpatialHadoop, etc), we hope that the semantics of the framework is more in line with the world view of GIS.
+
+This repository is still under developing.
+
+## STData Reader and Writer：
 
 - [x] Postgis
-- [x] csv
-- [x] shp (only read)
-- [x] mongoDB (only write)
+- [x] CSV (wkt)
+- [x] Shp (only read)
+- [x] MongoDB (only write)
 
 
-## 常用函数：  
-### 1. 图层类型不变的操作
+## Gis Functions：  
+### 1. Layer type preserved function
 
-- [x] 投影转换
-- [x] 图层平移
+- [x] Transformation
+- [x] Layer shift
 - [x] Polygon makevalid 
 
-### 2. 图层类型转换的操作
+### 2. Layer type changed funcion
 
 - [x] Buffer
 
-### 3. 基础空间操作
+### 3. Layer interaction function
 
 - [ ] clip
 - [ ] intersect
 - [ ] erase
 
-### 4. 可视化
+### 4. Layer visualization
 
 - [ ] Pyramid Tile Set
