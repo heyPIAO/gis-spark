@@ -9,11 +9,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.geojson.geom.GeometryJSON;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.WKTWriter2;
+import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.MultiLineString;
-import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.util.AffineTransformation;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -90,6 +94,11 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     AffineTransformation at = new AffineTransformation();
     at.setToTranslation(deltaX, deltaY);
     this.geometry = (T) at.transform(this.geometry);
+  }
+
+  public void transform(CoordinateReferenceSystem ocrs, CoordinateReferenceSystem crs) throws FactoryException, TransformException {
+    MathTransform mt = CRS.findMathTransform(ocrs, crs);
+    this.geometry = (T) JTS.transform(this.geometry, mt);
   }
 
   public boolean isMulti() {

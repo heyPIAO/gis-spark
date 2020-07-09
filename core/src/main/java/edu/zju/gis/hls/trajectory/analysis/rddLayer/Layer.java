@@ -15,6 +15,7 @@ import org.apache.spark.rdd.RDD;
 import org.apache.spark.storage.StorageLevel;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 
@@ -91,7 +92,7 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
    * @param deltaY
    * @return
    */
-  public <K, N extends Feature,T extends Layer<K,N>> T shift(double deltaX, double deltaY) {
+  public <L extends Layer<K,V>> L shift(double deltaX, double deltaY) {
 
     if (this.metadata.getExtent() != null) {
       this.metadata.shift(deltaX, deltaY);
@@ -106,8 +107,28 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
       }
     };
 
-    return (T) this.mapToLayer(shiftFunction);
+    return (L) this.mapToLayer(shiftFunction);
   }
+
+  /**
+   * 投影转换
+   * @param ocrs：目标css
+   * @param <L>
+   * @return
+   */
+  public <L extends Layer<K,V>> L transform(CoordinateReferenceSystem ocrs) {
+    Function transformFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
+      @Override
+      public Tuple2<K, V> call(Tuple2<K, V> t) throws Exception {
+        Feature f = t._2;
+        f.transform(metadata.getCrs(), ocrs);
+        return new Tuple2<>(t._1, (V)f);
+      }
+    };
+    this.metadata.setCrs(ocrs);
+    return (L) this.mapToLayer(transformFunction);
+  }
+
 
   public Constructor getConstructor(Class<?>... parameterTypes) throws NoSuchMethodException {
     return this.getClass().getConstructor(parameterTypes);
