@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**

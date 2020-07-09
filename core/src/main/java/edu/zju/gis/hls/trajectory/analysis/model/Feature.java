@@ -28,7 +28,7 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIM
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+//@AllArgsConstructor
 public class Feature <T extends Geometry> implements Serializable {
 
   protected String fid;
@@ -42,6 +42,12 @@ public class Feature <T extends Geometry> implements Serializable {
       }
     }
     return null;
+  }
+
+  public Feature(String fid, T geometry, LinkedHashMap<Field, Object> attributes) {
+    this.fid = fid;
+    this.geometry = geometry;
+    this.attributes = attributes;
   }
 
   public Object getAttribute(Field key){
