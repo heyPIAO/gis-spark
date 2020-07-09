@@ -2,14 +2,22 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.geotools.geojson.geom.GeometryJSON;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.WKTWriter2;
+import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.util.AffineTransformation;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -28,12 +36,17 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIM
 @Getter
 @Setter
 @NoArgsConstructor
-//@AllArgsConstructor
-public class Feature <T extends Geometry> implements Serializable {
+@AllArgsConstructor
+@Slf4j
+public abstract class Feature <T extends Geometry> implements Serializable {
 
   protected String fid;
   protected T geometry;
   protected LinkedHashMap<Field, Object> attributes; // HashMap的KeySet是乱序的，在数据输出时会导致顺序混乱，故使用 LinkedHashMap
+
+  public static Feature empty() {
+    return new Point(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+  }
 
   public Object getAttribute(String key){
     for (Map.Entry<Field, Object> a: attributes.entrySet()) {
@@ -42,12 +55,6 @@ public class Feature <T extends Geometry> implements Serializable {
       }
     }
     return null;
-  }
-
-  public Feature(String fid, T geometry, LinkedHashMap<Field, Object> attributes) {
-    this.fid = fid;
-    this.geometry = geometry;
-    this.attributes = attributes;
   }
 
   public Object getAttribute(Field key){
@@ -87,6 +94,28 @@ public class Feature <T extends Geometry> implements Serializable {
     AffineTransformation at = new AffineTransformation();
     at.setToTranslation(deltaX, deltaY);
     this.geometry = (T) at.transform(this.geometry);
+  }
+
+  public void transform(CoordinateReferenceSystem ocrs, CoordinateReferenceSystem crs) throws FactoryException, TransformException {
+    MathTransform mt = CRS.findMathTransform(ocrs, crs);
+    this.geometry = (T) JTS.transform(this.geometry, mt);
+  }
+
+  public boolean isMulti() {
+    return this.geometry instanceof  org.locationtech.jts.geom.MultiPoint
+      || this.geometry instanceof  org.locationtech.jts.geom.MultiLineString
+      || this.geometry instanceof org.locationtech.jts.geom.MultiPolygon;
+  }
+
+  public Feature buffer(double radius) {
+    if (!this.isMulti()) {
+      org.locationtech.jts.geom.Polygon p = (org.locationtech.jts.geom.Polygon) this.geometry.buffer(radius);
+      return new Polygon(fid, p, attributes);
+    } else {
+      org.locationtech.jts.geom.MultiPolygon mp =
+        (org.locationtech.jts.geom.MultiPolygon) Converter.convertToMulti(this.geometry.buffer(radius));
+      return new MultiPolygon(fid, mp, attributes);
+    }
   }
 
   @Override

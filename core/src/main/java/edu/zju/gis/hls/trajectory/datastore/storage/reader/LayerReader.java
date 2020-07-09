@@ -20,6 +20,8 @@ import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
 
+import static edu.zju.gis.hls.trajectory.analysis.util.Converter.convertToMulti;
+
 
 /**
  * @author Hu
@@ -29,84 +31,79 @@ import java.util.*;
  **/
 public abstract class LayerReader<T extends Layer> implements Closeable, Serializable {
 
-    private static final Logger logger = LoggerFactory.getLogger(LayerReader.class);
+  private static final Logger logger = LoggerFactory.getLogger(LayerReader.class);
 
-    @Getter
-    transient protected SparkSession ss;
+  @Getter
+  transient protected SparkSession ss;
 
-    @Getter
-    transient protected JavaSparkContext jsc;
+  @Getter
+  transient protected JavaSparkContext jsc;
 
-    @Setter
-    protected LayerType layerType;
+  @Setter
+  protected LayerType layerType;
 
-    public LayerReader(SparkSession ss, LayerType layerType) {
-        this.ss = ss;
-        this.jsc = JavaSparkContext.fromSparkContext(this.ss.sparkContext());
-        this.layerType = layerType;
+  public LayerReader(SparkSession ss, LayerType layerType) {
+    this.ss = ss;
+    this.jsc = JavaSparkContext.fromSparkContext(this.ss.sparkContext());
+    this.layerType = layerType;
+  }
+
+  public abstract T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException;
+
+  /**
+   * 获取图层类型对应的类
+   * @return
+   */
+  protected Class<T> getTClass() {
+    return (Class<T>) this.layerType.getLayerClass();
+  }
+
+  protected T rddToLayer(RDD<Tuple2<String, Feature>> features) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    Class<T> resultClass = this.getTClass();
+    Constructor resultClassConstructor = resultClass.getConstructor(RDD.class);
+    T result = (T) resultClassConstructor.newInstance(features);
+    return result;
+  }
+
+  protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, LinkedHashMap<edu.zju.gis.hls.trajectory.analysis.model.Field, Object> attributes, Long timestamp, Long startTime, Long endTime) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+
+    // 基于 java reflect 实现动态类 Feature 构造
+    String className = featureType.getClassName();
+    Class featureClass = Class.forName(className);
+    Object feature;
+    Constructor c;
+
+    // 根据不同的 geometryType 获取对应的构造函数并获取对应实例
+    if (featureType.equals(FeatureType.POINT)) {
+      c = featureClass.getConstructor(String.class, Point.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, (Point)geometry, attributes);
+    } else if (featureType.equals(FeatureType.POLYLINE)) {
+      c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, (LineString)geometry, attributes);
+    } else if (featureType.equals(FeatureType.POLYGON)) {
+      c = featureClass.getConstructor(String.class, Polygon.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, (Polygon)geometry, attributes);
+    } else if (featureType.equals(FeatureType.MULTI_POINT)) {
+      c = featureClass.getConstructor(String.class, MultiPoint.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, (MultiPoint)convertToMulti(geometry), attributes);
+    } else if (featureType.equals(FeatureType.MULTI_POLYLINE)) {
+      c = featureClass.getConstructor(String.class, MultiLineString.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, (MultiLineString)convertToMulti(geometry), attributes);
+    } else if (featureType.equals(FeatureType.MULTI_POLYGON)) {
+      c = featureClass.getConstructor(String.class, MultiPolygon.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, (MultiPolygon)convertToMulti(geometry), attributes);
+    } else if (featureType.equals(FeatureType.TRAJECTORY_POINT)) {
+      c = featureClass.getConstructor(String.class, Point.class, LinkedHashMap.class, long.class);
+      feature = c.newInstance(fid, (Point)geometry, attributes, timestamp.longValue());
+    } else if (featureType.equals(FeatureType.TRAJECTORY_POLYLINE)) {
+      c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class, long.class, long.class);
+      feature = c.newInstance(fid, (LineString)geometry, attributes, startTime.longValue(), endTime.longValue());
+    } else {
+      logger.error("Unsupport feature type: " + featureType.getName());
+      return null;
     }
-
-    public abstract T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException;
-
-    /**
-     * 获取图层类型对应的类
-     *
-     * @return
-     */
-    protected Class<T> getTClass() {
-        return (Class<T>) this.layerType.getLayerClass();
-    }
-
-    protected T rddToLayer(RDD<Tuple2<String, Feature>> features) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Class<T> resultClass = this.getTClass();
-        Constructor resultClassConstructor = resultClass.getConstructor(RDD.class);
-        T result = (T) resultClassConstructor.newInstance(features);
-        return result;
-    }
-
-    protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, LinkedHashMap<edu.zju.gis.hls.trajectory.analysis.model.Field, Object> attributes, Long timestamp, Long startTime, Long endTime) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        try {
-            // 基于 java reflect 实现动态类 Feature 构造
-            String className = featureType.getClassName();
-            Class featureClass = Class.forName(className);
-            Object feature;
-            Constructor c;
-
-            // 根据不同的 geometryType 获取对应的构造函数并获取对应实例
-            if (featureType.equals(FeatureType.POINT)) {
-                c = featureClass.getConstructor(String.class, Point.class, LinkedHashMap.class);
-                feature = c.newInstance(fid, (Point) geometry, attributes);
-            } else if (featureType.equals(FeatureType.POLYLINE)) {
-                c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class);
-                feature = c.newInstance(fid, (LineString) geometry, attributes);
-            } else if (featureType.equals(FeatureType.POLYGON)) {
-                c = featureClass.getConstructor(String.class, Polygon.class, LinkedHashMap.class);
-                feature = c.newInstance(fid, (Polygon) geometry, attributes);
-            } else if (featureType.equals(FeatureType.MULTI_POINT)) {
-                c = featureClass.getConstructor(String.class, MultiPoint.class, LinkedHashMap.class);
-                feature = c.newInstance(fid, (MultiPoint) transformToMulti(geometry), attributes);
-            } else if (featureType.equals(FeatureType.MULTI_POLYLINE)) {
-                c = featureClass.getConstructor(String.class, MultiLineString.class, LinkedHashMap.class);
-                feature = c.newInstance(fid, (MultiLineString) transformToMulti(geometry), attributes);
-            } else if (featureType.equals(FeatureType.MULTI_POLYGON)) {
-                c = featureClass.getConstructor(String.class, MultiPolygon.class, LinkedHashMap.class);
-                feature = c.newInstance(fid, (MultiPolygon) transformToMulti(geometry), attributes);
-            } else if (featureType.equals(FeatureType.TRAJECTORY_POINT)) {
-                c = featureClass.getConstructor(String.class, Point.class, LinkedHashMap.class, long.class);
-                feature = c.newInstance(fid, (Point) geometry, attributes, timestamp.longValue());
-            } else if (featureType.equals(FeatureType.TRAJECTORY_POLYLINE)) {
-                c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class, long.class, long.class);
-                feature = c.newInstance(fid, (LineString) geometry, attributes, startTime.longValue(), endTime.longValue());
-            } else {
-                logger.error("Unsupport feature type: " + featureType.getName());
-                return null;
-            }
-            return (Feature) feature;
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-            return null;
-        }
-    }
+    return (Feature) feature;
+  }
 
     private List<Field> getTFields() {
         List<Field> fields = new ArrayList<>();
@@ -119,34 +116,9 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
         return fields;
     }
 
-    /**
-     * 统一 Multi 图层的 Geometry 类型
-     *
-     * @param geometry
-     * @return
-     */
-    private Geometry transformToMulti(Geometry geometry) {
-        GeometryFactory gf = new GeometryFactory();
-        if (geometry instanceof Point) {
-            Point[] ps = new Point[1];
-            ps[0] = (Point) geometry;
-            return gf.createMultiPoint(ps);
-        } else if (geometry instanceof LineString) {
-            LineString[] ls = new LineString[1];
-            ls[0] = (LineString) geometry;
-            return gf.createMultiLineString(ls);
-        } else if (geometry instanceof Polygon) {
-            Polygon[] pls = new Polygon[1];
-            pls[0] = (Polygon) geometry;
-            return gf.createMultiPolygon(pls);
-        } else {
-            return geometry;
-        }
-    }
+  @Override
+  public void close() throws IOException {
 
-    @Override
-    public void close() throws IOException {
-
-    }
+  }
 
 }

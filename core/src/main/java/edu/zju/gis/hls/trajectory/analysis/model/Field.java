@@ -160,4 +160,14 @@ public class Field implements Serializable {
       throw new GISSparkException("Unsupport Field Type: " + fieldType);
     }
   }
+
+  public boolean isNumeric() {
+    return this.type.equals(Integer.class.getName())
+      || this.type.equals(Double.class.getName())
+      || this.type.equals(Float.class.getName());
+  }
+
+  public boolean isGeometry() {
+    return this.type.equals(Geometry.class.getName());
+  }
 }

@@ -1,9 +1,10 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
-import edu.zju.gis.hls.trajectory.analysis.model.Feature;
-import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.*;
+import edu.zju.gis.hls.trajectory.datastore.base.FieldBasicStat;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -12,12 +13,16 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.storage.StorageLevel;
+import org.geotools.geometry.jts.JTS;
+import org.locationtech.jts.geom.Envelope;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +32,7 @@ import java.util.stream.Collectors;
  * @author Hu
  * @date 2019/9/19
  **/
+@Slf4j
 public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Serializable {
 
   /**
@@ -35,6 +41,8 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
   @Getter
   @Setter
   protected LayerMetadata metadata;
+
+  private boolean isAnalyzed = false;
 
   protected Layer(RDD<Tuple2<K, V>> rdd, ClassTag<K> kClassTag, ClassTag<V> vClassTag) {
     super(rdd, kClassTag, vClassTag);
@@ -84,7 +92,7 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
    * @param deltaY
    * @return
    */
-  public <T extends Layer<K,V>> T shift(double deltaX, double deltaY) {
+  public <L extends Layer<K,V>> L shift(double deltaX, double deltaY) {
 
     if (this.metadata.getExtent() != null) {
       this.metadata.shift(deltaX, deltaY);
@@ -99,14 +107,35 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
       }
     };
 
-    return (T) this.mapToLayer(shiftFunction);
+    return (L) this.mapToLayer(shiftFunction);
   }
+
+  /**
+   * 投影转换
+   * @param ocrs：目标css
+   * @param <L>
+   * @return
+   */
+  public <L extends Layer<K,V>> L transform(CoordinateReferenceSystem ocrs) {
+    Function transformFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
+      @Override
+      public Tuple2<K, V> call(Tuple2<K, V> t) throws Exception {
+        Feature f = t._2;
+        f.transform(metadata.getCrs(), ocrs);
+        return new Tuple2<>(t._1, (V)f);
+      }
+    };
+    this.metadata.setCrs(ocrs);
+    return (L) this.mapToLayer(transformFunction);
+  }
+
 
   public Constructor getConstructor(Class<?>... parameterTypes) throws NoSuchMethodException {
     return this.getClass().getConstructor(parameterTypes);
   }
 
   /**
+   * 图层类型不变的操作
    * 重写 RDD 的 map/flatMap/mapToPair/filter 等方法，继承图层的元数据信息
    * 通过强制类型转换，保留了图层的类型信息
    * @param f
@@ -138,8 +167,12 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
    * @return
    */
   public void makeSureCached() {
+    this.makeSureCached(StorageLevel.MEMORY_ONLY());
+  }
+
+  public void makeSureCached(StorageLevel level) {
     if (!isCached()) {
-      this.cache();
+      this.persist(level);
     }
   }
 
@@ -167,6 +200,82 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
 
     // collect 之后再去重
     return keys.collect().stream().distinct().collect(Collectors.toList());
+  }
+
+  /**
+   * TODO 未测试
+   * 分析当前图层
+   * 获取信息包括：
+   * （1）图层四至
+   * （2）图层要素个数
+   * （3）图层 Numeric 字段的最大/最小/均值（Long，Integer，Float等）
+   * 分析结果存储于图层 LayerMetadata 中
+   */
+  public void analyze() {
+
+    if (this.isAnalyzed) {
+      log.info(String.format("Layer %s:%s has already analyzed",
+        this.metadata.getLayerId(), this.metadata.getLayerName()));
+      return;
+    }
+
+    JavaPairRDD<String, FieldBasicStat> basicStat = this.flatMapToPair(t -> {
+        Feature f = (Feature) t._2;
+        Map<Field, Object> attrs = f.getExistAttributes();
+        List<Tuple2<String, FieldBasicStat>> result = new ArrayList<>();
+        for (Field fd: attrs.keySet()) {
+          if (fd.isNumeric() && fd.isExist()) {
+            FieldBasicStat stat = new FieldBasicStat();
+            Object num = attrs.get(fd.getName());
+            if (num != null) {
+              stat.setMin((Double)num);
+              stat.setMax((Double)num);
+              stat.setTotal((Double)num);
+              stat.setCount(1L);
+              result.add(new Tuple2<>(fd.getName(), stat));
+            }
+          }
+        }
+
+        Envelope g = f.getGeometry().getEnvelopeInternal();
+        FieldBasicStat xs = new FieldBasicStat();
+        xs.setMin(g.getMinX());
+        xs.setMax(g.getMaxX());
+        xs.setCount(1L);
+        result.add(new Tuple2<>("LONGITUDE", xs));
+
+        FieldBasicStat ys = new FieldBasicStat();
+        ys.setMin(g.getMinY());
+        ys.setMax(g.getMaxY());
+        result.add(new Tuple2<>("LATITUDE", ys));
+
+        return result.iterator();
+    });
+
+    Map<String, FieldBasicStat> r = basicStat.reduceByKey(FieldBasicStat::add).collectAsMap();
+
+    // 获取四至并构建图层的Geometry
+    FieldBasicStat xs = r.get("LONGITUDE");
+    this.metadata.getAttributes().put(Term.LAYER_META_COUNT_FIELD, xs.getCount());
+    FieldBasicStat ys = r.get("LATITUDE");
+    this.metadata.setGeometry(JTS.toGeometry(new Envelope(xs.getMin(), xs.getMax(), ys.getMin(), ys.getMax())));
+
+    for (String k: r.keySet()) {
+      if (k.equals("LONGITUDE") || k.equals("LATITUDE")) continue;
+      this.metadata.getAttributes().put(this.findAttribute(k), r.get(k));
+    }
+
+    this.isAnalyzed = true;
+  }
+
+  public void print() {
+    this.collect().forEach(x->log.info(x._2.toString()));
+  }
+
+  public boolean isSimpleLayer() {
+    return !((this instanceof MultiPointLayer)
+      || (this instanceof MultiPolylineLayer)
+      || (this instanceof MultiPolygonLayer));
   }
 
 }

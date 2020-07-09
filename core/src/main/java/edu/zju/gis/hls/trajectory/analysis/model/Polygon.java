@@ -2,8 +2,11 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.geotools.geometry.jts.JTS;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +23,15 @@ public class Polygon extends Feature<org.locationtech.jts.geom.Polygon> {
 
   public Polygon(Polygon f) {
     super(f);
+  }
+
+  public List<Polygon> makeValid(boolean removeHoles) {
+    List<org.locationtech.jts.geom.Polygon> polygons = JTS.makeValid(this.geometry, removeHoles);
+    List<Polygon> pfs = new ArrayList<>();
+    for (org.locationtech.jts.geom.Polygon p: polygons) {
+      pfs.add(new Polygon(this.fid, p, this.attributes));
+    }
+    return pfs;
   }
 
 }
