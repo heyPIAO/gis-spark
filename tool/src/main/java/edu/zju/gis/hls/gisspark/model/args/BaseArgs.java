@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.gisspark.model.args;
 
 import com.sun.deploy.util.StringUtils;
+import edu.zju.gis.hls.gisspark.model.exception.ModelFailedException;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -26,7 +27,7 @@ public abstract class BaseArgs implements Serializable {
       return mArgs;
     } catch (NoSuchMethodException | CmdLineException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
       log.error(e.getLocalizedMessage());
-      throw new ToolFailedException("init arguments failed: " + StringUtils.join(Arrays.asList(args), ";"));
+      throw new ModelFailedException("init arguments failed: " + StringUtils.join(Arrays.asList(args), ";"));
     }
   }
 

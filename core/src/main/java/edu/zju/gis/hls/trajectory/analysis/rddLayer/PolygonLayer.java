@@ -42,7 +42,7 @@ public class PolygonLayer extends Layer<String, Polygon> {
         return result.iterator();
       }
     };
-    return this.flatMapToLayer(f);
+    return (PolygonLayer)this.flatMapToLayer(f);
   }
 
 }
