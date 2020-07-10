@@ -12,6 +12,8 @@ import scala.Tuple2;
 /**
  * @author Hu
  * @date 2020/7/9
+ * 空间相交操作
+ * TODO 待测
  **/
 public class IntersectOperator extends BinaryOperatorImpl {
 
@@ -19,8 +21,12 @@ public class IntersectOperator extends BinaryOperatorImpl {
     super(ss);
   }
 
+  public IntersectOperator(SparkSession ss, boolean attrReserve) {
+    super(ss, attrReserve);
+  }
+
   // TODO 将通用的 Function 抽出来
-  public Layer intersect(Geometry f, Layer layer) {
+  private Layer intersect(Geometry f, Layer layer) {
 
     Function intersectFunction = new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
       @Override
@@ -49,16 +55,6 @@ public class IntersectOperator extends BinaryOperatorImpl {
   @Override
   public Layer run(Geometry f, Layer layer) {
     return this.intersect(f, layer);
-  }
-
-  @Override
-  public Layer run(Geometry f, IndexedLayer layer) {
-    return this.run(f, layer.query(f).toLayer());
-  }
-
-  @Override
-  public Layer run(IndexedLayer layer1, IndexedLayer layer2) {
-    throw new GISSparkException("Under developing");
   }
 
 }

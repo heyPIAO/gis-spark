@@ -183,6 +183,20 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     return a;
   }
 
+  public void addAttributes(LinkedHashMap<Field, Object> o) {
+    this.attributes.putAll(o);
+  }
+
+  public void addAttributes(LinkedHashMap<Field, Object> o, String prefix) {
+    LinkedHashMap<Field, Object> of = new LinkedHashMap<>();
+    for (Field f: o.keySet()) {
+      Object v = of.get(f);
+      f.setName(prefix + f.getName());
+      of.put(f, v);
+    }
+    this.addAttributes(of);
+  }
+
   /**
    * Feature 对象转化为 GeoJson 字符串
    * @return
