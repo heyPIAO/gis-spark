@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -27,9 +28,21 @@ public enum FeatureType implements Serializable {
   @Getter
   private String className;
 
+  @Getter
+  private Class clz;
+
   FeatureType(String name, String className) {
     this.name = name;
     this.className = className;
+    try {
+      this.clz = Class.forName(className);
+      if (!Feature.class.isAssignableFrom(this.clz))
+        throw new GISSparkException("Must be a sub-class of Feature: " + className);
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Class not found for name: " + className);
+    }
+
   }
 
   public LayerType getLayerType() {

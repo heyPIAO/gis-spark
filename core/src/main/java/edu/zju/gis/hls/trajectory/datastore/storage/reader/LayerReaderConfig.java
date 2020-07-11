@@ -23,8 +23,8 @@ import java.util.UUID;
 @ToString
 public abstract class LayerReaderConfig implements Serializable {
 
-  private String layerId = UUID.randomUUID().toString();
-  private String layerName;
+  protected String layerId = UUID.randomUUID().toString();
+  protected String layerName;
   protected String sourcePath;
   protected LayerType layerType;
   protected Field[] attributes; // 不包括 shape, id, startTime, endTime, Time 的所有需要读取的 Field 信息
@@ -40,6 +40,8 @@ public abstract class LayerReaderConfig implements Serializable {
     this.layerType = layerType;
     this.layerName = layerName;
   }
+
+//  public abstract <T extends LayerReaderConfig> T decode(String json);
 
   public Field[] getAttributes() {
     if (this.attributes == null) {

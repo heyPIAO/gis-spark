@@ -15,4 +15,9 @@ public class BaseEntity {
         return gson.toJson(this);
     }
 
+    public BaseEntity fromJson(String json) {
+        Gson gson = new Gson();
+        return gson.fromJson(json, this.getClass());
+    }
+
 }

@@ -8,10 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.rdd.RDD;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
@@ -22,10 +24,7 @@ import scala.reflect.ClassTag;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +42,14 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
   protected LayerMetadata metadata;
 
   private boolean isAnalyzed = false;
+
+  public static <F extends Feature> Layer<String, F> empty(JavaSparkContext jsc, Class<F> f) {
+    List<Tuple2<String,F>> fs = new ArrayList<>();
+    fs.add(new Tuple2<>(UUID.randomUUID().toString(),Feature.empty(f)));
+    return new Layer<String, F>(jsc.parallelize(fs).rdd(),
+      scala.reflect.ClassTag$.MODULE$.apply(String.class),
+      scala.reflect.ClassTag$.MODULE$.apply(f));
+  }
 
   protected Layer(RDD<Tuple2<K, V>> rdd, ClassTag<K> kClassTag, ClassTag<V> vClassTag) {
     super(rdd, kClassTag, vClassTag);

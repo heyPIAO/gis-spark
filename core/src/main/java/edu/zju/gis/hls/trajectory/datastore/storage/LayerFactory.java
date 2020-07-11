@@ -1,7 +1,10 @@
 package edu.zju.gis.hls.trajectory.datastore.storage;
 
+import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.PointLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.PolylineLayer;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerWriterException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
@@ -21,7 +24,11 @@ import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
+import org.json.JSONObject;
 
 /**
  * @author Hu
@@ -31,14 +38,13 @@ public class LayerFactory {
 
   /**
    * TODO 如何动态传递读取的图层类型？？现在的方法有点蠢
-   * TODO 难道要在 getReader 里面根据layerType再封一层？
    * @param ss
    * @param config
-   * @param l
+   * @param c
    * @param <L>
    * @return
    */
-  public <L extends Layer> LayerReader getReader(SparkSession ss, LayerReaderConfig config, L l) {
+  public static <L extends Layer> LayerReader<L> getReader(SparkSession ss, LayerReaderConfig config, Class<L> c) {
 
     SourceType sourceType = SourceType.getSourceType(config.getSourcePath());
     LayerType layerType = config.getLayerType();
@@ -56,7 +62,7 @@ public class LayerFactory {
     }
   }
 
-  public LayerWriter getWriter(SparkSession ss, LayerWriterConfig config) {
+  public static LayerWriter getWriter(SparkSession ss, LayerWriterConfig config) {
 
     SourceType sourceType = SourceType.getSourceType(config.getSinkPath());
 
@@ -67,6 +73,30 @@ public class LayerFactory {
     } else {
       throw new LayerWriterException("Unsupport layer writer type: " + config.getClass().getName());
     }
+  }
+
+  /**
+   * 从 json 字符串中反序列化出对应的 config 对象
+   * @param json
+   * @return
+   */
+  public static LayerReaderConfig getReaderConfig(String json) {
+    JSONObject jo = new JSONObject(json);
+    SourceType sourceType = SourceType.getSourceType(jo.getString("sourcePath"));
+    Gson gson = new Gson();
+    return (LayerReaderConfig) gson.fromJson(json, sourceType.getReaderConfigClass());
+  }
+
+  /**
+   * 从 json 字符串中反序列化出对应的 config 对象
+   * @param json
+   * @return
+   */
+  public static LayerWriterConfig getWriterConfig(String json) {
+    JSONObject jo = new JSONObject(json);
+    SourceType sourceType = SourceType.getSourceType(jo.getString("sourcePath"));
+    Gson gson = new Gson();
+    return (LayerWriterConfig) gson.fromJson(json, sourceType.getWriterConfigClass());
   }
 
 }

@@ -11,6 +11,7 @@ import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Hu
@@ -41,10 +42,15 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
     this.init(type, appName, sc, args);
   }
 
+  public void exec() throws Exception {
+    this.run();
+    this.finish();
+  }
+
   /**
    * 模型核心业务逻辑
    */
-  public abstract void run() throws IOException;
+  protected abstract void run() throws Exception;
 
     protected void init(SparkSessionType type, String appName, SparkConf sc, String args[]) {
     initArg(args);
@@ -73,7 +79,7 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
 
   }
 
-  protected void close() {
+  protected void finish() {
     this.ss.stop();
     this.ss.close();
   }

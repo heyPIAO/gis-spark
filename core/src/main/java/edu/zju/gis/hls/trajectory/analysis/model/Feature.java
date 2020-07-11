@@ -14,7 +14,6 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.WKTWriter2;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.util.AffineTransformation;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -46,8 +45,33 @@ public abstract class Feature <T extends Geometry> implements Serializable {
   protected T geometry;
   protected LinkedHashMap<Field, Object> attributes; // HashMap的KeySet是乱序的，在数据输出时会导致顺序混乱，故使用 LinkedHashMap
 
-  public static Feature empty() {
-    return new Point(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+
+  public static Point empty() {
+    return Feature.empty(Point.class);
+  }
+
+  /**
+   * TODO is this safe to just set geometry = null ?
+   * @param f
+   * @return
+   */
+  public static <F extends Feature> F empty(Class<F> f) {
+    try {
+      Constructor c = f.getConstructor(String.class, Geometry.class, LinkedHashMap.class);
+      return (F) c.newInstance(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    } catch (InstantiationException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    }
   }
 
   public boolean isEmpty() {
@@ -124,6 +148,13 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     }
   }
 
+  /**
+   * TODO 挪到 FeatureType 里面去，构建 Geometry 类型和 Feature 类型的映射关系
+   * @param fid
+   * @param g
+   * @param attrs
+   * @return
+   */
   public static Feature buildFeature(String fid, Geometry g, LinkedHashMap<Field, Object> attrs) {
     if (g instanceof org.locationtech.jts.geom.Point) {
       return new Point(fid, (org.locationtech.jts.geom.Point)g, attrs);
