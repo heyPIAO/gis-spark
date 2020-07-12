@@ -40,6 +40,7 @@ This repository is still under developing.
 - [ ] Heatmap
 
 ### 5. Moedls
-- [ ] Clip Model
-- [ ] Intersection Model
-- [ ] Erase Model
+- [x] Clip Model
+- [x] Intersection Model
+- [x] Erase Model
+Partitial: Not indexed layer yet
