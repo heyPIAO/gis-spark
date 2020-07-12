@@ -76,9 +76,7 @@ public class PolygonLayerDemo {
     IndexedLayer<PolygonLayer> til = si.index(layer);
 
     // write to hdfs with grid index
-    FileLayerWriterConfig writerConfig = new FileLayerWriterConfig();
-    writerConfig.setKeepKey(true);
-    writerConfig.setSinkPath("/test");
+    FileLayerWriterConfig writerConfig = new FileLayerWriterConfig("/test", true);
 
     LayerWriter writer = new FileLayerWriter(ss, writerConfig);
     writer.write(til);

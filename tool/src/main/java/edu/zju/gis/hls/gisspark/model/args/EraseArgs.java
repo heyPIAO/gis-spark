@@ -10,7 +10,7 @@ import org.kohsuke.args4j.Option;
  **/
 @Getter
 @ToString
-public class ClipArgs extends BaseArgs {
+public class EraseArgs extends BaseArgs {
 
   @Option(name = "-output",usage = "输出文件路径", required = true)
   private String output;

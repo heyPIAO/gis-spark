@@ -1,10 +1,9 @@
 package edu.zju.gis.hls.trajectory.datastore.storage;
 
 import com.google.gson.Gson;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.PointLayer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.PolylineLayer;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerWriterException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
@@ -83,8 +82,7 @@ public class LayerFactory {
   public static LayerReaderConfig getReaderConfig(String json) {
     JSONObject jo = new JSONObject(json);
     SourceType sourceType = SourceType.getSourceType(jo.getString("sourcePath"));
-    Gson gson = new Gson();
-    return (LayerReaderConfig) gson.fromJson(json, sourceType.getReaderConfigClass());
+    return (LayerReaderConfig) Term.GSON_CONTEXT.fromJson(json, sourceType.getReaderConfigClass());
   }
 
   /**

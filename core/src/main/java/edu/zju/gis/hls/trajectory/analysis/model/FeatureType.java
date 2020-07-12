@@ -1,6 +1,5 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 
@@ -28,67 +27,30 @@ public enum FeatureType implements Serializable {
   @Getter
   private String className;
 
-  @Getter
-  private Class clz;
-
   FeatureType(String name, String className) {
     this.name = name;
     this.className = className;
+  }
+
+  public Class<? extends Feature> getClz() {
+    Class<? extends Feature> clz = null;
     try {
-      this.clz = Class.forName(className);
-      if (!Feature.class.isAssignableFrom(this.clz))
-        throw new GISSparkException("Must be a sub-class of Feature: " + className);
+      clz = (Class<? extends Feature>) Class.forName(className);
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
-      throw new GISSparkException("Class not found for name: " + className);
+      throw new GISSparkException("Must be a sub-class of Feature: " + className);
     }
-
+    // if (!Feature.class.isAssignableFrom(clz))
+    return clz;
   }
 
-  public LayerType getLayerType() {
-    switch (this.name) {
-      case "point":
-        return LayerType.POINT_LAYER;
-      case "polyline":
-        return LayerType.POLYLINE_LAYER;
-      case "polygon":
-        return LayerType.POLYGON_LAYER;
-      case "multi_point":
-        return LayerType.MULTI_POINT_LAYER;
-      case "multi_polyline":
-        return LayerType.MULTI_POLYLINE_LAYER;
-      case "multi_polygon":
-        return LayerType.MULTI_POLYGON_LAYER;
-      case "trajectory_point":
-        return LayerType.TRAJECTORY_POINT_LAYER;
-      case "trajectory_polyline":
-        return LayerType.TRAJECTORY_POLYLINE_LAYER;
+  public static FeatureType getFeatureType(String name) {
+    for (FeatureType ft: values()) {
+      if (ft.getClassName().equals(name)) {
+        return ft;
+      }
     }
-    return null;
-  }
-
-  public static FeatureType getType(String name) {
-    FeatureType featureType;
-    if (name.equals(Point.class.getName())){
-      featureType = FeatureType.POINT;
-    } else if (name.equals(Polyline.class.getName())) {
-      featureType = FeatureType.POLYLINE;
-    } else if (name.equals(Polygon.class.getName())) {
-      featureType = FeatureType.POLYGON;
-    } else if (name.equals(MultiPoint.class.getName())) {
-      featureType = FeatureType.MULTI_POINT;
-    } else if (name.equals(MultiPolyline.class.getName())) {
-      featureType = FeatureType.MULTI_POLYLINE;
-    } else if (name.equals(MultiPolygon.class.getName())) {
-      featureType = FeatureType.MULTI_POLYGON;
-    } else if (name.equals(TrajectoryPoint.class.getName())) {
-      featureType = FeatureType.TRAJECTORY_POINT;
-    } else if (name.equals(TrajectoryPolyline.class.getName())) {
-      featureType = FeatureType.TRAJECTORY_POLYLINE;
-    } else {
-      featureType = null;
-    }
-    return featureType;
+    throw new GISSparkException("Unvliad feature type class name: " + name);
   }
 
 }

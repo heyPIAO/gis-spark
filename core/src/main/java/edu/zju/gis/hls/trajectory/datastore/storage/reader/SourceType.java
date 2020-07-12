@@ -1,11 +1,8 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.reader;
 
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.es.ESLayerReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.mongo.MongoLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.mongo.MongoLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.platform.PlatformLayerReaderConfig;

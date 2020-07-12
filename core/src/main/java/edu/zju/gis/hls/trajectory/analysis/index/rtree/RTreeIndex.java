@@ -64,7 +64,7 @@ public class RTreeIndex implements InnerSpatialIndex, Serializable {
         Tuple2<String, V> m = t.next();
         gridId = m._1;
         Class c = m._2.getClass();
-        LayerType lt = LayerType.findLayerType(FeatureType.getType(c.getName()));
+        LayerType lt = LayerType.findLayerType(FeatureType.getFeatureType(c.getName()));
         rTree = new RTree(lt);
         rTree.insert(m._2.getGeometry().getEnvelopeInternal(), m._2);
       } else {

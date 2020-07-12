@@ -1,9 +1,9 @@
 package edu.zju.gis.hls.gisspark.model.basicop;
 
 import edu.zju.gis.hls.gisspark.model.BaseModel;
-import edu.zju.gis.hls.gisspark.model.args.ClipArgs;
+import edu.zju.gis.hls.gisspark.model.args.IntersectArgs;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
-import edu.zju.gis.hls.trajectory.analysis.operate.ClipOperator;
+import edu.zju.gis.hls.trajectory.analysis.operate.IntersectOperator;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
@@ -21,9 +21,9 @@ import java.util.List;
  * @date 2020/7/10
  **/
 @Slf4j
-public class Clip extends BaseModel<ClipArgs> {
+public class Intersect extends BaseModel<IntersectArgs> {
 
-  public Clip(String[] args) {
+  public Intersect(String[] args) {
     super(args);
   }
 
@@ -43,12 +43,12 @@ public class Clip extends BaseModel<ClipArgs> {
 
     List<Feature> fs = Arrays.asList(layer1.collectAsMap().values().toArray(new Feature[]{}));
     if (fs.size() > 1) {
-      throw new GISSparkException("Unsupport multi feature as an extent clip layer yet");
+      throw new GISSparkException("Unsupport multi feature as an extent intersect layer yet");
     }
     Feature f = fs.get(0);
 
-    ClipOperator clip = new ClipOperator(this.ss, arg.isAttrReserved());
-    Layer l = clip.run(f, layer2);
+    IntersectOperator intersectOp = new IntersectOperator(this.ss, arg.isAttrReserved());
+    Layer l = intersectOp.run(f, layer2);
 
     l.print();
 
@@ -60,12 +60,12 @@ public class Clip extends BaseModel<ClipArgs> {
   @Override
   protected void finish() {
     super.finish();
-    log.info("Clip Finish with args: " + this.arg.toString());
+    log.info("Intersect Job Finish with args: " + this.arg.toString());
   }
 
   public static void main(String[] args) throws Exception {
-    Clip clip = new Clip(args);
-    clip.exec();
+    Intersect intersect = new Intersect(args);
+    intersect.exec();
   }
 
 }

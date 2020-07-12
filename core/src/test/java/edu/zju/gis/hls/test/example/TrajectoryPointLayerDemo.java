@@ -101,9 +101,9 @@ public class TrajectoryPointLayerDemo {
     layer.unpersist();
 
     // write data to sink
-    MongoLayerWriterConfig writerConfig = new MongoLayerWriterConfig("mongodb://localhost:27017", "dwd", "index_rider_point");
-    LayerWriter writer = new MongoLayerWriter(ss, writerConfig);
-    writer.write(layer);
+//    MongoLayerWriterConfig writerConfig = new MongoLayerWriterConfig("mongodb://localhost:27017", "dwd", "index_rider_point");
+//    LayerWriter writer = new MongoLayerWriter(ss, writerConfig);
+//    writer.write(layer);
 
     // close the project
     ss.close();

@@ -33,13 +33,10 @@ public class PgLayerWriterConfig extends LayerWriterConfig {
   }
 
   public PgLayerWriterConfig(String sinkPath, String schema, String tablename, String username, String password) {
-    this.sinkPath = sinkPath;
+    super(sinkPath);
     this.schema = schema;
     this.tablename = tablename;
     this.username = username;
     this.password = password;
   }
-
-
-
 }

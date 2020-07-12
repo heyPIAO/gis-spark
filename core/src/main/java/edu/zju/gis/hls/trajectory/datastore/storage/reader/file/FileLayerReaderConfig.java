@@ -14,7 +14,7 @@ import lombok.ToString;
  **/
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 public class FileLayerReaderConfig extends LayerReaderConfig {
 
   private String separator = ReaderConfigTerm.DEFAULT_FILE_SEPARATOR;

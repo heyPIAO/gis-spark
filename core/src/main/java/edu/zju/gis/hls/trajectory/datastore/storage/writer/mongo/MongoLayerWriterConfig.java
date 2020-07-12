@@ -11,9 +11,15 @@ import lombok.Setter;
  **/
 @Getter
 @Setter
-@AllArgsConstructor
 public class MongoLayerWriterConfig extends LayerWriterConfig {
   private String uri;
   private String database;
   private String collection;
+
+  public MongoLayerWriterConfig(String sinkPath, String uri, String database, String collection) {
+    super(sinkPath);
+    this.uri = uri;
+    this.database = database;
+    this.collection = collection;
+  }
 }
