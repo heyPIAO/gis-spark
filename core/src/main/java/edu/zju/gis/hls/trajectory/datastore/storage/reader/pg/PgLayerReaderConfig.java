@@ -3,6 +3,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.pg;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -14,6 +15,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public class PgLayerReaderConfig extends LayerReaderConfig {
 
   private String schema;

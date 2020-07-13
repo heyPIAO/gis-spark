@@ -4,16 +4,14 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriter;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.HashPartitioner;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SparkSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.util.*;
@@ -23,9 +21,8 @@ import java.util.*;
  * @date 2019/11/8
  * 将图层写出到文件
  **/
+@Slf4j
 public class FileLayerWriter extends LayerWriter<String> {
-
-  private static final Logger logger = LoggerFactory.getLogger(MongoLayerWriter.class);
 
   @Getter
   @Setter
@@ -51,7 +48,6 @@ public class FileLayerWriter extends LayerWriter<String> {
   @Override
   public void write(Layer layer) {
     if (this.writerConfig.isKeepKey()) {
-
       layer.makeSureCached();
       int partitionNum = layer.distinctKeys().size();
       JavaPairRDD<String, String> t = layer.mapToPair(x-> {
@@ -59,7 +55,7 @@ public class FileLayerWriter extends LayerWriter<String> {
         return new Tuple2<>(m._1, m._2.toString());
       }).partitionBy(new HashPartitioner(partitionNum));
       t.saveAsHadoopFile(writerConfig.getSinkPath(), String.class, String.class, KeyFileOutputFormat.class);
-      logger.info("Write layer to directory " + writerConfig.getSinkPath() + " with partition key as file name successfully");
+      log.info("Write layer to directory " + writerConfig.getSinkPath() + " with partition key as file name successfully");
     } else {
       JavaRDD<Tuple2<String, Feature>> t = layer.rdd().toJavaRDD();
       JavaRDD<String> outputData = t.mapPartitions(new FlatMapFunction<Iterator<Tuple2<String, Feature>>, String>() {
@@ -73,7 +69,7 @@ public class FileLayerWriter extends LayerWriter<String> {
         }
       });
       outputData.saveAsTextFile(writerConfig.getSinkPath());
-      logger.info("Write layer to directory " + writerConfig.getSinkPath() + " successfully");
+      log.info("Write layer to directory " + writerConfig.getSinkPath() + " successfully");
     }
   }
 

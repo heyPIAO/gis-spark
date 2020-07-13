@@ -82,7 +82,8 @@ public class LayerFactory {
   public static LayerReaderConfig getReaderConfig(String json) {
     JSONObject jo = new JSONObject(json);
     SourceType sourceType = SourceType.getSourceType(jo.getString("sourcePath"));
-    return (LayerReaderConfig) Term.GSON_CONTEXT.fromJson(json, sourceType.getReaderConfigClass());
+    LayerReaderConfig r = (LayerReaderConfig) Term.GSON_CONTEXT.fromJson(json, sourceType.getReaderConfigClass());
+    return r;
   }
 
   /**
@@ -92,9 +93,9 @@ public class LayerFactory {
    */
   public static LayerWriterConfig getWriterConfig(String json) {
     JSONObject jo = new JSONObject(json);
-    SourceType sourceType = SourceType.getSourceType(jo.getString("sourcePath"));
+    SourceType sourceType = SourceType.getSourceType(jo.getString("sinkPath"));
     Gson gson = new Gson();
-    return (LayerWriterConfig) gson.fromJson(json, sourceType.getWriterConfigClass());
+    return (LayerWriterConfig) gson.fromJson(json, sourceType.getLayerWriterConfigClass());
   }
 
 }

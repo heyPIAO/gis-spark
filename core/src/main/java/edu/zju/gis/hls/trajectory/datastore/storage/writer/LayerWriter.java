@@ -6,8 +6,6 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import lombok.Getter;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 

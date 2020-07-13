@@ -1,7 +1,6 @@
 package edu.zju.gis.hls.gisspark.model;
 
 import edu.zju.gis.hls.gisspark.model.args.BaseArgs;
-import edu.zju.gis.hls.gisspark.model.exception.ModelFailedException;
 import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
 import edu.zju.gis.hls.gisspark.model.util.SparkUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -9,9 +8,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 
 /**
  * @author Hu
@@ -64,19 +62,13 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
   }
 
   protected void initArg(String args[]) {
-    String argClassName = this.getClass().getName() + "Args";
-    Class c = null;
-    try {
-      c = Class.forName(argClassName);
-      if (c.asSubclass(BaseArgs.class) != null) {
-        this.arg = (T) BaseArgs.initArgs(args, c);
-      } else {
-        throw new ModelFailedException(BaseArgs.class, "initArg()", "is not a sub class of BaseArgs", argClassName);
-      }
-    } catch (ClassNotFoundException e) {
-      throw new ModelFailedException(BaseArgs.class, "initArg()", "cannot find argument class named " + argClassName, this.getClass().getName());
-    }
+    this.arg = (T) BaseArgs.initArgs(args, this.getTClass());
+  }
 
+  private Class<T> getTClass() {
+    ParameterizedType type = (ParameterizedType) this.getClass()
+      .getGenericSuperclass();
+    return (Class<T>) type.getActualTypeArguments()[0];
   }
 
   protected void finish() {

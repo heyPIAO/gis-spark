@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.writer.file;
 
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -12,13 +13,10 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString(callSuper = true)
+@NoArgsConstructor
 public class FileLayerWriterConfig extends LayerWriterConfig {
 
-  private boolean keepKey; // 是否保留 KeyedIndexLayer 的分区key 作为文件名
-
-  public FileLayerWriterConfig() {
-    this(null);
-  }
+  private boolean keepKey = false; // 是否保留 KeyedIndexLayer 的分区key 作为文件名
 
   public FileLayerWriterConfig(String sinkPath) {
     this(sinkPath, false);

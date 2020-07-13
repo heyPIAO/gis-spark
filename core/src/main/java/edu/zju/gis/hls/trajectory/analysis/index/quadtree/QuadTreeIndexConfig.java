@@ -14,13 +14,18 @@ import lombok.Setter;
 public class QuadTreeIndexConfig extends IndexConfig {
 
   private int indexLevel;
+  private boolean isClip;
 
   public QuadTreeIndexConfig() {
-    this(Term.QUADTREE_DEFAULT_LEVEL);
+    this(Term.QUADTREE_DEFAULT_LEVEL, true);
   }
 
   public QuadTreeIndexConfig(int level) {
-    this.indexLevel = level;
+    this(level, true);
   }
 
+  public QuadTreeIndexConfig(int indexLevel, boolean isClip) {
+    this.indexLevel = indexLevel;
+    this.isClip = isClip;
+  }
 }

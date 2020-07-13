@@ -8,6 +8,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.util.CrsUtils;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -32,9 +33,8 @@ import java.util.List;
  **/
 @Getter
 @Setter
+@Slf4j
 public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
-
-  private static final Logger logger = LoggerFactory.getLogger(QuadTreeIndex.class);
 
   private QuadTreeIndexConfig c;
 
@@ -73,15 +73,18 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
 
     private PyramidConfig pc;
     private QuadTreeIndexConfig indexConfig;
+    private int z;
 
     public QuadTreeIndexBuiler(PyramidConfig pc, QuadTreeIndexConfig conf) {
       this.pc = pc;
       this.indexConfig = conf;
+      int zmin = pc.getZMin();
+      int zmax = pc.getZMax();
+      this.z = Math.min(Math.max(zmin, indexConfig.getIndexLevel()), zmax);
     }
 
     public QuadTreeIndexBuiler(PyramidConfig pc) {
-      this.pc = pc;
-      this.indexConfig = new QuadTreeIndexConfig();
+      this(pc, new QuadTreeIndexConfig());
     }
 
     @Override
@@ -89,10 +92,7 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
       List<Tuple2<String, V>> result = new ArrayList<>();
       Geometry geom = in._2.getGeometry();
       ReferencedEnvelope envelope = JTS.toEnvelope(geom);
-      int zmin = pc.getZMin();
-      int zmax = pc.getZMax();
-      int z = Math.min(Math.max(zmin, indexConfig.getIndexLevel()), zmax);
-      ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[z - zmin];
+      ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[z - pc.getZMin()];
       int tx_min = tZLevelInfo.getMinX();
       int tx_max = tZLevelInfo.getMaxX();
       int ty_min = tZLevelInfo.getMinY();
@@ -108,7 +108,8 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
           // 得到在每一个瓦片中对应的 geometry
           Geometry tileGeometry = JTS.toGeometry(tileEnvelope);
           Geometry finalGeom;
-          if (tileGeometry.contains(geom)) {
+          if (!tileGeometry.intersects(geom)) continue;
+          if ((!this.indexConfig.isClip())||tileGeometry.contains(geom)) {
             finalGeom = geom;
           } else {
             try {

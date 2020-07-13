@@ -143,7 +143,7 @@ public class ShpLayerReader <T extends Layer> extends LayerReader<T> {
     lm.setLayerId(readerConfig.getLayerId());
     lm.setLayerName(readerConfig.getLayerName());
 
-    this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
+    // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
     lm.setAttributes(readerConfig.getAllAttributes());
 
     layer.setMetadata(lm);

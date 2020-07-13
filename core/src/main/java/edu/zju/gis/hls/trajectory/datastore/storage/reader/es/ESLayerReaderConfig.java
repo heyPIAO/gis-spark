@@ -3,6 +3,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.es;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -13,6 +14,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public class ESLayerReaderConfig extends LayerReaderConfig {
 
     private String masterNode;

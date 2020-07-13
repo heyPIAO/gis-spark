@@ -4,10 +4,14 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
-import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.SparkSession;
 import org.locationtech.jts.geom.Geometry;
-import scala.Tuple2;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Hu
@@ -15,9 +19,9 @@ import scala.Tuple2;
  **/
 public abstract class BinaryOperatorImpl implements BinaryOperator {
 
-  private SparkSession ss;
+  protected SparkSession ss;
 
-  private boolean attrReserve;
+  protected Boolean attrReserve;
 
   public BinaryOperatorImpl(SparkSession ss, boolean attrReserve) {
     this.ss = ss;
@@ -30,33 +34,27 @@ public abstract class BinaryOperatorImpl implements BinaryOperator {
 
   @Override
   public Layer run(Feature f, Layer layer) {
-    Layer l = this.run(f.getGeometry(), layer);
-    if (attrReserve) {
-      return unionAttrs(f, l);
+    List<Feature> fs = new ArrayList<>();
+    fs.add(f);
+    return this.run(fs, layer);
+  }
+
+  @Override
+  public Layer run(Geometry g, Layer layer) {
+    if (!(g instanceof org.locationtech.jts.geom.Polygon || g instanceof org.locationtech.jts.geom.MultiPolygon)) {
+      throw new GISSparkException("Unvalid operator for geometry type: " + g.toString());
     }
-    return l;
+    Feature f = Feature.buildFeature(UUID.randomUUID().toString(), g, new LinkedHashMap<>());
+    List<Feature> fs = new ArrayList<>();
+    fs.add(f);
+    return this.run(fs, layer);
   }
 
   @Override
   public Layer run(Feature f, IndexedLayer layer) {
-    Layer l = this.run(f.getGeometry(), layer);
-    if (attrReserve) {
-      return unionAttrs(f, l);
-    }
-    return l;
-  }
-
-  private Layer unionAttrs(Feature f, Layer layer) {
-
-    Function unionAttrFunction = new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
-      @Override
-      public Tuple2<String, Feature> call(Tuple2<String, Feature> v1) throws Exception {
-        v1._2.addAttributes(f.getAttributes(), f.getFid());
-        return v1;
-      }
-    };
-
-    return layer.mapToLayer(unionAttrFunction);
+    List<Feature> fs = new ArrayList<>();
+    fs.add(f);
+    return this.run(fs, layer);
   }
 
   @Override
@@ -69,4 +67,15 @@ public abstract class BinaryOperatorImpl implements BinaryOperator {
     throw new GISSparkException("Under developing");
   }
 
+  @Override
+  public Layer run(Layer layer1, IndexedLayer layer2) {
+    throw new GISSparkException("Under developing");
+  }
+
+  @Override
+  public Layer run(List<Feature> features, IndexedLayer layer) {
+    return this.run(features,
+      layer.query(features.stream().map((java.util.function.Function<Feature, Geometry>) Feature::getGeometry)
+      .collect(Collectors.toList())).toLayer());
+  }
 }

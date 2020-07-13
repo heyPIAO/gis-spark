@@ -3,10 +3,15 @@ package edu.zju.gis.hls.trajectory.analysis.operate;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.SparkSession;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Hu
@@ -24,34 +29,40 @@ public class EraseOperator extends BinaryOperatorImpl {
     super(ss);
   }
 
-  private Layer erase(Geometry f, Layer layer) {
-    Function eraseFunction = new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
-      @Override
-      public Tuple2<String, Feature> call(Tuple2<String, Feature> v1) throws Exception {
-
-        Geometry g = v1._2.getGeometry();
-
-        if (g.isEmpty() || !g.intersects(f)) return new Tuple2<>(v1._1, Feature.empty());
-
-        Geometry r = g.difference(f);
-        if (r.isEmpty()) return new Tuple2<>(v1._1, Feature.empty());
-
-        return new Tuple2<>(v1._1, Feature.buildFeature(v1._2.getFid(), r, v1._2.getAttributes()));
-      }
-    };
-
-    Function filterFunction = new Function<Tuple2<String, Feature>, Boolean> () {
-      @Override
-      public Boolean call(Tuple2<String, Feature> v) throws Exception {
-        return !v._2.isEmpty();
-      }
-    };
-    return layer.mapToLayer(eraseFunction).filterToLayer(filterFunction);
+  @Override
+  public Layer run(List<Feature> features, Layer layer) {
+    return layer.flatMapToLayer(this.eraseFunction(features.toArray(new Feature[]{}), this.attrReserve)).filterEmpty();
   }
 
-  @Override
-  public Layer run(Geometry f, Layer layer) {
-    return this.erase(f, layer);
+  private FlatMapFunction eraseFunction(Feature[] features, Boolean attrReserved) {
+    return new FlatMapFunction<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
+      @Override
+      public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Feature> v1) throws Exception {
+
+        List<Tuple2<String, Feature>> result = new ArrayList<>();
+        Geometry g = v1._2.getGeometry();
+
+        for (int i=0; i<features.length; i++) {
+          Feature f = features[i];
+          if (g.isEmpty() || !g.intersects(f.getGeometry())) {
+            result.add(new Tuple2<>(String.format("%s_%s", v1._1, f.getFid()), Feature.empty()));
+            continue;
+          }
+          Geometry r = g.difference(f.getGeometry());
+          if (r.isEmpty()) {
+            result.add(new Tuple2<>(String.format("%s_%s", v1._1, f.getFid()), Feature.empty()));
+          } else {
+            Feature of = Feature.buildFeature(v1._2.getFid(), r, v1._2.getAttributes());
+            if (attrReserved) {
+              of.addAttributes(f.getAttributes(), f.getFid());
+            }
+            result.add(new Tuple2<>(String.format("%s_%s", v1._1, f.getFid()), of));
+          }
+        }
+
+        return result.iterator();
+      }
+    };
   }
 
 }

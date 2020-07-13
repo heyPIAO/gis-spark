@@ -5,6 +5,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public abstract class LayerReaderConfig implements Serializable {
 
   protected String layerId = UUID.randomUUID().toString();
@@ -40,8 +42,6 @@ public abstract class LayerReaderConfig implements Serializable {
     this.layerType = layerType;
     this.layerName = layerName;
   }
-
-//  public abstract <T extends LayerReaderConfig> T decode(String json);
 
   public Field[] getAttributes() {
     if (this.attributes == null) {

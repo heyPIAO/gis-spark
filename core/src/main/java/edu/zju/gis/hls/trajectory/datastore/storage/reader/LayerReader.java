@@ -48,14 +48,6 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
 
   public abstract T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException;
 
-  /**
-   * 获取图层类型对应的类
-   * @return
-   */
-  protected Class<T> getTClass() {
-    return (Class<T>) this.layerType.getLayerClass();
-  }
-
   protected T rddToLayer(RDD<Tuple2<String, Feature>> features) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
     Class<T> resultClass = this.getTClass();
     Constructor resultClassConstructor = resultClass.getConstructor(RDD.class);
@@ -103,20 +95,29 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     return (Feature) feature;
   }
 
-    private List<Field> getTFields() {
-        List<Field> fields = new ArrayList<>();
-        Class<T> c = getTClass();
-        // 迭代获取类及父类中的所有字段
-        while (c != null) {
-            fields.addAll(Arrays.asList(c.getDeclaredFields()));
-            c = (Class<T>) c.getSuperclass();
-        }
-        return fields;
+  /**
+   * 获取图层类型对应的类
+   * @return
+   */
+  protected Class<T> getTClass() {
+    return (Class<T>) this.layerType.getLayerClass();
+  }
+
+  private List<Field> getTFields() {
+    List<Field> fields = new ArrayList<>();
+    Class<T> c = getTClass();
+    // 迭代获取类及父类中的所有字段
+    while (c != null) {
+      fields.addAll(Arrays.asList(c.getDeclaredFields()));
+      c = (Class<T>) c.getSuperclass();
     }
+    return fields;
+  }
 
   @Override
   public void close() throws IOException {
-
+    this.ss.stop();
+    this.ss.close();
   }
 
 }

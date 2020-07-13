@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import edu.zju.gis.hls.trajectory.analysis.util.ClassUtil;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIMAL;
@@ -57,7 +59,8 @@ public abstract class Feature <T extends Geometry> implements Serializable {
    */
   public static <F extends Feature> F empty(Class<F> f) {
     try {
-      Constructor c = f.getConstructor(String.class, Geometry.class, LinkedHashMap.class);
+      Class gc = ClassUtil.getTClass(f, 0);
+      Constructor c = f.getConstructor(String.class, gc, LinkedHashMap.class);
       return (F) c.newInstance(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
@@ -75,7 +78,7 @@ public abstract class Feature <T extends Geometry> implements Serializable {
   }
 
   public boolean isEmpty() {
-    return this.geometry.isEmpty() || this.geometry == null;
+    return this.geometry == null || this.geometry.isEmpty();
   }
 
   public Object getAttribute(String key){

@@ -28,19 +28,11 @@ public enum SourceType {
   @Getter
   private int type;
 
-  @Getter
-  private Class readerConfigClass;
-
-  @Getter
-  private Class writerConfigClass;
-
   private String prefix;
 
   SourceType(int type, String prefix) {
     this.type = type;
     this.prefix = prefix;
-    this.readerConfigClass = this.getReaderConfigClass(type);
-    this.writerConfigClass = this.getLayerWriterConfigClass(type);
   }
 
   public static SourceType getSourceType(String path) {
@@ -50,7 +42,7 @@ public enum SourceType {
     throw new GISSparkException("Unsupport source type: " + path);
   }
 
-  private Class getReaderConfigClass(int type) {
+  public Class getReaderConfigClass() {
     switch (type) {
       case 0: return FileLayerReaderConfig.class;
       case 1: return MongoLayerReaderConfig.class;
@@ -64,7 +56,7 @@ public enum SourceType {
     }
   }
 
-  private Class getLayerWriterConfigClass(int type) {
+  public Class getLayerWriterConfigClass() {
     switch (type) {
       case 0: return FileLayerWriterConfig.class;
       case 1: return MongoLayerWriterConfig.class;

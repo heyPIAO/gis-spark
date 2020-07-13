@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.writer.pg;
 
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -13,6 +14,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public class PgLayerWriterConfig extends LayerWriterConfig {
 
   private String schema;

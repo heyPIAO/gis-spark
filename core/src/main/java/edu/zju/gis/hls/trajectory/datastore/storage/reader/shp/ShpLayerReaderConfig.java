@@ -3,12 +3,14 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.shp;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
  * @author Hu
  * @date 2019/12/19
  **/
+@NoArgsConstructor
 public class ShpLayerReaderConfig extends LayerReaderConfig {
 
   @Getter

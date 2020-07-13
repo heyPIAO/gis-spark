@@ -37,7 +37,7 @@ public class SparkUtil {
     SparkSession ss = SparkSession
       .builder()
       .appName(appName)
-//            .master("local[1]")
+      .master("local[4]")
       .config(overrideConf(conf))
       .getOrCreate();
     return ss;

@@ -168,6 +168,16 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
     return this.initialize(this, this.repartition(num).rdd());
   }
 
+  public Layer<K,V> filterEmpty() {
+    Function<Tuple2<K, V>, Boolean> filterFunction = new Function<Tuple2<K, V>, Boolean> () {
+      @Override
+      public Boolean call(Tuple2<K, V> v) throws Exception {
+        return !((Feature)v._2).isEmpty();
+      }
+    };
+    return this.filterToLayer(filterFunction);
+  }
+
   /**
    * 如果图层未被缓存，则缓存
    * TODO 换个名字.. 太丑了..  @HLS

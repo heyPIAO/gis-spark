@@ -17,11 +17,10 @@ public class CRSJsonSerializer implements JsonSerializer<CoordinateReferenceSyst
   @Override
   public JsonElement serialize(CoordinateReferenceSystem crs, Type type, JsonSerializationContext jsonSerializationContext) {
     final JsonObject propEle = new JsonObject();
-    propEle.addProperty("wkt", crs.toWKT());
+    String wkt = crs.toWKT().replace("\r\n", "");
+    propEle.addProperty("wkt", wkt);
     propEle.addProperty("codespace", crs.getName().getCodeSpace());
     propEle.addProperty("code", crs.getName().getCode());
-    propEle.addProperty("remarks", crs.getRemarks().toString());
-    propEle.addProperty("scope", crs.getScope().toString());
     return propEle;
   }
 
@@ -40,4 +39,5 @@ public class CRSJsonSerializer implements JsonSerializer<CoordinateReferenceSyst
       return crs;
     }
   }
+
 }
