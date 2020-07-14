@@ -43,4 +43,9 @@ This repository is still under developing.
 - [x] Clip Model
 - [x] Intersection Model
 - [x] Erase Model
-Partitial: Not indexed layer yet
+
+### StorageHelper
+- [x] MysqlHelper
+- [x] PgHelper
+- [x] Local File Data Reader
+- [x] Local Shp File Data Reader

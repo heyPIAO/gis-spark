@@ -3,15 +3,13 @@ package edu.zju.gis.hls.trajectory.datastore.storage.config;
 
 import lombok.Getter;
 
-import java.io.Serializable;
-
 /**
  * @author Hu
  * @date 2019/9/18
  * mongoDB 数据库连接配置
  **/
 @Getter
-public class MongoConfig implements DataSourceConfig, Serializable {
+public class MongoConfig extends DataSourceConfig {
 
   private String[] ip;
   private int[] port;

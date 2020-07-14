@@ -1,12 +1,14 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.helper;
 
 import com.mongodb.client.*;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.MongoConfig;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,9 +20,8 @@ import java.util.stream.Collectors;
  * MongoDB 数据库操作
  * 使用方法：获取单例 MongoHelper，选择数据库，操作数据库
  **/
-public class MongoHelper implements StorageHelper {
-
-  private static final Logger logger = LoggerFactory.getLogger(MongoHelper.class);
+@Slf4j
+public class MongoHelper implements JDBCHelper {
 
   private static MongoHelper instance = null;
 
@@ -38,30 +39,24 @@ public class MongoHelper implements StorageHelper {
   private MongoHelper(MongoConfig config) {
     this.config = config;
     this.client = MongoClients.create(config.toString());
-    logger.info("init MongoDB client with url: " + config.toString());
+    log.info("init MongoDB client with url: " + config.toString());
   }
 
   private MongoHelper() {
     this(new MongoConfig());
   }
 
-  public static MongoHelper getHelper(MongoConfig config) {
-    if (instance != null) {
-      if (config == null) {
-        logger.warn("MongoHelper has already inited, configuration abort");
-      }
-    } else {
-      if (config == null) {
-        instance = new MongoHelper();
-      } else {
-        instance = new MongoHelper(config);
-      }
-    }
-    return instance;
+  public static MongoHelper getHelper() {
+    return MongoHelper.getHelper(new MongoConfig());
   }
 
-  public static MongoHelper getHelper() {
-    return getHelper(null);
+  public static MongoHelper getHelper(MongoConfig config) {
+    if (instance != null) {
+      log.warn("MongoHelper has already inited, configuration abort");
+    } else {
+      instance = new MongoHelper(config);
+    }
+    return instance;
   }
 
   @Override
@@ -70,7 +65,7 @@ public class MongoHelper implements StorageHelper {
   }
 
   @Override
-  public long insert(String table, Map<String, ?> data) {
+  public long insert(String table, Map<String, Object> data) {
     this.checkConfig();
     MongoCollection<Document> collection = this.database.getCollection(table);
     collection.insertOne(this.mapToDocument(data));
@@ -78,7 +73,7 @@ public class MongoHelper implements StorageHelper {
   }
 
   @Override
-  public long insert(String table, List<Map<String, ?>> data) {
+  public long insert(String table, List<Map<String, Object>> data) {
     this.checkConfig();
     MongoCollection<Document> collection = this.database.getCollection(table);
     collection.insertMany(data.stream().map(this::mapToDocument).collect(Collectors.toList()));
@@ -101,17 +96,22 @@ public class MongoHelper implements StorageHelper {
   public String next() {
     this.checkConfig();
     if (this.reader == null){
-      logger.error("please verify the target table by function read(String)");
+      log.error("please verify the target table by function read(String)");
       return null;
     }
-    return this.reader.next().toJson();
+    if (this.hasNext()) {
+      log.warn("the reader has come to the end of the table");
+      return this.reader.next().toJson();
+    } else {
+      return null;
+    }
   }
 
-  @Override
-  public boolean hasNext() {
+//  @Override
+  private boolean hasNext() {
     this.checkConfig();
     if (this.reader == null){
-      logger.error("please verify the target table by function read(String)");
+      log.error("please verify the target table by function read(String)");
       return false;
     }
     return this.reader.hasNext();
@@ -125,6 +125,13 @@ public class MongoHelper implements StorageHelper {
     }
   }
 
+  @Override
+  public void close() {
+    if (this.client != null) {
+      this.client.close();
+    }
+  }
+
   private void checkConfig() {
     // 默认使用local数据库
     if (this.database == null){
@@ -132,12 +139,17 @@ public class MongoHelper implements StorageHelper {
     }
   }
 
-  private Document mapToDocument(Map<String, ?> data){
+  private Document mapToDocument(Map<String, Object> data){
     Document document = new Document();
     for(String key: data.keySet()) {
       document.append(key, data.get(key));
     }
     return document;
+  }
+
+  @Override
+  public <T> void runSQL(String sql, SQLResultHandler<T> callBack) {
+    throw new GISSparkException("Under developing");
   }
 
 }

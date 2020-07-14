@@ -6,8 +6,7 @@ import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderExceptionEnum;
 import edu.zju.gis.hls.trajectory.datastore.exception.LoaderException;
 import edu.zju.gis.hls.trajectory.datastore.exception.LoaderExceptionEnum;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 
@@ -18,9 +17,8 @@ import static edu.zju.gis.hls.trajectory.datastore.base.Seperator.TAB;
  * @date 2019/6/19
  * Linux本地wkt文件读取
  **/
+@Slf4j
 public class WktDataReader extends DataReader {
-
-    private static final Logger logger = LoggerFactory.getLogger(WktDataReader.class);
 
     private BufferedReader reader;
 

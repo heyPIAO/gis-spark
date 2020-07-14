@@ -1,11 +1,9 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.config;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.io.Serializable;
 
 /**
  * @author Hu
@@ -14,19 +12,22 @@ import java.io.Serializable;
  **/
 @Getter
 @Setter
-@ToString
-@AllArgsConstructor
-public class PgConfig implements DataSourceConfig, Serializable {
+@ToString(callSuper = true)
+public class PgConfig extends JDBCHelperConfig {
 
-  private String url;
-  private int port;
-  private String username;
-  private String password;
-  private String database;
   private String schema;
 
-  public PgConfig() {
-    this("localhost", 5432, "postgres", "postgres", "postgres", "public");
+  public PgConfig(String url, int port, String username, String password, String database, String schema) {
+    super(url, port, username, password, database);
+    this.schema = schema;
   }
 
+  public PgConfig() {
+    this("localhost", 5432, "postgres", "root", "postgres", "public");
+  }
+
+  @Override
+  protected String getDriver() {
+    return "org.postgresql.Driver";
+  }
 }

@@ -104,6 +104,14 @@
             </dependency>
 
             <dependency>
+                <groupId>org.geotools.jdbc</groupId>
+                <artifactId>gt-jdbc-postgis</artifactId>
+                <version>${gt.version}</version>
+                <!--<scope>test</scope>-->
+            </dependency>
+
+
+            <dependency>
                 <groupId>org.geotools</groupId>
                 <artifactId>gt-epsg-extension</artifactId>
                 <version>${gt.version}</version>

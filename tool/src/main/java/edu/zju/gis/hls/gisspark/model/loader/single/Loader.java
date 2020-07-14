@@ -3,7 +3,7 @@ package edu.zju.gis.hls.gisspark.model.loader.single;
 import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.datastore.base.BaseEntity;
 import edu.zju.gis.hls.trajectory.datastore.exception.LoaderException;
-import edu.zju.gis.hls.trajectory.datastore.storage.helper.StorageHelper;
+import edu.zju.gis.hls.trajectory.datastore.storage.helper.JDBCHelper;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -36,9 +36,9 @@ public abstract class Loader<T extends BaseEntity> implements LoadProcedure<T>, 
 
     protected String table; // table name
 
-    protected StorageHelper reader;
+    protected JDBCHelper reader;
 
-    protected StorageHelper writer;
+    protected JDBCHelper writer;
 
     @Override
     public void check() {
