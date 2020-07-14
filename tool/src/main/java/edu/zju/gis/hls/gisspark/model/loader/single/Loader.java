@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.datastore.storage.loader.single;
+package edu.zju.gis.hls.gisspark.model.loader.single;
 
 import com.google.gson.Gson;
 import edu.zju.gis.hls.trajectory.datastore.base.BaseEntity;

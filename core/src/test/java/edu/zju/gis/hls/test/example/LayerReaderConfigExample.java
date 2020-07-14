@@ -7,6 +7,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.serializer.CRSJsonSerializer;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriterConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
@@ -22,6 +23,7 @@ public class LayerReaderConfigExample {
   public static void main(String[] args) throws FactoryException {
     readerConfigTest();
     writerConfigTest();
+    pgLayerWriterConfigTest();
   }
 
   public static void readerConfigTest() throws FactoryException {
@@ -36,6 +38,17 @@ public class LayerReaderConfigExample {
     FileLayerWriterConfig config = new FileLayerWriterConfig("file:///", false);
     Gson gson = new Gson();
     System.out.println(gson.toJson(config));
+  }
+
+  public static void pgLayerWriterConfigTest() {
+    String source = "jdbc:postgresql://localhost:5432/postgres";
+    String user = "postgres";
+    String password = "root";
+    String schema = "public";
+    String dbtable = "test";
+    PgLayerWriterConfig wconfig = new PgLayerWriterConfig(source, "public", "test2", user, password);
+    Gson gson = new Gson();
+    System.out.println(gson.toJson(wconfig));
   }
 
 }

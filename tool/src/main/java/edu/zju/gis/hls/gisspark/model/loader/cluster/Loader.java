@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.datastore.storage.loader.cluster;
+package edu.zju.gis.hls.gisspark.model.loader.cluster;
 
 import java.io.Serializable;
 

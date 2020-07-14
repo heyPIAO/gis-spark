@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 public enum SourceType {
 
   FILE(0, "file://"), MONGODB(1, "mongo://"), SHP(2, "shp://"), ES(3, "es://"),
-  HDFS_FILE(4, "hdfs://"), HDFS_SHP(5, "hdfshp://"), PG(6, "pg://"),
-  MYSQL(7, "mysql://"), PLATFORM(8, "platform://");
+  HDFS_FILE(4, "hdfs://"), HDFS_SHP(5, "hdfshp://"), PG(6, "jdbc:postgresql://"),
+  MYSQL(7, "jdbc:mysql://"), PLATFORM(8, "platform://");
 
   @Getter
   private int type;
