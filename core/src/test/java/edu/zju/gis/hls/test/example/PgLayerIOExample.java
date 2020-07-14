@@ -78,8 +78,8 @@ public class PgLayerIOExample {
         String password = pgConnectInfo.getPassword();
         String schema = pgConnectInfo.getSchemaName();
         String dbtable = pgConnectInfo.getTableName();
-        String idFieldName = pgConnectInfo.getPkField();
-        String idFieldType = pgConnectInfo.getPkType();
+        String idFieldName = pgConnectInfo.getPkFieldName();
+        String idFieldType = pgConnectInfo.getPkFieldType();
         String shapeFieldName = pgConnectInfo.getSpatialField();
         String shapeFieldType = pgConnectInfo.getSpatialType();
         String timeFieldName = pgConnectInfo.getTimeField();
@@ -88,7 +88,7 @@ public class PgLayerIOExample {
 
         Field gid = new Field(idFieldName, FieldType.ID_FIELD);
         //TODO 根据数据库字段类型，返回java类型; <需要补全>
-        gid.setType(dbClass2JavaClass(idFieldType));
+        gid.setType(Class.forName(idFieldType));
         Field shapeField = new Field(shapeFieldName, FieldType.SHAPE_FIELD);
 
         FeatureType featureType = FeatureType.valueOf(shapeFieldType);
@@ -101,16 +101,7 @@ public class PgLayerIOExample {
         config.setSchema(schema);
         config.setIdField(gid);
         config.setShapeField(shapeField);
-
         pgDf.close();
-
         return config;
     }
-
-    private static Class dbClass2JavaClass(String fieldType) {
-        if (fieldType.contains("int"))
-            return Integer.class;
-        return String.class;
-    }
-
 }
