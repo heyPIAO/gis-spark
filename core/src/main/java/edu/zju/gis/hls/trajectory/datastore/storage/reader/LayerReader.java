@@ -6,12 +6,11 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.SparkSession;
 import org.locationtech.jts.geom.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.io.Closeable;
@@ -29,9 +28,8 @@ import static edu.zju.gis.hls.trajectory.analysis.util.Converter.convertToMulti;
  * 分布式环境下数据读取基类
  * 原理：基于 SparkSession 对于各类 datasource 的读取API封装，以支持更多业务操作
  **/
+@Slf4j
 public abstract class LayerReader<T extends Layer> implements Closeable, Serializable {
-
-  private static final Logger logger = LoggerFactory.getLogger(LayerReader.class);
 
   @Getter
   transient protected SparkSession ss;
@@ -49,14 +47,6 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
   }
 
   public abstract T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException;
-
-  /**
-   * 获取图层类型对应的类
-   * @return
-   */
-  protected Class<T> getTClass() {
-    return (Class<T>) this.layerType.getLayerClass();
-  }
 
   protected T rddToLayer(RDD<Tuple2<String, Feature>> features) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
     Class<T> resultClass = this.getTClass();
@@ -99,26 +89,35 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
       c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class, long.class, long.class);
       feature = c.newInstance(fid, (LineString)geometry, attributes, startTime.longValue(), endTime.longValue());
     } else {
-      logger.error("Unsupport feature type: " + featureType.getName());
+      log.error("Unsupport feature type: " + featureType.getName());
       return null;
     }
     return (Feature) feature;
   }
 
-    private List<Field> getTFields() {
-        List<Field> fields = new ArrayList<>();
-        Class<T> c = getTClass();
-        // 迭代获取类及父类中的所有字段
-        while (c != null) {
-            fields.addAll(Arrays.asList(c.getDeclaredFields()));
-            c = (Class<T>) c.getSuperclass();
-        }
-        return fields;
+  /**
+   * 获取图层类型对应的类
+   * @return
+   */
+  protected Class<T> getTClass() {
+    return (Class<T>) this.layerType.getLayerClass();
+  }
+
+  private List<Field> getTFields() {
+    List<Field> fields = new ArrayList<>();
+    Class<T> c = getTClass();
+    // 迭代获取类及父类中的所有字段
+    while (c != null) {
+      fields.addAll(Arrays.asList(c.getDeclaredFields()));
+      c = (Class<T>) c.getSuperclass();
     }
+    return fields;
+  }
 
   @Override
   public void close() throws IOException {
-
+    this.ss.stop();
+    this.ss.close();
   }
 
 }

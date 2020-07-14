@@ -9,8 +9,6 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Serializable;
 import scala.Tuple2;
 
@@ -24,7 +22,6 @@ import java.util.*;
  **/
 public class RTreeIndex implements InnerSpatialIndex, Serializable {
 
-  private static final Logger logger = LoggerFactory.getLogger(RTreeIndex.class);
   private RTreeIndexConfig conf;
 
   public RTreeIndex() {
@@ -67,7 +64,7 @@ public class RTreeIndex implements InnerSpatialIndex, Serializable {
         Tuple2<String, V> m = t.next();
         gridId = m._1;
         Class c = m._2.getClass();
-        LayerType lt = LayerType.findLayerType(FeatureType.getType(c.getName()));
+        LayerType lt = LayerType.findLayerType(FeatureType.getFeatureType(c.getName()));
         rTree = new RTree(lt);
         rTree.insert(m._2.getGeometry().getEnvelopeInternal(), m._2);
       } else {

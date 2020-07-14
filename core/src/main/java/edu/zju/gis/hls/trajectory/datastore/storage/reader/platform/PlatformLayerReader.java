@@ -5,9 +5,8 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -16,9 +15,8 @@ import java.lang.reflect.InvocationTargetException;
  * @author Hu
  * @date 2020/7/3
  **/
+@Slf4j
 public class PlatformLayerReader<T extends Layer> extends LayerReader<T> {
-
-  private static final Logger logger = LoggerFactory.getLogger(PlatformLayerReader.class);
 
   @Getter
   @Setter

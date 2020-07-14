@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.writer.pg;
 
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -13,6 +14,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public class PgLayerWriterConfig extends LayerWriterConfig {
 
   private String schema;
@@ -33,13 +35,10 @@ public class PgLayerWriterConfig extends LayerWriterConfig {
   }
 
   public PgLayerWriterConfig(String sinkPath, String schema, String tablename, String username, String password) {
-    this.sinkPath = sinkPath;
+    super(sinkPath);
     this.schema = schema;
     this.tablename = tablename;
     this.username = username;
     this.password = password;
   }
-
-
-
 }

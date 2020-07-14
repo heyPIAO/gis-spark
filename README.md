@@ -1,9 +1,9 @@
 # gis-spark
-Spark extension for normal spatio-temporal data
+Spark extension for normal spatio-temporal data analysis.
 
-This project aims to make the most out of spark framework for professional GIS operation.
+This project aims to make the most out of spark framework for professional GIS operations.
 
-Unlike the previous framework (like GeoSpark, SpatialHadoop, etc), we hope that the semantics of the framework is more in line with the world view of GIS.
+Unlike the previous framework (like GeoSpark, SpatialHadoop, etc), we hope that our framework's semantics are more in line with the world view of GIS.
 
 This repository is still under developing.
 
@@ -13,7 +13,9 @@ This repository is still under developing.
 - [x] CSV (wkt)
 - [x] Shp (only read)
 - [x] MongoDB (only write)
+- [x] ES
 
+- [ ] layer transform to Dataset<Row>
 
 ## Gis Functions：  
 ### 1. Layer type preserved function
@@ -28,10 +30,22 @@ This repository is still under developing.
 
 ### 3. Layer interaction function
 
-- [ ] clip
-- [ ] intersect
-- [ ] erase
+- [x] clip
+- [x] intersect
+- [x] erase
 
 ### 4. Layer visualization
 
 - [ ] Pyramid Tile Set
+- [ ] Heatmap
+
+### 5. Moedls
+- [x] Clip Model
+- [x] Intersection Model
+- [x] Erase Model
+
+### StorageHelper
+- [x] MysqlHelper
+- [x] PgHelper
+- [x] Local File Data Reader
+- [x] Local Shp File Data Reader

@@ -173,7 +173,7 @@ public class PgLayerReader <T extends Layer> extends LayerReader<T> {
     lm.setCrs(readerConfig.getCrs());
     lm.setLayerName(readerConfig.getLayerName());
 
-    this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
+    // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
     lm.setAttributes(readerConfig.getAllAttributes());
 
     layer.setMetadata(lm);

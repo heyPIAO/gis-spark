@@ -9,6 +9,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
@@ -131,7 +132,7 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
         lm.setCrs(readerConfig.getCrs());
         lm.setLayerName(readerConfig.getLayerName());
 
-        this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
+        // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
         lm.setAttributes(readerConfig.getAllAttributes());
 
         layer.setMetadata(lm);

@@ -45,6 +45,10 @@ public class Field implements Serializable {
     this(name, FieldType.NORMA_FIELD);
   }
 
+  public Field(Field f) {
+    this(f.name, f.alias, f.type, f.length, f.index, f.fieldType);
+  }
+
   // 字段默认存在
   public Field(String name, FieldType fieldType) {
     this(name, Term.FIELD_EXIST, fieldType);

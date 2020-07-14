@@ -11,8 +11,9 @@
 
     <modules>
         <module>core</module>
-        <module>doctor-example</module>
+        <module>example</module>
         <module>viz</module>
+        <module>tool</module>
     </modules>
 
     <properties>
@@ -101,6 +102,14 @@
                 <artifactId>gt-shapefile</artifactId>
                 <version>${gt.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.geotools.jdbc</groupId>
+                <artifactId>gt-jdbc-postgis</artifactId>
+                <version>${gt.version}</version>
+                <!--<scope>test</scope>-->
+            </dependency>
+
 
             <dependency>
                 <groupId>org.geotools</groupId>

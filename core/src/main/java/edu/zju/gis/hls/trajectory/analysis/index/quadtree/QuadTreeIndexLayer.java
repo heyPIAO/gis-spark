@@ -6,12 +6,11 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.function.Function;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Geometry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -24,9 +23,8 @@ import java.util.List;
  **/
 @Getter
 @Setter
+@Slf4j
 public class QuadTreeIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
-
-  private static final Logger logger = LoggerFactory.getLogger(QuadTreeIndexLayer.class);
 
   private PyramidConfig pc;
   private QuadTreeIndexConfig conf;

@@ -5,6 +5,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -21,10 +22,11 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public abstract class LayerReaderConfig implements Serializable {
 
-  private String layerId = UUID.randomUUID().toString();
-  private String layerName;
+  protected String layerId = UUID.randomUUID().toString();
+  protected String layerName;
   protected String sourcePath;
   protected LayerType layerType;
   protected Field[] attributes; // 不包括 shape, id, startTime, endTime, Time 的所有需要读取的 Field 信息

@@ -3,17 +3,18 @@ package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Geometry;
+
+import java.util.List;
 
 /**
  * @author Hu
  * @date 2019/12/16
  * 基于 Key 构建索引，用于数据分区
  **/
+@Slf4j
 public abstract class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
-
-  private static final Logger logger = LoggerFactory.getLogger(KeyIndexedLayer.class);
 
   @Getter
   @Setter
@@ -36,5 +37,7 @@ public abstract class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
   public L toLayer() {
     return this.layer;
   }
+
+  public abstract List<String> queryPartitionsIds(Geometry geometry);
 
 }

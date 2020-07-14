@@ -2,7 +2,6 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.shp;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
-import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
@@ -10,6 +9,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.util.ShpDataReader;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SparkSession;
@@ -18,8 +18,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.lang.reflect.InvocationTargetException;
@@ -33,9 +31,8 @@ import java.util.*;
  * 各个文件路径以“;”分隔
  * TODO 暂时不支持存储在HDFS中的shapefile文件
  **/
+@Slf4j
 public class ShpLayerReader <T extends Layer> extends LayerReader<T> {
-
-  private static final Logger logger = LoggerFactory.getLogger(ShpLayerReader.class);
 
   @Getter
   @Setter
@@ -136,14 +133,14 @@ public class ShpLayerReader <T extends Layer> extends LayerReader<T> {
       CoordinateReferenceSystem crs = CRS.parseWKT(prjwkt);
       lm.setCrs(crs);
     } catch (FactoryException e) {
-      logger.error(e.getMessage());
-      logger.warn("Set coordinate reference default to wgs84");
+      log.error(e.getMessage());
+      log.warn("Set coordinate reference default to wgs84");
     }
 
     lm.setLayerId(readerConfig.getLayerId());
     lm.setLayerName(readerConfig.getLayerName());
 
-    this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
+    // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
     lm.setAttributes(readerConfig.getAllAttributes());
 
     layer.setMetadata(lm);

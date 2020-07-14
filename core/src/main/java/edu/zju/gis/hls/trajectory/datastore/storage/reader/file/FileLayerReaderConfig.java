@@ -4,6 +4,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.ReaderConfigTerm;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -14,7 +15,8 @@ import lombok.ToString;
  **/
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class FileLayerReaderConfig extends LayerReaderConfig {
 
   private String separator = ReaderConfigTerm.DEFAULT_FILE_SEPARATOR;

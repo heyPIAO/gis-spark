@@ -2,7 +2,9 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import edu.zju.gis.hls.trajectory.analysis.util.ClassUtil;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +26,7 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIMAL;
@@ -44,8 +47,38 @@ public abstract class Feature <T extends Geometry> implements Serializable {
   protected T geometry;
   protected LinkedHashMap<Field, Object> attributes; // HashMap的KeySet是乱序的，在数据输出时会导致顺序混乱，故使用 LinkedHashMap
 
-  public static Feature empty() {
-    return new Point(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+
+  public static Point empty() {
+    return Feature.empty(Point.class);
+  }
+
+  /**
+   * TODO is this safe to just set geometry = null ?
+   * @param f
+   * @return
+   */
+  public static <F extends Feature> F empty(Class<F> f) {
+    try {
+      Class gc = ClassUtil.getTClass(f, 0);
+      Constructor c = f.getConstructor(String.class, gc, LinkedHashMap.class);
+      return (F) c.newInstance(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    } catch (InstantiationException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
+      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
+    }
+  }
+
+  public boolean isEmpty() {
+    return this.geometry == null || this.geometry.isEmpty();
   }
 
   public Object getAttribute(String key){
@@ -118,6 +151,31 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     }
   }
 
+  /**
+   * TODO 挪到 FeatureType 里面去，构建 Geometry 类型和 Feature 类型的映射关系
+   * @param fid
+   * @param g
+   * @param attrs
+   * @return
+   */
+  public static Feature buildFeature(String fid, Geometry g, LinkedHashMap<Field, Object> attrs) {
+    if (g instanceof org.locationtech.jts.geom.Point) {
+      return new Point(fid, (org.locationtech.jts.geom.Point)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.LineString) {
+      return new Polyline(fid, (org.locationtech.jts.geom.LineString)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.Polygon) {
+      return new Polygon(fid, (org.locationtech.jts.geom.Polygon)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.MultiPoint) {
+      return new MultiPoint(fid, (org.locationtech.jts.geom.MultiPoint)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.MultiLineString) {
+      return new MultiPolyline(fid, (org.locationtech.jts.geom.MultiLineString)g, attrs);
+    } else if (g instanceof org.locationtech.jts.geom.MultiPolygon) {
+      return new MultiPolygon(fid, (org.locationtech.jts.geom.MultiPolygon)g, attrs);
+    } else {
+      throw new GISSparkException("Unsupport geometry type for method: edu.zju.gis.hls.trajectory.analysis.model.Feature.buildFeature()");
+    }
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -157,6 +215,20 @@ public abstract class Feature <T extends Geometry> implements Serializable {
       }
     }
     return a;
+  }
+
+  public void addAttributes(LinkedHashMap<Field, Object> o) {
+    this.attributes.putAll(o);
+  }
+
+  public void addAttributes(LinkedHashMap<Field, Object> o, String prefix) {
+    LinkedHashMap<Field, Object> of = new LinkedHashMap<>();
+    for (Field f: o.keySet()) {
+      Object v = of.get(f);
+      f.setName(prefix + f.getName());
+      of.put(f, v);
+    }
+    this.addAttributes(of);
   }
 
   /**

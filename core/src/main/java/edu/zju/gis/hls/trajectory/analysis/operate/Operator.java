@@ -9,8 +9,8 @@ import java.io.Serializable;
  * @date 2019/12/9
  * 单目操作符
  **/
-public abstract class Operator implements Serializable {
+public interface Operator extends Serializable {
 
-  public abstract Layer operate(Layer layer);
+  Layer operate(Layer layer);
 
 }

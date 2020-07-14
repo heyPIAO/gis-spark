@@ -8,10 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.rdd.RDD;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
@@ -22,10 +24,7 @@ import scala.reflect.ClassTag;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,15 +43,23 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
 
   private boolean isAnalyzed = false;
 
+  public static <F extends Feature> Layer<String, F> empty(JavaSparkContext jsc, Class<F> f) {
+    List<Tuple2<String,F>> fs = new ArrayList<>();
+    fs.add(new Tuple2<>(UUID.randomUUID().toString(),Feature.empty(f)));
+    return new Layer<String, F>(jsc.parallelize(fs).rdd(),
+      scala.reflect.ClassTag$.MODULE$.apply(String.class),
+      scala.reflect.ClassTag$.MODULE$.apply(f));
+  }
+
   protected Layer(RDD<Tuple2<K, V>> rdd, ClassTag<K> kClassTag, ClassTag<V> vClassTag) {
     super(rdd, kClassTag, vClassTag);
     this.metadata = new LayerMetadata();
   }
 
-  private <T extends Layer<K,V>> T initialize(T layer, RDD<Tuple2<K, V>> rdd) {
+  private Layer<K,V> initialize(Layer<K,V> layer, RDD<Tuple2<K, V>> rdd) {
     try {
       Constructor c = layer.getConstructor(RDD.class);
-      T t = (T) c.newInstance(rdd);
+      Layer<K,V> t = (Layer<K,V>) c.newInstance(rdd);
       return copy(layer, t);
     } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();
@@ -64,12 +71,13 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
    * only copy meta info of the layer
    * @return
    */
-  protected <T extends Layer<K,V>> T copy(T from, T to) {
+  protected Layer<K,V> copy(Layer<K,V> from, Layer<K,V> to) {
     to.metadata = from.metadata;
     return to;
   }
 
   /**
+   * 复制图层元数据信息
    * @param from
    * @param <L>
    */
@@ -92,7 +100,7 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
    * @param deltaY
    * @return
    */
-  public <L extends Layer<K,V>> L shift(double deltaX, double deltaY) {
+  public Layer<K,V> shift(double deltaX, double deltaY) {
 
     if (this.metadata.getExtent() != null) {
       this.metadata.shift(deltaX, deltaY);
@@ -107,16 +115,15 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
       }
     };
 
-    return (L) this.mapToLayer(shiftFunction);
+    return this.mapToLayer(shiftFunction);
   }
 
   /**
    * 投影转换
    * @param ocrs：目标css
-   * @param <L>
    * @return
    */
-  public <L extends Layer<K,V>> L transform(CoordinateReferenceSystem ocrs) {
+  public Layer<K,V> transform(CoordinateReferenceSystem ocrs) {
     Function transformFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
       @Override
       public Tuple2<K, V> call(Tuple2<K, V> t) throws Exception {
@@ -126,7 +133,7 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
       }
     };
     this.metadata.setCrs(ocrs);
-    return (L) this.mapToLayer(transformFunction);
+    return this.mapToLayer(transformFunction);
   }
 
 
@@ -141,24 +148,34 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
    * @param f
    * @return
    */
-  public <L extends Layer<K,V>> L flatMapToLayer(PairFlatMapFunction<Tuple2<K, V>, K, V> f) {
-    return (L) this.initialize(this, this.flatMapToPair(f).rdd());
+  public Layer<K,V> flatMapToLayer(PairFlatMapFunction<Tuple2<K, V>, K, V> f) {
+    return this.initialize(this, this.flatMapToPair(f).rdd());
   }
 
-  public <L extends Layer<K,V>> L mapToLayer(Function<Tuple2<K, V>, Tuple2<K, V>> f) {
-    return (L) this.initialize(this, this.map(f).rdd());
+  public Layer<K,V> mapToLayer(Function<Tuple2<K, V>, Tuple2<K, V>> f) {
+    return this.initialize(this, this.map(f).rdd());
   }
 
-  public <L extends Layer<K,V>> L flatMapToLayer(FlatMapFunction<Tuple2<K, V>, Tuple2<K, V>> f) {
-    return (L) this.initialize(this, this.flatMap(f).rdd());
+  public Layer<K,V> flatMapToLayer(FlatMapFunction<Tuple2<K, V>, Tuple2<K, V>> f) {
+    return this.initialize(this, this.flatMap(f).rdd());
   }
 
-  public <L extends Layer<K,V>> L filterToLayer(Function<Tuple2<K, V>, Boolean> f) {
-    return (L) this.initialize(this, this.filter(f).rdd());
+  public Layer<K,V> filterToLayer(Function<Tuple2<K, V>, Boolean> f) {
+    return this.initialize(this, this.filter(f).rdd());
   }
 
-  public <L extends Layer<K,V>> L repartitionToLayer(int num) {
-    return (L) this.initialize(this, this.repartition(num).rdd());
+  public Layer<K,V> repartitionToLayer(int num) {
+    return this.initialize(this, this.repartition(num).rdd());
+  }
+
+  public Layer<K,V> filterEmpty() {
+    Function<Tuple2<K, V>, Boolean> filterFunction = new Function<Tuple2<K, V>, Boolean> () {
+      @Override
+      public Boolean call(Tuple2<K, V> v) throws Exception {
+        return !((Feature)v._2).isEmpty();
+      }
+    };
+    return this.filterToLayer(filterFunction);
   }
 
   /**
