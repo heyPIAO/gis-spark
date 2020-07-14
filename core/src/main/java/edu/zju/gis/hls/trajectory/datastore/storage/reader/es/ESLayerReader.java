@@ -11,6 +11,7 @@ import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import lombok.Getter;
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * @author Hu
@@ -45,6 +45,13 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
     public ESLayerReader(SparkSession ss, ESLayerReaderConfig config) {
         super(ss, config.getLayerType());
         this.readerConfig = config;
+
+        this.ss.sparkContext().conf()
+                .set("es.nodes", config.getMasterNode())
+                .set("es.port", config.getPort())
+                .set("es.index.read.missing.as.empty", "true")
+                .set("es.nodes.wan.only", "true");
+        this.jsc = JavaSparkContext.fromSparkContext(this.ss.sparkContext());
     }
 
     @Override
@@ -75,12 +82,8 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
                 Long endTime = null;
                 LinkedHashMap<Field, Object> attributes = null;
 
-                Field idf = readerConfig.getIdField();
-                if (idf.isExist()) {
-                    fid = String.valueOf(_atts.get(idf.getName()));
-                } else {
-                    fid = UUID.randomUUID().toString();
-                }
+                //Es自带的pk_id
+                fid = _id;
 
                 //set up geometry
                 Field geof = readerConfig.getShapeField();
