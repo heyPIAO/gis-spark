@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.gisspark.model.loader.cluster;
 
 import edu.zju.gis.hls.gisspark.model.BaseModel;
-import edu.zju.gis.hls.gisspark.model.args.PgLoaderArgs;
+import edu.zju.gis.hls.gisspark.model.args.DataLoaderArgs;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
@@ -17,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
  * 数据入库到 PostgreSQL
  **/
 @Slf4j
-public class PgLoader extends BaseModel<PgLoaderArgs> {
+public class DataLoader extends BaseModel<DataLoaderArgs> {
 
-  public PgLoader(String[] args) {
+  public DataLoader(String[] args) {
     super(args);
   }
 
@@ -39,12 +39,12 @@ public class PgLoader extends BaseModel<PgLoaderArgs> {
 
   @Override
   protected void finish() {
-    log.info("PgLoader Job Finish");
+    log.info("DataLoader Job Finish");
     super.finish();
   }
 
   public static void main(String[] args) throws Exception {
-    PgLoader pgLoader = new PgLoader(args);
+    DataLoader pgLoader = new DataLoader(args);
     pgLoader.exec();
   }
 

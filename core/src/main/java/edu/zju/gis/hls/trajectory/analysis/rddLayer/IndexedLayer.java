@@ -25,9 +25,9 @@ public abstract class IndexedLayer<L extends Layer> implements Serializable {
    * @param geometry
    * @return
    */
-  public abstract IndexedLayer<L> query(Geometry geometry);
+  public abstract L query(Geometry geometry);
 
-  public IndexedLayer<L> query(Feature feature) {
+  public L query(Feature feature) {
     return this.query(feature.getGeometry());
   }
 
@@ -37,7 +37,7 @@ public abstract class IndexedLayer<L extends Layer> implements Serializable {
    * @return
    * TODO It's dangerous to return null, modify it later by return an empty layer
    */
-  public IndexedLayer<L> query(List<Geometry> geometries) {
+  public L query(List<Geometry> geometries) {
     if (geometries.size() == 0) {
       log.warn("empty geometry list for indexed layer query, return null");
       return null;
@@ -50,11 +50,11 @@ public abstract class IndexedLayer<L extends Layer> implements Serializable {
   }
 
   /**
-   * 获取指定图层范围内的对象
+   * 获取指定图层四至范围内的对象
    * @param layer
    * @return
    */
-  public IndexedLayer<L> query(Layer layer) {
+  public L query(Layer layer) {
     if (layer.getMetadata().getExtent() == null) {
       log.error("layer extent has not be calculated, please run layer.analyze() first");
       throw new DataQueryException("layer extent has not be calculated, please run layer.analyze() first");

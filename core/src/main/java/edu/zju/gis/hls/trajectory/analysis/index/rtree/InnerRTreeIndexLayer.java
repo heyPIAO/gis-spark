@@ -5,6 +5,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.PartitionIndexedLayer;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,20 +25,21 @@ import java.util.List;
 /**
  * @author Hu
  * @date 2019/12/24
+ * TODO 待测
  **/
 @Slf4j
-public class RTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, KeyIndexedLayer<L>> {
+public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, KeyIndexedLayer<L>> {
 
   @Getter
   @Setter
   private JavaPairRDD<String, RTree> indexedPartition;
 
-  public RTreeIndexLayer() {
+  public InnerRTreeIndexLayer() {
     this.indexType = IndexType.RTREE;
   }
 
   @Override
-  public RTreeIndexLayer<L> query(Geometry geometry) {
+  public L query(Geometry geometry) {
     List<String> partitionIds = this.layer.queryPartitionsIds(geometry);
     JavaRDD<Tuple2<String, Feature>> t = indexedPartition.filter(m->partitionIds.contains(m._1)).flatMap(new FlatMapFunction<Tuple2<String, RTree>, Tuple2<String, Feature>>() {
       @Override
@@ -51,15 +53,14 @@ public class RTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, K
       }
     });
 
+    // TODO 这步可能会报 NoSuchMethod 的错
     try {
       Constructor con = this.layer.getLayer().getConstructor(RDD.class);
-      L l = (L) con.newInstance(t.rdd());
-      this.layer.setLayer(l);
-      return this;
+      return (L) con.newInstance(t.rdd());
     } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();
+      throw new GISSparkException("InnerRTreeIndexLayer query failed: " + e.getMessage());
     }
-    return null;
   }
 
 }

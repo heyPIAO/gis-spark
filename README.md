@@ -7,13 +7,14 @@ Unlike the previous framework (like GeoSpark, SpatialHadoop, etc), we hope that 
 
 This repository is still under developing.
 
-## STData Reader and Writer：
+## Spatio-temporal Data Reader and Writer for Layer (JavaPairRDD actually)：
 
 - [x] Postgis
 - [x] CSV (wkt)
 - [x] Shp (only read)
-- [x] MongoDB (only write)
+- [x] MongoDB (only write yet)
 - [x] ES
+- [ ] Platform Reader (api for read data for our big spatio-temporal data analysis cloud platform)
 
 - [ ] layer transform to Dataset<Row>
 
@@ -39,12 +40,13 @@ This repository is still under developing.
 - [ ] Pyramid Tile Set
 - [ ] Heatmap
 
-### 5. Moedls
+### 5. Models
 - [x] Clip Model
 - [x] Intersection Model
 - [x] Erase Model
 
-### StorageHelper
+### 6. StorageHelper
+Stream Reader for multiple data storage backend
 - [x] MysqlHelper
 - [x] PgHelper
 - [x] Local File Data Reader

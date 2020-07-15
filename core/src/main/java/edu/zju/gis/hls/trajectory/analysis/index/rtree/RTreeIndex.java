@@ -38,13 +38,13 @@ public class RTreeIndex implements InnerSpatialIndex, Serializable {
    * @return
    */
   @Override
-  public RTreeIndexLayer index(KeyIndexedLayer layer) {
+  public InnerRTreeIndexLayer index(KeyIndexedLayer layer) {
     return this.indexRTree(layer);
   }
 
-  private RTreeIndexLayer indexRTree(KeyIndexedLayer layer) {
+  private InnerRTreeIndexLayer indexRTree(KeyIndexedLayer layer) {
     Layer l = layer.getLayer();
-    RTreeIndexLayer result = new RTreeIndexLayer();
+    InnerRTreeIndexLayer result = new InnerRTreeIndexLayer();
     result.setLayer(layer);
     result.setIndexedPartition(l.mapPartitionsToPair(new RTreeIndexBuilder()));
     return result;

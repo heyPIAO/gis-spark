@@ -17,8 +17,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Serializable;
 import scala.Tuple2;
 
@@ -48,6 +46,7 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
 
   /**
    * 构建四叉树索引
+   * HINT：每次构建完KeyedIndexLayer都要重新 repartition
    * @param layer
    * @return
    */
@@ -57,7 +56,10 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
     PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build();
     QuadTreeIndexBuiler builder = new QuadTreeIndexBuiler(pc, c);
     QuadTreeIndexLayer result = new QuadTreeIndexLayer(pc, c);
-    result.setLayer(layer.flatMapToLayer(builder));
+    Layer klayer = layer.flatMapToLayer(builder);
+    klayer.makeSureCached();
+    result.setLayer(klayer.repartitionToLayer(klayer.distinctKeys().size()));
+    klayer.release();
     return (T) result;
   }
 

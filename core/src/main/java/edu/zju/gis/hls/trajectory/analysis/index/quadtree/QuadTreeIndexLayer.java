@@ -36,30 +36,21 @@ public class QuadTreeIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
   }
 
   @Override
-  public QuadTreeIndexLayer<L> query(Geometry geometry) {
+  public L query(Geometry geometry) {
 
     List<String> tiles = this.queryPartitionsIds(geometry);
 
-    int partitionNum = this.layer.getNumPartitions();
-
-    this.layer = (L) this.layer.filterToLayer(new Function<Tuple2, Boolean>() {
+    return (L) this.layer.filterToLayer(new Function<Tuple2, Boolean>() {
       @Override
       public Boolean call(Tuple2 in) throws Exception {
         Object k = in._1;
-        if (k instanceof String) {
-          return tiles.contains(k);
+        if (k instanceof String && tiles.contains(k)) {
+          Feature f = (Feature) in._2;
+          return f.getGeometry().intersects(geometry);
         }
         return false;
       }
-    }).repartitionToLayer(partitionNum).filterToLayer(new Function<Tuple2, Boolean>() {
-      @Override
-      public Boolean call(Tuple2 in) throws Exception {
-        Feature f = (Feature) in._2;
-        return f.getGeometry().intersects(geometry);
-      }
     });
-
-    return this;
   }
 
   public List<String> queryPartitionsIds(Geometry geometry) {

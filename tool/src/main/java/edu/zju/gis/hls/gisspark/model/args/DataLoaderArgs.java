@@ -8,7 +8,7 @@ import org.kohsuke.args4j.Option;
  * @date 2020/7/14
  **/
 @Getter
-public class PgLoaderArgs extends BaseArgs {
+public class DataLoaderArgs extends BaseArgs {
 
   @Option(name = "-output",usage = "输出数据图层定义,json", required = true)
   private String output;
