@@ -51,3 +51,10 @@ Stream Reader for multiple data storage backend
 - [x] PgHelper
 - [x] Local File Data Reader
 - [x] Local Shp File Data Reader
+
+### 7. Spatial Index
+> Distribute Spatial Index (RDD Partitioner)
+- [x] QuadTree
+
+> Inner Spatial Index (RDD Parition's Index)
+- [x] RTree
