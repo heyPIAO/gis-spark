@@ -26,7 +26,7 @@ import java.util.List;
  * @author Hu
  * @date 2019/12/24
  * TODO 待测
- **/
+  **/
 @Slf4j
 public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, KeyIndexedLayer<L>> {
 
@@ -44,7 +44,7 @@ public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer
     JavaRDD<Tuple2<String, Feature>> t = indexedPartition.filter(m->partitionIds.contains(m._1)).flatMap(new FlatMapFunction<Tuple2<String, RTree>, Tuple2<String, Feature>>() {
       @Override
       public Iterator<Tuple2<String, Feature>> call(Tuple2<String, RTree> in) throws Exception {
-        List<Feature> l = in._2.query(geometry.getEnvelopeInternal());
+        List<Feature> l = in._2.query(geometry);
         List<Tuple2<String, Feature>> result = new ArrayList<>();
         for (Feature f: l) {
           result.add(new Tuple2<>(in._1, f));
@@ -55,7 +55,7 @@ public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer
 
     // TODO 这步可能会报 NoSuchMethod 的错
     try {
-      Constructor con = this.layer.getLayer().getConstructor(RDD.class);
+      Constructor con = this.layer.toLayer().getConstructor(RDD.class);
       return (L) con.newInstance(t.rdd());
     } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();

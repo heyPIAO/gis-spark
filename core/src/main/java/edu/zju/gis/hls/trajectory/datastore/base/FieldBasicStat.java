@@ -12,6 +12,7 @@ import lombok.ToString;
 import java.io.Serializable;
 
 /**
+ * 字段的基础统计值
  * FieldBasicStat的初始化值默认为0
  * TODO 初始化为0这样的设定不知道合不合适
  */
@@ -32,6 +33,10 @@ public class FieldBasicStat implements Serializable {
     result.count = this.count + s.count;
     result.total = this.total + s.total;
     return result;
+  }
+
+  public double getAvg() {
+    return this.total/this.count;
   }
 
 }

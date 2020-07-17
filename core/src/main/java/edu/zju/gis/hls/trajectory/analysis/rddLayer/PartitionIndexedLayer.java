@@ -19,11 +19,11 @@ public abstract class PartitionIndexedLayer<L extends Layer, K extends KeyIndexe
   protected K layer;
 
   public LayerMetadata getMetadata() {
-    return this.layer.getLayer().metadata;
+    return this.layer.getMetadata();
   }
 
   public Field[] getAttributes() {
-    return this.layer.getLayer().metadata.getAttributes().keySet().toArray(new Field[]{});
+    return this.layer.getAttributes();
   }
 
   @Override

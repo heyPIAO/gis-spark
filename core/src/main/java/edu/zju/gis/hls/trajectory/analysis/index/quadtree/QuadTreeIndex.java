@@ -3,12 +3,13 @@ package edu.zju.gis.hls.trajectory.analysis.index.quadtree;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.util.CrsUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.spark.HashPartitioner;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -51,14 +52,14 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
    * @return
    */
   @Override
-  public <L extends Layer, T extends IndexedLayer<L>> T index(L layer) {
+  public <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer) {
     CoordinateReferenceSystem crs = layer.getMetadata().getCrs();
     PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build();
     QuadTreeIndexBuiler builder = new QuadTreeIndexBuiler(pc, c);
     QuadTreeIndexLayer result = new QuadTreeIndexLayer(pc, c);
     Layer klayer = layer.flatMapToLayer(builder);
     klayer.makeSureCached();
-    result.setLayer(klayer.repartitionToLayer(klayer.distinctKeys().size()));
+    result.setLayer(klayer.partitionByToLayer(new HashPartitioner(klayer.distinctKeys().size())));
     klayer.release();
     return (T) result;
   }

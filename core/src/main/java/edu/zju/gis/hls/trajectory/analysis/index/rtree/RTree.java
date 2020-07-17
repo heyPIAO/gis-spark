@@ -4,9 +4,12 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import lombok.Getter;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.index.strtree.STRtree;
 
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author Hu
@@ -43,6 +46,17 @@ public class RTree {
   public <V extends Feature> boolean remove(Envelope e, V o) {
     count --;
     return this.si.remove(e, o);
+  }
+
+  public <V extends Feature> List<V> query(Geometry g) {
+    List<V> e = this.query(g.getEnvelopeInternal());
+    return e.stream().filter(new Predicate<V>() {
+      @Override
+      public boolean test(V v) {
+        Feature f = (Feature) v;
+        return f.getGeometry().intersects(g);
+      }
+    }).collect(Collectors.toList());
   }
 
 }

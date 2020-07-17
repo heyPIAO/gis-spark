@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
+import org.apache.spark.Partitioner;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -165,6 +166,10 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
 
   public Layer<K,V> repartitionToLayer(int num) {
     return this.initialize(this, this.repartition(num).rdd());
+  }
+
+  public Layer<K,V> partitionByToLayer(Partitioner partitioner) {
+    return this.initialize(this, this.partitionBy(partitioner).rdd());
   }
 
   public Layer<K,V> filterEmpty() {

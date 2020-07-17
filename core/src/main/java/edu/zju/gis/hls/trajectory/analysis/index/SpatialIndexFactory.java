@@ -5,8 +5,6 @@ import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndexConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Hu
