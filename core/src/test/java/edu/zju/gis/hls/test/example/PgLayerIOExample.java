@@ -70,47 +70,44 @@ public class PgLayerIOExample {
         layer.release();
     }
 
-//    private static PgLayerReaderConfig setConfig_CZD() throws Exception {
-//        DataFactory pgDf = new DataFactory(PlatFormStorageType.PF, "2fa7d456-0d60-48ba-881b-bace9c47a005");
-//        PgConnectInfo pgConnectInfo = (PgConnectInfo) pgDf.getSchema();
-//        String source = pgConnectInfo.toString();
-//        String user = pgConnectInfo.getUserName();
-//        String password = pgConnectInfo.getPassword();
-//        String schema = pgConnectInfo.getSchemaName();
-//        String dbtable = pgConnectInfo.getTableName();
-//        String idFieldName = pgConnectInfo.getPkField();
-//        String idFieldType = pgConnectInfo.getPkType();
-//        String shapeFieldName = pgConnectInfo.getSpatialField();
-//        String shapeFieldType = pgConnectInfo.getSpatialType();
-//        String timeFieldName = pgConnectInfo.getTimeField();
-//        String timeFieldType = pgConnectInfo.getTimeType();
-//        String fileds = pgConnectInfo.getFields();
-//
-//        Field gid = new Field(idFieldName, FieldType.ID_FIELD);
-//        //TODO 根据数据库字段类型，返回java类型; <需要补全>
-//        gid.setType(dbClass2JavaClass(idFieldType));
-//        Field shapeField = new Field(shapeFieldName, FieldType.SHAPE_FIELD);
-//
-//        FeatureType featureType = FeatureType.valueOf(shapeFieldType);
-//        LayerType type = LayerType.findLayerType(featureType);
-//
-//        PgLayerReaderConfig config = new PgLayerReaderConfig("point_layer_test", source, type);
-//        config.setDbtable(dbtable);
-//        config.setUsername(user);
-//        config.setPassword(password);
-//        config.setSchema(schema);
-//        config.setIdField(gid);
-//        config.setShapeField(shapeField);
-//
-//        pgDf.close();
-//
-//        return config;
-//    }
+//     private static PgLayerReaderConfig setConfig_CZD() throws Exception {
+//         DataFactory pgDf = new DataFactory(PlatFormStorageType.PF, "2fa7d456-0d60-48ba-881b-bace9c47a005");
+//         PgConnectInfo pgConnectInfo = (PgConnectInfo) pgDf.getSchema();
+//         String source = pgConnectInfo.toString();
+//         String user = pgConnectInfo.getUserName();
+//         String password = pgConnectInfo.getPassword();
+//         String schema = pgConnectInfo.getSchemaName();
+//         String dbtable = pgConnectInfo.getTableName();
+//         String idFieldName = pgConnectInfo.getPkFieldName();
+//         String idFieldType = pgConnectInfo.getPkFieldType();
+//         String shapeFieldName = pgConnectInfo.getSpatialField();
+//         String shapeFieldType = pgConnectInfo.getSpatialType();
+//         String timeFieldName = pgConnectInfo.getTimeField();
+//         String timeFieldType = pgConnectInfo.getTimeType();
+//         String fileds = pgConnectInfo.getFields();
+
+//         Field gid = new Field(idFieldName, FieldType.ID_FIELD);
+//         //TODO 根据数据库字段类型，返回java类型; <需要补全>
+//         gid.setType(Class.forName(idFieldType));
+//         Field shapeField = new Field(shapeFieldName, FieldType.SHAPE_FIELD);
+
+//         FeatureType featureType = FeatureType.valueOf(shapeFieldType);
+//         LayerType type = LayerType.findLayerType(featureType);
+
+//         PgLayerReaderConfig config = new PgLayerReaderConfig("point_layer_test", source, type);
+//         config.setDbtable(dbtable);
+//         config.setUsername(user);
+//         config.setPassword(password);
+//         config.setSchema(schema);
+//         config.setIdField(gid);
+//         config.setShapeField(shapeField);
+//         pgDf.close();
+//         return config;
+//     }
 
     private static Class dbClass2JavaClass(String fieldType) {
         if (fieldType.contains("int"))
             return Integer.class;
         return String.class;
     }
-
 }

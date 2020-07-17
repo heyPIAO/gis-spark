@@ -9,8 +9,8 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import lombok.Getter;
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * @author Hu
@@ -45,6 +44,13 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
     public ESLayerReader(SparkSession ss, ESLayerReaderConfig config) {
         super(ss, config.getLayerType());
         this.readerConfig = config;
+
+        this.ss.sparkContext().conf()
+                .set("es.nodes", config.getMasterNode())
+                .set("es.port", config.getPort())
+                .set("es.index.read.missing.as.empty", "true")
+                .set("es.nodes.wan.only", "true");
+        this.jsc = JavaSparkContext.fromSparkContext(this.ss.sparkContext());
     }
 
     @Override
@@ -58,7 +64,6 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
             throw new LayerReaderException("reader config is not set correctly");
         }
         String source = this.readerConfig.getIndexName() + "/" + this.readerConfig.getTypeName();
-
         //By JavaEsSpark
         JavaPairRDD<String, Map<String, Object>> rddFromEs = JavaEsSpark.esRDD(this.jsc, source);
 
@@ -75,19 +80,15 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
                 Long endTime = null;
                 LinkedHashMap<Field, Object> attributes = null;
 
-                Field idf = readerConfig.getIdField();
-                if (idf.isExist()) {
-                    fid = String.valueOf(_atts.get(idf.getName()));
-                } else {
-                    fid = UUID.randomUUID().toString();
-                }
+                //Es自带的pk_id
+                fid = _id;
 
                 //set up geometry
                 Field geof = readerConfig.getShapeField();
                 Map<String, Object> geoShape = (Map<String, Object>) _atts.get(geof.getName());
                 String geoType = String.valueOf(geoShape.get("type"));
                 String geoCoors = geoShape.get("coordinates").toString();
-                String geoJsonTemplate = "{\"geometry\":{\"type\":\"%s\",\"coordinates\":\"%s\"}}";
+                String geoJsonTemplate = "{\"geometry\":{\"type\":\"%s\",\"coordinates\":%s}}";
                 GeometryJSON geometryJSON = new GeometryJSON(9);
                 geometry = geometryJSON.read(String.format(geoJsonTemplate, geoType, geoCoors));
 
@@ -115,7 +116,7 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
                 for (Field f : fs) {
                     String cname = f.getType();
                     Class c = Class.forName(cname);
-                    attributes.put(f, Converter.convert(String.valueOf(_atts.get(tf.getName())), c));
+                    attributes.put(f, Converter.convert(String.valueOf(_atts.get(f.getName())), c));
                 }
 
                 Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);

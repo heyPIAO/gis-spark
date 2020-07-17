@@ -28,6 +28,7 @@ public enum SourceType {
   @Getter
   private int type;
 
+  @Getter
   private String prefix;
 
   SourceType(int type, String prefix) {

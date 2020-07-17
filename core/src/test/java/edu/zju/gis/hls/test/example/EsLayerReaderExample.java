@@ -1,45 +1,54 @@
 package edu.zju.gis.hls.test.example;
 
-import edu.zju.gis.hls.trajectory.analysis.model.Field;
-import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
-import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
+import edu.zju.gis.dbfg.queryserver.constant.PlatFormStorageType;
+import edu.zju.gis.dbfg.queryserver.model.EsConnectInfo;
+import edu.zju.gis.dbfg.queryserver.tool.DataFactory;
+import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.es.ESLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.es.ESLayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.es.ESLayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.es.ESLayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
-import scala.Tuple2;
 
 import java.util.List;
+
+import static edu.zju.gis.hls.trajectory.analysis.model.FieldType.NORMA_FIELD;
 
 @Slf4j
 public class EsLayerReaderExample {
 
     public static void main(String[] args) throws Exception {
+        String esInfo = "{\n" +
+                "    \"hosts\":[192.168.1.112],\n" +
+                "    \"masterNode\":\"192.168.1.112\",\n" +
+                "    \"port\":9200,\n" +
+                "    \"index\":\"wmx3\",\n" +
+                "}\n";
+//        DataFactory pgDf = new DataFactory(PlatFormStorageType.ES, esInfo);
+        DataFactory pgDf = new DataFactory(PlatFormStorageType.PF, "5365ef90-0df8-4be4-8289-f619c52bd970");
+        EsConnectInfo esConnectInfo = (EsConnectInfo) pgDf.getSchema();
+
+        String source = esConnectInfo.toString();
+        String masterNode = esConnectInfo.getMasterNode();
+        String[] nodes = esConnectInfo.getHosts();
+        String port = String.valueOf(esConnectInfo.getPort());
+        String indexName = esConnectInfo.getIndex();
+        String typeName = esConnectInfo.getType();
+
+        String pkName = esConnectInfo.getPkField().getName();
+        String spatialFieldName = esConnectInfo.getSpatialFields().get(0).getName();
+        FeatureType featureType = FeatureType.valueOf(esConnectInfo.getSpatialFields().get(0).getFormat());
+        LayerType layerType = LayerType.findLayerType(featureType);
 
         // setup spark environment
         SparkSession ss = SparkSession
                 .builder()
                 .appName("Es Layer Reader Demo")
                 .master("local[1]")
-                .config("es.nodes", "192.168.1.112")
-                .config("es.port", "9200")
-                .config("es.index.read.missing.as.empty", "true")
-                .config("es.nodes.wan.only", "true")
                 .getOrCreate();
-
-        String source = "http://192.168.1.112:9200/";
-        String masterNode = "192.168.1.112";
-        String[] nodes = new String[]{"192.168.1.112"};
-        String port = "9200";
-        String indexName = "wmx3";
-        String typeName = "2";
-
-        String pkName = "OBJECTID";
-        String spatialFieldName = "GEOM";
-        LayerType layerType = LayerType.MULTI_POLYGON_LAYER;
 
         Field fid = new Field(pkName, FieldType.ID_FIELD);
 //        fid.setType(String.class);
@@ -55,6 +64,11 @@ public class EsLayerReaderExample {
         config.setIdField(fid);
         config.setShapeField(shapeField);
 
+        List<edu.zju.gis.dbfg.queryserver.model.Field> sourceFields = esConnectInfo.getNormalFields();
+        Field[] targetFields = new Field[1];
+        targetFields[0] = new Field(sourceFields.get(1).getName(),NORMA_FIELD);
+        config.setAttributes(targetFields);
+
         // read layer
         ESLayerReader<MultiPolygonLayer> layerReader = new ESLayerReader<MultiPolygonLayer>(ss, config);
         MultiPolygonLayer layer = layerReader.read();
@@ -63,8 +77,13 @@ public class EsLayerReaderExample {
         layer.makeSureCached();
         log.info("Layer count: " + layer.count());
 
-        List<Tuple2<String, MultiPolygon>> features = layer.collect();
-        features.forEach(x -> log.info(x._2.toJson()));
+//        List<Tuple2<String, MultiPolygon>> features = layer.collect();
+//        features.forEach(x -> log.info(x._2.toJson()));
+
+        //Write
+        ESLayerWriterConfig w_config = new ESLayerWriterConfig(masterNode, port, "w_test", "_doc");
+        ESLayerWriter writer = new ESLayerWriter(ss, w_config);
+        writer.write(layer);
 
         layer.release();
     }
