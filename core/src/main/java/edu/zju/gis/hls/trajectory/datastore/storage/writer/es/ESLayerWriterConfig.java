@@ -28,6 +28,6 @@ public class ESLayerWriterConfig extends LayerWriterConfig {
         this.indexName = indexName;
         this.typeName = typeName;
         this.resource = String.format("%s/%s", indexName, typeName);
-        this.sinkPath = String.format(SourceType.ES + "http://%s:%s/%s/%s", masterNode, port, indexName, typeName);
+        this.sinkPath = String.format(SourceType.ES.getPrefix() + "http://%s:%s/%s/%s", masterNode, port, indexName, typeName);
     }
 }
