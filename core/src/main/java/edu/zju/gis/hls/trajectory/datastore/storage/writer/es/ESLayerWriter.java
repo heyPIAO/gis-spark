@@ -25,9 +25,7 @@ import org.json.JSONObject;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.FieldType.*;

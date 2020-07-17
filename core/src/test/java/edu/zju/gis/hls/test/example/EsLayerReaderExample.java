@@ -13,6 +13,10 @@ import edu.zju.gis.hls.trajectory.datastore.storage.writer.es.ESLayerWriterConfi
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
 
+import java.util.List;
+
+import static edu.zju.gis.hls.trajectory.analysis.model.FieldType.NORMA_FIELD;
+
 @Slf4j
 public class EsLayerReaderExample {
 
@@ -59,6 +63,11 @@ public class EsLayerReaderExample {
         config.setTypeName(typeName);
         config.setIdField(fid);
         config.setShapeField(shapeField);
+
+        List<edu.zju.gis.dbfg.queryserver.model.Field> sourceFields = esConnectInfo.getNormalFields();
+        Field[] targetFields = new Field[1];
+        targetFields[0] = new Field(sourceFields.get(1).getName(),NORMA_FIELD);
+        config.setAttributes(targetFields);
 
         // read layer
         ESLayerReader<MultiPolygonLayer> layerReader = new ESLayerReader<MultiPolygonLayer>(ss, config);

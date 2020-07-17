@@ -116,7 +116,7 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
                 for (Field f : fs) {
                     String cname = f.getType();
                     Class c = Class.forName(cname);
-                    attributes.put(f, Converter.convert(String.valueOf(_atts.get(tf.getName())), c));
+                    attributes.put(f, Converter.convert(String.valueOf(_atts.get(f.getName())), c));
                 }
 
                 Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
