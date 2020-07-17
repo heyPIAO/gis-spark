@@ -9,7 +9,6 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
@@ -65,7 +64,6 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
             throw new LayerReaderException("reader config is not set correctly");
         }
         String source = this.readerConfig.getIndexName() + "/" + this.readerConfig.getTypeName();
-
         //By JavaEsSpark
         JavaPairRDD<String, Map<String, Object>> rddFromEs = JavaEsSpark.esRDD(this.jsc, source);
 
@@ -90,7 +88,7 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
                 Map<String, Object> geoShape = (Map<String, Object>) _atts.get(geof.getName());
                 String geoType = String.valueOf(geoShape.get("type"));
                 String geoCoors = geoShape.get("coordinates").toString();
-                String geoJsonTemplate = "{\"geometry\":{\"type\":\"%s\",\"coordinates\":\"%s\"}}";
+                String geoJsonTemplate = "{\"geometry\":{\"type\":\"%s\",\"coordinates\":%s}}";
                 GeometryJSON geometryJSON = new GeometryJSON(9);
                 geometry = geometryJSON.read(String.format(geoJsonTemplate, geoType, geoCoors));
 

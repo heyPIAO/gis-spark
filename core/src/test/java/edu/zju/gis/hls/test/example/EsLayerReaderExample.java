@@ -6,20 +6,25 @@ import edu.zju.gis.dbfg.queryserver.tool.DataFactory;
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.PointLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.es.ESLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.es.ESLayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.es.ESLayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.es.ESLayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
-import scala.Tuple2;
-
-import java.util.List;
 
 @Slf4j
 public class EsLayerReaderExample {
 
     public static void main(String[] args) throws Exception {
-        DataFactory pgDf = new DataFactory(PlatFormStorageType.PF, "wmx");
+        String esInfo = "{\n" +
+                "    \"hosts\":[192.168.1.112],\n" +
+                "    \"masterNode\":\"192.168.1.112\",\n" +
+                "    \"port\":9200,\n" +
+                "    \"index\":\"wmx3\",\n" +
+                "}\n";
+//        DataFactory pgDf = new DataFactory(PlatFormStorageType.ES, esInfo);
+        DataFactory pgDf = new DataFactory(PlatFormStorageType.PF, "5365ef90-0df8-4be4-8289-f619c52bd970");
         EsConnectInfo esConnectInfo = (EsConnectInfo) pgDf.getSchema();
 
         String source = esConnectInfo.toString();
@@ -63,8 +68,13 @@ public class EsLayerReaderExample {
         layer.makeSureCached();
         log.info("Layer count: " + layer.count());
 
-        List<Tuple2<String, MultiPolygon>> features = layer.collect();
-        features.forEach(x -> log.info(x._2.toJson()));
+//        List<Tuple2<String, MultiPolygon>> features = layer.collect();
+//        features.forEach(x -> log.info(x._2.toJson()));
+
+        //Write
+        ESLayerWriterConfig w_config = new ESLayerWriterConfig(masterNode, port, "w_test", "_doc");
+        ESLayerWriter writer = new ESLayerWriter(ss, w_config);
+        writer.write(layer);
 
         layer.release();
     }
