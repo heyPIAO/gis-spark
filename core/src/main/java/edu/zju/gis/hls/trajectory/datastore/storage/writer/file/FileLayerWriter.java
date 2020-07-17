@@ -74,6 +74,7 @@ public class FileLayerWriter extends LayerWriter<String> {
   }
 
   public void write(KeyIndexedLayer layer) {
+    this.writerConfig.setKeepKey(true);
     this.write(layer.toLayer());
   }
 

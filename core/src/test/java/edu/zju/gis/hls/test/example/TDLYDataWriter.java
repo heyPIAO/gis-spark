@@ -83,7 +83,7 @@ public class TDLYDataWriter {
     writerConfig.setKeepKey(true);
 
     // write to file with grid index
-    IndexedLayer<MultiPolygonLayer> dltb = si.index(dltbLayer);
+    KeyIndexedLayer<MultiPolygonLayer> dltb = si.index(dltbLayer);
 
     MultiPolygonLayer l = dltb.toLayer();
     l.makeSureCached();
