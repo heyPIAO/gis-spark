@@ -171,6 +171,26 @@
             <version>${logback.version}</version>
         </dependency>
         <!-- slf4j + logback 配置结束 -->
+
+        <!-- json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20200518</version>
+        </dependency>
+
+        <!-- org.elasticsearch -->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>7.8.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>7.8.0</version>
+        </dependency>
     </dependencies>
 
     <build>
