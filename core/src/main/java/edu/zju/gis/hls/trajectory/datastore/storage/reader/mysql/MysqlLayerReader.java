@@ -23,7 +23,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKTReader;
 import scala.Tuple2;
 
 import java.io.IOException;
@@ -117,10 +117,9 @@ public class MysqlLayerReader <T extends Layer> extends LayerReader<T> {
 
                 // set up geometry
                 Field geof = readerConfig.getShapeField();
-                String wkbstr = row.getString(row.fieldIndex(geof.getName()));
-                WKBReader wkbReader = new WKBReader();
-                byte[] aux = WKBReader.hexToBytes(wkbstr);
-                Geometry geometry = wkbReader.read(aux);
+                String wktstr = row.getString(row.fieldIndex(geof.getName()));
+                WKTReader wktReader = new WKTReader();
+                Geometry geometry = wktReader.read(wktstr);
 
                 // set up timestamp if exists
                 Long timestamp = null;

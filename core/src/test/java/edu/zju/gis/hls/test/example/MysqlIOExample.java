@@ -25,7 +25,7 @@ public class MysqlIOExample {
                 .master("local[4]")
                 .getOrCreate();
 
-        String source = "jdbc:mysql://localhost:3306/test_db";
+        String source = "jdbc:mysql://localhost:3306/test_db?serverTimezone=Asia/Shanghai";
         String user = "root";
         String password = "566000";
         String dbtable = "test1";
@@ -47,6 +47,7 @@ public class MysqlIOExample {
 
         // check if success
         layer.makeSureCached();
+        layer.count();
         log.info("Layer count: " + layer.count());
 
         layer.release();
