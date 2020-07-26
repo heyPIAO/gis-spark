@@ -22,11 +22,10 @@ public class MysqlExample {
                 .getOrCreate();
         System.out.println("数据库设置成功");
 
-        String schema = "test_db";
         String tablename = "test1";
 
         Dataset<Row> inputDataSet = ss.read().format("jdbc")
-                .option("url", "jdbc:mysql://localhost:3306/test_db")
+                .option("url", "jdbc:mysql://localhost:3306/test_db?serverTimezone=Asia/Shanghai")
                 .option("driver", "com.mysql.jdbc.Driver")
                 .option("user", "root")
                 .option("password", "566000")
@@ -45,9 +44,6 @@ public class MysqlExample {
 
         inputDataSet = inputDataSet.select("id", "name", "wkt");
 
-        System.out.println(" ====== SCHEMA ====== ");
-        inputDataSet.printSchema();
-
         System.out.println(" ====== SHOW ====== ");
         inputDataSet.show();
 
@@ -60,7 +56,7 @@ public class MysqlExample {
         System.out.println(" ====== LAYER WRITE TEST ===== ");
         inputDataSet.write()
                 .format("jdbc")
-                .option("url", "jdbc:mysql://localhost:3306/test_db")
+                .option("url", "jdbc:mysql://localhost:3306/test_db?serverTimezone=Asia/Shanghai")
                 .option("dbtable", "test2")
                 .option("user", "root")
                 .option("password", "566000")
