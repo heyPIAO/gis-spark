@@ -59,7 +59,7 @@ public abstract class BinaryOperatorImpl implements BinaryOperator {
 
   @Override
   public Layer run(Geometry f, IndexedLayer layer) {
-    return this.run(f, layer.query(f).toLayer());
+    return this.run(f, layer.query(f));
   }
 
   @Override
@@ -76,6 +76,6 @@ public abstract class BinaryOperatorImpl implements BinaryOperator {
   public Layer run(List<Feature> features, IndexedLayer layer) {
     return this.run(features,
       layer.query(features.stream().map((java.util.function.Function<Feature, Geometry>) Feature::getGeometry)
-      .collect(Collectors.toList())).toLayer());
+      .collect(Collectors.toList())));
   }
 }

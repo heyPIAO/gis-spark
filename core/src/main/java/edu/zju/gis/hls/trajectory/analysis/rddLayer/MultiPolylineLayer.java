@@ -9,7 +9,6 @@ import scala.reflect.ClassTag;
 /**
  * @author Hu
  * @date 2019/9/19
- *
  **/
 public class MultiPolylineLayer extends Layer<String, MultiPolyline> {
 

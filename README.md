@@ -10,10 +10,11 @@ This repository is still under developing.
 ## Spatio-temporal Data Reader and Writer for Layer (JavaPairRDD actually)：
 
 - [x] Postgis
-- [x] CSV (wkt)
-- [x] Shp (only read)
-- [x] MongoDB (only write yet)
+- [x] CSV File(geometry in wkt)
+- [x] Shp (only reader yet)
+- [x] MongoDB (only writer yet)
 - [x] ES
+- [x] MySQL (only reader yet)
 - [ ] Platform Reader (api for read data for our big spatio-temporal data analysis cloud platform)
 
 - [ ] layer transform to Dataset<Row>
@@ -37,7 +38,8 @@ This repository is still under developing.
 
 ### 4. Layer visualization
 
-- [ ] Pyramid Tile Set
+- [ ] Pyramid Tile Set (Static)
+- [ ] Vector Pyramid Tile Set
 - [ ] Heatmap
 
 ### 5. Models
