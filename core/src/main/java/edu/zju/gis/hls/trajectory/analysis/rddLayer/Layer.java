@@ -240,6 +240,8 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
       return;
     }
 
+    this.makeSureCached();
+
     JavaPairRDD<String, FieldBasicStat> basicStat = this.flatMapToPair(t -> {
         Feature f = (Feature) t._2;
         Map<Field, Object> attrs = f.getExistAttributes();
