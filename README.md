@@ -14,10 +14,10 @@ This repository is still under developing.
 - [x] Shp (only reader yet)
 - [x] MongoDB (only writer yet)
 - [x] ES
-- [x] MySQL (only reader yet)
+- [x] MySQL
 - [ ] Platform Reader (api for read data for our big spatio-temporal data analysis cloud platform)
 
-- [ ] layer transform to Dataset<Row>
+- [x] layer transform to Dataset<Row>
 
 ## Gis Functions：  
 ### 1. Layer type preserved function

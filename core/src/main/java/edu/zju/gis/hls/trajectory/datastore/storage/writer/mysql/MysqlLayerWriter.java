@@ -47,8 +47,7 @@ public class MysqlLayerWriter<T extends Layer> extends LayerWriter<Row> {
 
     @Override
     public void write(Layer layer) {
-        JavaRDD<Row> rdd = ((JavaRDD<Tuple2<String, Feature>>)(layer.rdd().toJavaRDD())).map(x->x._2).map(x->transform(x));
-        Dataset<Row> df = this.ss.createDataFrame(rdd, this.getLayerStructType(layer));
+        Dataset<Row> df = layer.toDataset(this.ss);
         df.write()
                 .format("jdbc")
                 .option("url", config.getSinkPath())
@@ -56,40 +55,5 @@ public class MysqlLayerWriter<T extends Layer> extends LayerWriter<Row> {
                 .option("user", config.getUsername())
                 .option("password", config.getPassword())
                 .save();
-    }
-
-    /**
-     * 根据Layer的元数据信息获取Dataset的StructType
-     * structtype的顺序默认：ID为第1列，SHAPE为最后一列
-     */
-    private StructType getLayerStructType(Layer layer) {
-        Map<Field, Object> layerAttrs = layer.getMetadata().getExistAttributes();
-
-        List<StructField> sfsl = new LinkedList<>();
-        sfsl.add(convertFieldToStructField(layer.getMetadata().getIdField()));
-
-        Field[] attrs = new Field[layerAttrs.size()];
-        layerAttrs.keySet().toArray(attrs);
-        for (int i=0; i<layerAttrs.size(); i++) {
-            if (attrs[i].getFieldType().equals(FieldType.ID_FIELD) || attrs[i].getFieldType().equals(FieldType.SHAPE_FIELD)) {
-                continue;
-            }
-            sfsl.add(convertFieldToStructField(attrs[i]));
-        }
-
-        sfsl.add(convertFieldToStructField(layer.getMetadata().getShapeField()));
-        StructField[] sfs = new StructField[sfsl.size()];
-        sfsl.toArray(sfs);
-        return new StructType(sfs);
-    }
-
-    /**
-     * 根据 Field 的元数据信息转成 StructField
-     */
-    private StructField convertFieldToStructField(Field field) {
-        return new StructField(field.getName(),
-                Field.converFieldTypeToDataType(field),
-                !(field.getFieldType().equals(FieldType.ID_FIELD) || field.getFieldType().equals(FieldType.SHAPE_FIELD)),
-                Metadata.empty());
     }
 }
