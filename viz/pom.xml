@@ -11,5 +11,19 @@
 
     <artifactId>viz</artifactId>
 
+    <dependencies>
+        <!-- Spark 相关包 -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>edu.zju.gis.hls</groupId>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
 
 </project>
