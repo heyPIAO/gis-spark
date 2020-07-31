@@ -14,6 +14,13 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.rdd.RDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.catalyst.expressions.GenericRow;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
@@ -299,6 +306,50 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
     return !((this instanceof MultiPointLayer)
       || (this instanceof MultiPolylineLayer)
       || (this instanceof MultiPolygonLayer));
+  }
+
+  /**
+   * Layer transform to Dataset
+   */
+  public Dataset<Row> toDataset(SparkSession ss){
+    JavaRDD<Row> rdd = (this.rdd().toJavaRDD()).map(x->x._2).map(x->new GenericRow(x.toObjectArray()));
+    Dataset<Row> df = ss.createDataFrame(rdd, this.getLayerStructType());
+    return df;
+  }
+
+  /**
+   * 根据Layer的元数据信息获取Dataset的StructType
+   * structtype的顺序默认：ID为第1列，SHAPE为最后一列
+   */
+  private StructType getLayerStructType() {
+    Map<Field, Object> layerAttrs = this.metadata.getExistAttributes();
+
+    List<StructField> sfsl = new LinkedList<>();
+    sfsl.add(convertFieldToStructField(this.metadata.getIdField()));
+
+    Field[] attrs = new Field[layerAttrs.size()];
+    layerAttrs.keySet().toArray(attrs);
+    for (int i=0; i<layerAttrs.size(); i++) {
+      if (attrs[i].getFieldType().equals(FieldType.ID_FIELD) || attrs[i].getFieldType().equals(FieldType.SHAPE_FIELD)) {
+        continue;
+      }
+      sfsl.add(convertFieldToStructField(attrs[i]));
+    }
+
+    sfsl.add(convertFieldToStructField(this.metadata.getShapeField()));
+    StructField[] sfs = new StructField[sfsl.size()];
+    sfsl.toArray(sfs);
+    return new StructType(sfs);
+  }
+
+  /**
+   * 根据 Field 的元数据信息转成 StructField
+   */
+  private StructField convertFieldToStructField(Field field) {
+    return new StructField(field.getName(),
+            Field.converFieldTypeToDataType(field),
+            !(field.getFieldType().equals(FieldType.ID_FIELD) || field.getFieldType().equals(FieldType.SHAPE_FIELD)),
+            Metadata.empty());
   }
 
 }
