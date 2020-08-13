@@ -38,7 +38,7 @@ This repository is still under developing.
 
 ### 4. Layer visualization
 
-- [ ] Pyramid Tile Set (Static)
+- [x] Pyramid Tile Set (Static)
 - [ ] Vector Pyramid Tile Set
 - [ ] Heatmap
 
@@ -59,4 +59,5 @@ Stream Reader for multiple data storage backend
 - [x] QuadTree
 
 > Inner Spatial Index (RDD Parition's Index)
+
 - [x] RTree

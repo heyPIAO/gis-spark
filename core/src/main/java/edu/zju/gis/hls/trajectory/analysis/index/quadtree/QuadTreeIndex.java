@@ -54,7 +54,7 @@ public class QuadTreeIndex implements DistributeSpatialIndex, Serializable {
   @Override
   public <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer) {
     CoordinateReferenceSystem crs = layer.getMetadata().getCrs();
-    PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build();
+    PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setZLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build(true);
     QuadTreeIndexBuiler builder = new QuadTreeIndexBuiler(pc, c);
     QuadTreeIndexLayer result = new QuadTreeIndexLayer(pc, c);
     Layer klayer = layer.flatMapToLayer(builder);

@@ -30,7 +30,7 @@ public class BufferOperator extends OperatorImpl {
   }
 
   @Override
-  public Layer operate(Layer layer) {
+  public Layer run(Layer layer) {
     JavaPairRDD<String, Feature> buffered = layer.mapToPair(new PairFunction() {
       @Override
       public Tuple2 call(Object o) throws Exception {

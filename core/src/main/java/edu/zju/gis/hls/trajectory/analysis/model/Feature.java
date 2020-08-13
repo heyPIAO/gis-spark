@@ -216,6 +216,16 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     return a;
   }
 
+  // 增加单条属性 (katus)
+  public void addAttribute(String key, Object value) {
+    addAttribute(new Field(key), value);
+  }
+
+  // 增加单条属性 (katus)
+  public void addAttribute(Field key, Object value) {
+    attributes.put(key, value);
+  }
+
   public void addAttributes(LinkedHashMap<Field, Object> o) {
     this.attributes.putAll(o);
   }
@@ -228,6 +238,37 @@ public abstract class Feature <T extends Geometry> implements Serializable {
       of.put(f, v);
     }
     this.addAttributes(of);
+  }
+
+  // 如果存在则修改现有属性值 如不存在则增加单条属性 (katus)
+  public void addOrSetAttribute(String key, Object value) {
+    Field field = new Field(key);
+    addOrSetAttribute(field, value);
+  }
+
+  // 如果存在则修改现有属性值 如不存在则增加单条属性 (katus)
+  public void addOrSetAttribute(Field key, Object value) {
+    for (Map.Entry<Field, Object> a: attributes.entrySet()) {
+      if (a.getKey().getName().equals(key.getName())) {
+        a.setValue(value);
+        return;
+      }
+    }
+    addAttribute(key, value);
+  }
+
+  // 修改现有单条属性 (katus)
+  public void setAttribute(String key, Object value) {
+    for (Map.Entry<Field, Object> a: attributes.entrySet()) {
+      if (a.getKey().getName().equals(key)) {
+        a.setValue(value);
+      }
+    }
+  }
+
+  // 修改现有单条属性 (katus)
+  public void setAttribute(Field key, Object value) {
+    setAttribute(key.getName(), value);
   }
 
   /**
