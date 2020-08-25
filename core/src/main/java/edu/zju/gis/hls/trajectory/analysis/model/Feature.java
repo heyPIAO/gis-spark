@@ -51,6 +51,18 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     return Feature.empty(Point.class);
   }
 
+  public Feature(String fid, T geometry) {
+    this(fid, geometry, new LinkedHashMap<>());
+  }
+
+  public Feature(T geometry, LinkedHashMap<Field, Object> attributes) {
+    this(UUID.randomUUID().toString(), geometry, attributes);
+  }
+
+  public Feature(T geometry) {
+    this(geometry, new LinkedHashMap<>());
+  }
+
   /**
    * TODO is this safe to just set geometry = null ?
    * @param f

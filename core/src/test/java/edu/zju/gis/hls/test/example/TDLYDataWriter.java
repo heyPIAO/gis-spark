@@ -3,7 +3,7 @@ package edu.zju.gis.hls.test.example;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
@@ -78,7 +78,7 @@ public class TDLYDataWriter {
     PolylineLayer xzdwLayer = xzdwReader.read();
     PointLayer lxdwLayer = lxdwReader.read();
 
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE, new QuadTreeIndexConfig(4));
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE, new UniformGridIndexConfig(4));
     FileLayerWriterConfig writerConfig = new FileLayerWriterConfig();
     writerConfig.setKeepKey(true);
 

@@ -228,6 +228,7 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
 
     // collect 之后再去重
     return keys.collect().stream().distinct().collect(Collectors.toList());
+    // return keys.collect();
   }
 
   /**

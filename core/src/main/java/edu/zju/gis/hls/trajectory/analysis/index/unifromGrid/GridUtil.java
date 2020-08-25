@@ -1,5 +1,6 @@
-package edu.zju.gis.hls.trajectory.analysis.index.quadtree;
+package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
 
+import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.*;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.SCREEN_TILE_SIZE;
@@ -70,6 +71,16 @@ public class GridUtil {
         double minY = baseEnv.getMinY() + pyramidConfig.getGridSize(gridID.getzLevel()) * gridID.getY();
         double maxY = baseEnv.getMinY() + pyramidConfig.getGridSize(gridID.getzLevel()) * (gridID.getY() + 1);
         return new Envelope(minX, maxX, minY, maxY);
+    }
+
+    /**
+     * 构建瓦片所对应的空间范围
+     * @param gridID
+     * @param pyramidConfig
+     * @return
+     */
+    public static Polygon createTileBoxGeo(GridID gridID, PyramidConfig pyramidConfig){
+        return JTS.toGeometry(createTileBox(gridID, pyramidConfig));
     }
 
     /**

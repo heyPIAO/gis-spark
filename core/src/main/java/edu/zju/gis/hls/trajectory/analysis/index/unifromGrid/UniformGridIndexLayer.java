@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.analysis.index.quadtree;
+package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
 
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
@@ -8,28 +8,25 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.function.Function;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Hu
  * @date 2019/12/18
- * 四叉树索引的 RDD Layer
+ * 均匀格网索引的 RDD Layer
  **/
 @Getter
 @Setter
 @Slf4j
-public class QuadTreeIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
+public class UniformGridIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
 
   private PyramidConfig pc;
-  private QuadTreeIndexConfig conf;
+  private UniformGridIndexConfig conf;
 
-  public QuadTreeIndexLayer(PyramidConfig pc, QuadTreeIndexConfig conf) {
+  public UniformGridIndexLayer(PyramidConfig pc, UniformGridIndexConfig conf) {
     this.indexType = IndexType.QUADTREE;
     this.pc = pc;
     this.conf = conf;
@@ -51,18 +48,6 @@ public class QuadTreeIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
         return false;
       }
     });
-  }
-
-  public List<String> queryPartitionsIds(Geometry geometry) {
-    ReferencedEnvelope envelope = JTS.toEnvelope(geometry);
-    ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[conf.getIndexLevel() - pc.getZLevelRange()[0]];
-    List<String> tiles = new ArrayList<>();
-    for (int tile_x = tZLevelInfo.getTileRanges()[0]; tile_x <= tZLevelInfo.getTileRanges()[1]; tile_x++) {
-      for (int tile_y = tZLevelInfo.getTileRanges()[2]; tile_y <= tZLevelInfo.getTileRanges()[3]; tile_y++) {
-        tiles.add((new GridID(conf.getIndexLevel(), tile_x, tile_y)).toString());
-      }
-    }
-    return tiles;
   }
 
 }

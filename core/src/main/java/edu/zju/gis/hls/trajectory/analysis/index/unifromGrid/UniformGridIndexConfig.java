@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.analysis.index.quadtree;
+package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
 
 import edu.zju.gis.hls.trajectory.analysis.index.IndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
@@ -11,20 +11,20 @@ import lombok.Setter;
  **/
 @Getter
 @Setter
-public class QuadTreeIndexConfig extends IndexConfig {
+public class UniformGridIndexConfig extends IndexConfig {
 
   private int indexLevel;
   private boolean isClip;
 
-  public QuadTreeIndexConfig() {
+  public UniformGridIndexConfig() {
     this(Term.QUADTREE_DEFAULT_LEVEL, true);
   }
 
-  public QuadTreeIndexConfig(int level) {
+  public UniformGridIndexConfig(int level) {
     this(level, true);
   }
 
-  public QuadTreeIndexConfig(int indexLevel, boolean isClip) {
+  public UniformGridIndexConfig(int indexLevel, boolean isClip) {
     this.indexLevel = indexLevel;
     this.isClip = isClip;
   }

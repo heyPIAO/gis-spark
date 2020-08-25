@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.analysis.index.quadtree;
+package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
 
 import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;

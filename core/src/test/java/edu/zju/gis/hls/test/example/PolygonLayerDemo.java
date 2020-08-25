@@ -3,7 +3,7 @@ package edu.zju.gis.hls.test.example;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
@@ -72,7 +72,7 @@ public class PolygonLayerDemo {
     // layer.collect().forEach(x->System.out.println(x._2.toString()));
 
     // transform to key-indexed layer with quadtree
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE, new QuadTreeIndexConfig(5));
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE, new UniformGridIndexConfig(5));
     IndexedLayer<PolygonLayer> til = si.index(layer);
 
     // write to hdfs with grid index

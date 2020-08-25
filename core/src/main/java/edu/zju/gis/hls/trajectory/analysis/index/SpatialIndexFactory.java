@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.index;
 
-import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndex;
-import edu.zju.gis.hls.trajectory.analysis.index.quadtree.QuadTreeIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndex;
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndexConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class SpatialIndexFactory {
 
   public static DistributeSpatialIndex getDistributedSpatialIndex(IndexType type, IndexConfig config) {
     switch (type) {
-      case QUADTREE: return config == null ? new QuadTreeIndex():new QuadTreeIndex((QuadTreeIndexConfig) config);
+      case QUADTREE: return config == null ? new UniformGridIndex():new UniformGridIndex((UniformGridIndexConfig) config);
       default:
         log.error("Unvalid distributed spatial index type");
         throw new UnsupportedOperationException("Unvalid distributed spatial index type");

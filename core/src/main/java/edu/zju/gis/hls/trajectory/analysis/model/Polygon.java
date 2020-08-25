@@ -7,7 +7,6 @@ import org.geotools.geometry.jts.JTS;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Hu
@@ -19,6 +18,18 @@ public class Polygon extends Feature<org.locationtech.jts.geom.Polygon> {
 
   public Polygon(String fid, org.locationtech.jts.geom.Polygon geometry, LinkedHashMap<Field, Object> attributes) {
     super(fid, geometry, attributes);
+  }
+
+  public Polygon(org.locationtech.jts.geom.Polygon geometry, LinkedHashMap<Field, Object> attributes) {
+    super(geometry, attributes);
+  }
+
+  public Polygon(String fid, org.locationtech.jts.geom.Polygon geometry) {
+    super(fid, geometry);
+  }
+
+  public Polygon(org.locationtech.jts.geom.Polygon geometry) {
+    super(geometry);
   }
 
   public Polygon(Polygon f) {
