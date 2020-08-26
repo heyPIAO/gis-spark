@@ -72,7 +72,7 @@ public class PolygonLayerDemo {
     // layer.collect().forEach(x->System.out.println(x._2.toString()));
 
     // transform to key-indexed layer with quadtree
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE, new UniformGridIndexConfig(5));
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(5));
     IndexedLayer<PolygonLayer> til = si.index(layer);
 
     // write to hdfs with grid index

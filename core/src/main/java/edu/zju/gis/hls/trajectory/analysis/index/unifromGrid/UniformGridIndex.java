@@ -1,7 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
 
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
-import edu.zju.gis.hls.trajectory.analysis.index.partitioner.DistributeSpatialPartioner;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
@@ -43,10 +42,9 @@ public class UniformGridIndex implements DistributeSpatialIndex, Serializable {
   public <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer) {
     CoordinateReferenceSystem crs = layer.getMetadata().getCrs();
     PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build();
-    UniformGridIndexLayer result = new UniformGridIndexLayer(pc, c);
+    UniformGridIndexLayer<L> result = new UniformGridIndexLayer<L>(pc, c);
     UniformGridPartitioner partitioner = new UniformGridPartitioner(pc, c, layer.getNumPartitions());
-    Layer klayer = layer.flatMapToLayer(DistributeSpatialPartioner.getPreProcessFunction(partitioner,c.isClip()))
-      .partitionByToLayer(partitioner);
+    L klayer = (L) layer.flatMapToLayer(partitioner).partitionByToLayer(partitioner);
     klayer.makeSureCached();
     partitioner.collectPartitionMeta(klayer);
     result.setLayer(klayer);

@@ -10,7 +10,11 @@ import java.util.List;
  * @author Hu
  * @date 2020/8/24
  **/
-public abstract class SpaceSplitDistributeSpatialPartitioner extends DistributeSpatialPartioner {
+public abstract class SpaceSplitDistributeSpatialPartitioner extends DistributeSpatialPartitioner {
+
+  public SpaceSplitDistributeSpatialPartitioner(int partitionNum) {
+    super(partitionNum);
+  }
 
   /**
    * 根据分区结果收集分区元数据信息
@@ -22,6 +26,5 @@ public abstract class SpaceSplitDistributeSpatialPartitioner extends DistributeS
     List<String> keys = layer.distinctKeys();
     keys.forEach(key -> keyRanges.put(key, this.getKeyRangeFeature(key)));
   }
-
 
 }

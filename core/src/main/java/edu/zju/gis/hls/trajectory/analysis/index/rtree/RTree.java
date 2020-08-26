@@ -24,12 +24,12 @@ public class RTree {
   @Getter
   private int count;
 
-  @Getter
-  private LayerType layerType;
+//  @Getter
+//  private LayerType layerType;
+//
 
-
-  public RTree(LayerType layerType) {
-    this.layerType = layerType;
+  public RTree() {
+//    this.layerType = layerType;
     this.count = 0;
     si = new STRtree();
   }

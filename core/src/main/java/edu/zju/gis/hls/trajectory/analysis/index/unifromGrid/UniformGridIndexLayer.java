@@ -27,17 +27,16 @@ public class UniformGridIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
   private UniformGridIndexConfig conf;
 
   public UniformGridIndexLayer(PyramidConfig pc, UniformGridIndexConfig conf) {
-    this.indexType = IndexType.QUADTREE;
+    this.indexType = IndexType.UNIFORM_GRID;
     this.pc = pc;
     this.conf = conf;
   }
 
   @Override
-  public L query(Geometry geometry) {
+  public UniformGridIndexLayer<L> query(Geometry geometry) {
 
     List<String> tiles = this.queryPartitionsIds(geometry);
-
-    return (L) this.layer.filterToLayer(new Function<Tuple2, Boolean>() {
+    this.layer = (L) this.layer.filterToLayer(new Function<Tuple2, Boolean>() {
       @Override
       public Boolean call(Tuple2 in) throws Exception {
         Object k = in._1;
@@ -48,6 +47,7 @@ public class UniformGridIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
         return false;
       }
     });
+    return this;
   }
 
 }

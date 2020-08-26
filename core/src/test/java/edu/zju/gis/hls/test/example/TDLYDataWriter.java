@@ -78,7 +78,7 @@ public class TDLYDataWriter {
     PolylineLayer xzdwLayer = xzdwReader.read();
     PointLayer lxdwLayer = lxdwReader.read();
 
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE, new UniformGridIndexConfig(4));
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(4));
     FileLayerWriterConfig writerConfig = new FileLayerWriterConfig();
     writerConfig.setKeepKey(true);
 

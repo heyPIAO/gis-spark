@@ -10,9 +10,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryPoint;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.*;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriter;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriterConfig;
 import org.apache.spark.sql.SparkSession;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
@@ -76,7 +73,7 @@ public class TrajectoryPointLayerDemo {
     Envelope e = new Envelope(120.0826484129990348, 120.2443047286111408, 30.2467093379181975, 30.3120984094017416);
 
     // construct spatial index
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE);
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID);
     IndexedLayer<TrajectoryPointLayer> til = si.index(layer);
     til = til.query(JTS.toGeometry(e));
     TrajectoryPointLayer layer0 = til.toLayer();

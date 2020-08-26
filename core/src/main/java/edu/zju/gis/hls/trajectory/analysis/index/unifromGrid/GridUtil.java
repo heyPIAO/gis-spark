@@ -3,12 +3,14 @@ package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.*;
 
+import java.io.Serializable;
+
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.SCREEN_TILE_SIZE;
 
 /**
  * Created by ylj on 2017/10/10.
  */
-public class GridUtil {
+public class GridUtil implements Serializable {
 
     /**
      * 获取地图数据在基准地图中所覆盖的所有瓦片信息，且是每一层级的瓦片信息

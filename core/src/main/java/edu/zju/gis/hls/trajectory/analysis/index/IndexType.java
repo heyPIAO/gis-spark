@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 public enum IndexType {
 
-  QUADTREE("quadtree", 0), RTREE("rtree", 1), STTREE("sttree", 2), STRTREE("strtree", 3);
+  UNIFORM_GRID("uniform_grid", 0), RTREE("rtree", 1), STTREE("sttree", 2), STRTREE("strtree", 3), QUADTREE("quadtree", 4);
 
   IndexType(String name, int type) {
     this.name = name;
@@ -20,7 +20,7 @@ public enum IndexType {
   private int type;
 
   public static IndexType Default() {
-    return QUADTREE;
+    return UNIFORM_GRID;
   }
 
 }

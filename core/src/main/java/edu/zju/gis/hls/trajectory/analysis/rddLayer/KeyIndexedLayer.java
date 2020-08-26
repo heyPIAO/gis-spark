@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
-import edu.zju.gis.hls.trajectory.analysis.index.partitioner.DistributeSpatialPartioner;
+import edu.zju.gis.hls.trajectory.analysis.index.partitioner.DistributeSpatialPartitioner;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,12 +23,8 @@ public abstract class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
 
   @Getter
   @Setter
-  protected DistributeSpatialPartioner partitioner;
+  protected DistributeSpatialPartitioner partitioner;
 
-  public KeyIndexedLayer<L> copy(KeyIndexedLayer<L> from, KeyIndexedLayer<L> to) {
-    to.indexType = from.indexType;
-    return to;
-  }
 
   public LayerMetadata getMetadata() {
     return this.layer.metadata;

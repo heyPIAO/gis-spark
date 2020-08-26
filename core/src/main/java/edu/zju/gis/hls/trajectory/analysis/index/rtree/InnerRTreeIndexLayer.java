@@ -39,7 +39,7 @@ public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer
   }
 
   @Override
-  public L query(Geometry geometry) {
+  public InnerRTreeIndexLayer<L> query(Geometry geometry) {
     List<String> partitionIds = this.layer.queryPartitionsIds(geometry);
     JavaRDD<Tuple2<String, Feature>> t = indexedPartition.filter(m->partitionIds.contains(m._1)).flatMap(new FlatMapFunction<Tuple2<String, RTree>, Tuple2<String, Feature>>() {
       @Override
@@ -56,7 +56,9 @@ public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer
     // TODO 这步可能会报 NoSuchMethod 的错
     try {
       Constructor con = this.layer.toLayer().getConstructor(RDD.class);
-      return (L) con.newInstance(t.rdd());
+      L l = (L) con.newInstance(t.rdd());
+      this.getLayer().setLayer(l);
+      return this;
     } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();
       throw new GISSparkException("InnerRTreeIndexLayer query failed: " + e.getMessage());

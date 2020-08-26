@@ -175,6 +175,10 @@ public class Layer<K,V extends Feature> extends JavaPairRDD<K, V> implements Ser
     return this.initialize(this, this.repartition(num).rdd());
   }
 
+  public Layer<K,V> repartitionToLayer() {
+    return this.initialize(this, this.repartition(this.getNumPartitions()).rdd());
+  }
+
   public Layer<K,V> partitionByToLayer(Partitioner partitioner) {
     return this.initialize(this, this.partitionBy(partitioner).rdd());
   }

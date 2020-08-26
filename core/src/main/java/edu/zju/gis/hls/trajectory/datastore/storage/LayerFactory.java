@@ -43,7 +43,7 @@ public class LayerFactory {
    * @param <L>
    * @return
    */
-  public static <L extends Layer> LayerReader<L> getReader(SparkSession ss, LayerReaderConfig config, Class<L> c) {
+  public static <L extends Layer> LayerReader<L> getReader(SparkSession ss, LayerReaderConfig config) {
 
     SourceType sourceType = SourceType.getSourceType(config.getSourcePath());
     LayerType layerType = config.getLayerType();

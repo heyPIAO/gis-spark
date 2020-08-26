@@ -51,7 +51,7 @@ public class Erase extends BaseModel<EraseArgs> {
     Layer result = null;
 
     if (this.arg.getIndexBaseLayer()) {
-      DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.QUADTREE, new UniformGridIndexConfig(4));
+      DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(4));
       IndexedLayer il = si.index(layer2);
       result = eraseOperator.run(fs, il);
     } else {

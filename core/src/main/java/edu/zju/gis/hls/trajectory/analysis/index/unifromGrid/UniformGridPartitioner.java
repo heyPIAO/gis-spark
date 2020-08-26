@@ -20,7 +20,7 @@ import java.util.List;
  **/
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartitioner {
 
   private PyramidConfig pc;
@@ -28,6 +28,7 @@ public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartition
   private int z;
 
   public UniformGridPartitioner(PyramidConfig pc, UniformGridIndexConfig conf, int partitionNum) {
+    super(partitionNum);
     this.pc = pc;
     this.conf = conf;
     int zmin = pc.getZMin();
@@ -41,7 +42,7 @@ public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartition
 
   @Override
   public KeyRangeFeature getKeyRangeFeature(String key) {
-    if (this.keyRanges.size() > 0 && this.keyRanges.get(key)!=null) {
+    if (this.keyRanges!= null && this.keyRanges.size() > 0 && this.keyRanges.get(key)!=null) {
       return this.keyRanges.get(key);
     }
     GridID gridID = GridID.fromString(key);
