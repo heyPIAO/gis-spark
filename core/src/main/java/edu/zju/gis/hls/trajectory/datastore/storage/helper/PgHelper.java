@@ -14,27 +14,19 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(callSuper = true)
 public class PgHelper extends JDBCHelperImpl<PgConfig> {
 
-  private static PgHelper instance = null;
-
-  private PgHelper(PgConfig config) {
+  public PgHelper(PgConfig config) {
     super(config);
   }
 
-  private PgHelper() {
+  public PgHelper() {
     this(new PgConfig());
   }
 
-  public static PgHelper getHelper() {
-    return PgHelper.getHelper(new PgConfig());
-  }
 
-  public static PgHelper getHelper(PgConfig config) {
-    if (instance != null) {
-      log.warn("PgHelper has already inited, configuration abort");
-    } else {
-      instance = new PgHelper(config);
-    }
-    return instance;
+  @Override
+  protected String dbUrl() {
+    return String.format("jdbc:postgresql://%s:%d/%s",
+      this.config.getUrl(), this.config.getPort(), this.config.getDatabase());
   }
 
   @Override

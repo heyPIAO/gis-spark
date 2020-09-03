@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.serializer.CRSJsonSerializer;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
@@ -9,6 +10,7 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.FieldType.*;
 
@@ -46,8 +48,6 @@ public class Term implements Serializable {
   // Geometry 转 GeoJSON 的坐标精度
   public static Integer GEOMETRY_JSON_DECIMAL = 9;
 
-
-
   public static Gson GSON_CONTEXT = new GsonBuilder().registerTypeAdapter(CoordinateReferenceSystem.class, new CRSJsonSerializer())
     .registerTypeAdapter(CoordinateReferenceSystem.class, new CRSJsonSerializer.CRSJsonDeserializer()).create();
 
@@ -62,6 +62,14 @@ public class Term implements Serializable {
       e.printStackTrace();
     }
     return null;
+  }
+
+  public static Integer getEpsgCode(CoordinateReferenceSystem crs) {
+    try {
+      return CRS.lookupEpsgCode(crs, true);
+    } catch (FactoryException e) {
+      throw new GISSparkException("Cannot find epsg code for Coordinate Reference System: " + crs.toWKT());
+    }
   }
 
 }

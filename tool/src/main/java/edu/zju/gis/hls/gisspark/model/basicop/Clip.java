@@ -34,11 +34,11 @@ public class Clip extends BaseModel<ClipArgs> {
   @Override
   public void run() throws Exception {
     LayerReaderConfig config1 = LayerFactory.getReaderConfig(this.arg.getInput1());
-    LayerReader layerReader1 = LayerFactory.getReader(this.ss, config1, config1.getLayerType().getLayerClass());
+    LayerReader layerReader1 = LayerFactory.getReader(this.ss, config1);
     Layer<String, Feature> layer1 = (Layer<String, Feature>)layerReader1.read();
 
     LayerReaderConfig config2 = LayerFactory.getReaderConfig(this.arg.getInput2());
-    LayerReader layerReader2 = LayerFactory.getReader(this.ss, config2, config2.getLayerType().getLayerClass());
+    LayerReader layerReader2 = LayerFactory.getReader(this.ss, config2);
     Layer layer2 = layerReader2.read();
 
     if (!config1.getCrs().equals(config2.getCrs())) {

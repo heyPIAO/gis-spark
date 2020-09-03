@@ -14,32 +14,23 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(callSuper = true)
 public class MSHelper extends JDBCHelperImpl<MSConfig> {
 
-  private static MSHelper instance = null;
-
   public MSHelper(MSConfig config) {
     super(config);
   }
 
-  private MSHelper() {
+  public MSHelper() {
     this(new MSConfig());
   }
 
-  public static MSHelper getHelper() {
-    return MSHelper.getHelper(new MSConfig());
-  }
-
-  public static MSHelper getHelper(MSConfig config) {
-    if (instance != null) {
-      log.warn("MSHelper has already inited, configuration abort");
-    } else {
-      instance = new MSHelper(config);
-    }
-    return instance;
-  }
 
   @Override
   public String transformTableName(String tableName) {
     return tableName;
   }
 
+  @Override
+  protected String dbUrl() {
+    return String.format("jdbc:mysql://%s:%d/%s",
+      this.config.getUrl(), this.config.getPort(), this.config.getDatabase());
+  }
 }

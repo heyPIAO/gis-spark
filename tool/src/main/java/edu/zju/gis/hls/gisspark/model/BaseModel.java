@@ -28,6 +28,10 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
     this.init(SparkSessionType.LOCAL, this.getClass().getName(), new SparkConf(), args);
   }
 
+  public BaseModel(SparkSessionType type, String args[]) {
+    this.init(type, this.getClass().getName(), new SparkConf(), args);
+  }
+
   public BaseModel(String appName, String args[]) {
     this.init(SparkSessionType.LOCAL, appName, new SparkConf(), args);
   }
@@ -41,6 +45,7 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
   }
 
   public void exec() throws Exception {
+    this.prepare();
     this.run();
     this.finish();
   }
@@ -50,7 +55,7 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
    */
   protected abstract void run() throws Exception;
 
-    protected void init(SparkSessionType type, String appName, SparkConf sc, String args[]) {
+  protected void init(SparkSessionType type, String appName, SparkConf sc, String args[]) {
     initArg(args);
     initSparkSession(type, appName, sc);
   }
@@ -69,6 +74,10 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
     ParameterizedType type = (ParameterizedType) this.getClass()
       .getGenericSuperclass();
     return (Class<T>) type.getActualTypeArguments()[0];
+  }
+
+  protected void prepare() {
+
   }
 
   protected void finish() {

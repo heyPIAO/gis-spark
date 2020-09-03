@@ -12,6 +12,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.expressions.GenericRow;
 import org.apache.spark.sql.types.Metadata;
@@ -55,6 +56,7 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
       .option("dbtable", String.format("%s.%s", config.getSchema(), config.getTablename()))
       .option("user", config.getUsername())
       .option("password", config.getPassword())
+      .mode(config.getSaveMode())
       .save();
   }
 

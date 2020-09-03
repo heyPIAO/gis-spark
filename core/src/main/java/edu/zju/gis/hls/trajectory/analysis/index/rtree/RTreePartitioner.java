@@ -19,8 +19,11 @@ import java.util.List;
 @ToString(callSuper = true)
 public class RTreePartitioner extends PreBuildDistributeSpatialPartitioner {
 
+  private RTree rTree;
+
   public RTreePartitioner(int partitionNum) {
     super(partitionNum);
+    this.rTree = new RTree();
   }
 
   @Override

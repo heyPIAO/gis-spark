@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.spark.sql.SaveMode;
 
 /**
  * @author Hu
@@ -21,6 +22,7 @@ public class PgLayerWriterConfig extends LayerWriterConfig {
   private String tablename;
   private String username;
   private String password;
+  private SaveMode saveMode = SaveMode.Append;
 
   public PgLayerWriterConfig(String tablename) {
     this(tablename, "postgres", "postgres");

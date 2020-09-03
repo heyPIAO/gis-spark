@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.index.strtree.STRtree;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -19,10 +20,10 @@ import java.util.stream.Collectors;
  **/
 public class RTree {
 
-  private org.locationtech.jts.index.SpatialIndex si;
+  private STRtree si;
 
   @Getter
-  private int count;
+  private List<Envelope> grids;
 
 //  @Getter
 //  private LayerType layerType;
@@ -30,13 +31,12 @@ public class RTree {
 
   public RTree() {
 //    this.layerType = layerType;
-    this.count = 0;
+    this.grids = new ArrayList<>();
     si = new STRtree();
   }
 
   public <V extends Feature> void insert(Envelope e, V o)  {
     this.si.insert(e, o);
-    count ++;
   }
 
   public <V extends Feature> List<V> query(Envelope e) {
@@ -44,7 +44,6 @@ public class RTree {
   }
 
   public <V extends Feature> boolean remove(Envelope e, V o) {
-    count --;
     return this.si.remove(e, o);
   }
 
@@ -57,6 +56,10 @@ public class RTree {
         return f.getGeometry().intersects(g);
       }
     }).collect(Collectors.toList());
+  }
+
+  public void finish() {
+    this.si.build();
   }
 
 }

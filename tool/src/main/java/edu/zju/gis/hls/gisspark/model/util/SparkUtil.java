@@ -24,11 +24,11 @@ public class SparkUtil {
 
   //TODO put these configuration into property file
   private static SparkConf overrideConf(SparkConf conf) {
-    conf.set("es.index.auto.create", "true");
-    conf.set("es.nodes", "121.89.211.142");
-    conf.set("es.nodes.discovery", "true");
-    conf.set("es.port", "9200");
-    conf.set("es.mapping.date.rich", "false");
+//    conf.set("es.index.auto.create", "true");
+//    conf.set("es.nodes", "121.89.211.142");
+//    conf.set("es.nodes.discovery", "true");
+//    conf.set("es.port", "9200");
+//    conf.set("es.mapping.date.rich", "false");
 //    conf.set("es.nodes.wan.only","true");
     return conf;
   }

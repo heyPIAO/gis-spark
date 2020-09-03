@@ -4,7 +4,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.util.ClassUtil;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.JDBCHelperConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.config.PgConfig;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -24,7 +23,6 @@ import java.util.Map;
 @Slf4j
 public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBCHelper {
 
-//  private static JDBCHelperImpl instance = null;
 
   protected Connection conn;
 
@@ -130,16 +128,32 @@ public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBC
     try {
       this.conn = DriverManager.getConnection(this.initUrl(), this.config.getUsername(), this.config.getPassword());
     } catch (SQLException e) {
-      throw new GISSparkException("JDBCHelper init connection failed");
+      throw new RuntimeException("JDBCHelper init connection failed");
     }
   }
 
-  private String initUrl() {
-    return String.format("jdbc::mysql://%s:%d/%s",
-      this.config.getUrl(), this.config.getPort(), this.config.getDatabase());
+  protected String initUrl() {
+    StringBuilder sb = new StringBuilder(this.dbUrl());
+    if (sb.lastIndexOf("?") == -1) {
+      sb.append("?");
+    } else {
+      sb.append("&");
+    }
+    sb.append(this.initConnConfig());
+    return sb.toString();
   }
 
+  protected abstract String dbUrl();
 
+  /**
+   * 覆盖一些全局的数据库连接参数
+   * @return
+   */
+  protected String initConnConfig() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("rewriteBatchedStatements=true");
+    return sb.toString();
+  }
   /**
    * 返回体转为json字符串
    * @return
