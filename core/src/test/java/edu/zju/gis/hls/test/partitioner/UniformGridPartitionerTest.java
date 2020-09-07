@@ -86,8 +86,8 @@ public class UniformGridPartitionerTest {
   }
 
   private static Field[] getProvinceFields() {
-    Field xzqdm = new Field("XZQDM","行政区代码", 2, FieldType.NORMA_FIELD);
-    Field xzqmc = new Field("XZQMC", "行政区名称", 3, FieldType.NORMA_FIELD);
+    Field xzqdm = new Field("XZQDM","行政区代码", 2, FieldType.NORMAL_FIELD);
+    Field xzqmc = new Field("XZQMC", "行政区名称", 3, FieldType.NORMAL_FIELD);
     return new Field[]{xzqdm, xzqmc};
   }
 

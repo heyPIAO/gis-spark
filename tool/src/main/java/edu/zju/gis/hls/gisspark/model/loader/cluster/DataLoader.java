@@ -21,7 +21,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * 数据入库到指定后端
  **/
 @Slf4j
-public class DataLoader extends BaseModel<DataLoaderArgs> {
+public class DataLoader<DataLoadArgs> extends BaseModel<DataLoaderArgs> {
 
   public DataLoader(String[] args) {
     super(args);
@@ -40,9 +40,9 @@ public class DataLoader extends BaseModel<DataLoaderArgs> {
     LayerReader layerReader = LayerFactory.getReader(this.ss, readerConfig);
     Layer<String, Feature> layer = (Layer<String, Feature>)layerReader.read();
 
-    CoordinateReferenceSystem targetCrs = CRS.decode(this.arg.getTargetCrs());
-    if (!layer.getMetadata().getCrs().equals(targetCrs))
-      layer = layer.transform(targetCrs);
+//    CoordinateReferenceSystem targetCrs = CRS.decode(this.arg.getTargetCrs());
+//    if (!layer.getMetadata().getCrs().equals(targetCrs))
+//      layer = layer.transform(targetCrs);
 
     // 计算图层四至
     layer.makeSureCached();
@@ -55,7 +55,8 @@ public class DataLoader extends BaseModel<DataLoaderArgs> {
 
   protected void storeMetadata(LayerMetadata metadata) {
     log.info("Store Layer Metadata for Layer " + metadata.getLayerName() + ": " + metadata.toJson());
-  }
+    log.info("Layer Count:" + metadata.getLayerCount());
+}
 
   @Override
   protected void finish() {

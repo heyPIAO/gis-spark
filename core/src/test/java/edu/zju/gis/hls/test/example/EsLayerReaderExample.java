@@ -15,7 +15,7 @@
 //
 //import java.util.List;
 //
-//import static edu.zju.gis.hls.trajectory.analysis.model.FieldType.NORMA_FIELD;
+//import static edu.zju.gis.hls.trajectory.analysis.model.FieldType.NORMAL_FIELD;
 //
 //@Slf4j
 //public class EsLayerReaderExample {
@@ -66,7 +66,7 @@
 //
 //        List<edu.zju.gis.dbfg.queryserver.model.Field> sourceFields = esConnectInfo.getNormalFields();
 //        Field[] targetFields = new Field[1];
-//        targetFields[0] = new Field(sourceFields.get(1).getName(),NORMA_FIELD);
+//        targetFields[0] = new Field(sourceFields.get(1).getName(),NORMAL_FIELD);
 //        config.setAttributes(targetFields);
 //
 //        // read layer

@@ -29,7 +29,7 @@ public interface JDBCHelper extends Closeable {
    * 是否还有值
    * @return
    */
-  // boolean hasNext();
+   boolean hasNext();
 
   /**
    * 返回一个JsonString
@@ -43,5 +43,7 @@ public interface JDBCHelper extends Closeable {
   void closeReader();
 
   <T> void runSQL(String sql, SQLResultHandler<T> callBack);
+
+  boolean runSQL(String sql);
 
 }

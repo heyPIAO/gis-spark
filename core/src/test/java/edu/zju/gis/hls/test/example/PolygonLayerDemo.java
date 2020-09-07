@@ -46,8 +46,8 @@ public class PolygonLayerDemo {
     String file = "D:\\Work\\STCoding\\测试数据\\JIASHAN_2018_DLTB.wkt";
 
     // set up layer reader
-    Field fid = new Field("FID","FeatureID", 1, FieldType.NORMA_FIELD);
-    Field area = new Field("Area", "面积", 19, FieldType.NORMA_FIELD);
+    Field fid = new Field("FID","FeatureID", 1, FieldType.NORMAL_FIELD);
+    Field area = new Field("Area", "面积", 19, FieldType.NORMAL_FIELD);
     Field shapeField = Term.FIELD_DEFAULT_SHAPE;
     shapeField.setIndex(0);
 

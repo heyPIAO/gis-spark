@@ -58,17 +58,17 @@ public abstract class Loader<T extends BaseEntity> implements LoadProcedure<T>, 
     }
 
     @Override
-    public List<Map<String, ?>> transformAll(List<T> values) {
-        List<Map<String, ?>> result = new ArrayList<>();
+    public List<Map<String, Object>> transformAll(List<T> values) {
+        List<Map<String, Object>> result = new ArrayList<>();
         for(T value: values){
-            Map<String, ?> t = this.transform(value);
+            Map<String, Object> t = this.transform(value);
             result.add(t);
         }
         return result;
     }
 
     @Override
-    public long insert(List<Map<String, ?>> data) {
+    public long insert(List<Map<String, Object>> data) {
       this.writer.insert(table, data);
       return data.size();
     }
@@ -92,7 +92,7 @@ public abstract class Loader<T extends BaseEntity> implements LoadProcedure<T>, 
       if (data.size() == 1000 || (!reader.hasNext())) {
         count = count + data.size();
         data = this.preprocess(data);
-        List<Map<String, ?>> tuple = this.transformAll(data);
+        List<Map<String, Object>> tuple = this.transformAll(data);
         this.insert(tuple);
         data = new ArrayList<>();
         logger.info(String.format("load %d tuple successful", data.size()));

@@ -263,7 +263,9 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     properties.put("fid", this.fid);
     for (Map.Entry<Field, Object> f: this.attributes.entrySet()) {
       if (f.getKey().isExist()) {
-        properties.put(f.getKey().getName(), f.getValue().toString());
+        //打印值？改为打印类型
+        properties.put(f.getKey().getName(), f.getValue()!=null?f.getValue().toString():"NO_SET");
+//        properties.put(f.getKey().getName(), f.getKey().getType());
       }
     }
     result.put("type", "Feature");

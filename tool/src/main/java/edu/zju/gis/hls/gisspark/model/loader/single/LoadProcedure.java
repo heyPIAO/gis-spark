@@ -40,9 +40,9 @@ public interface LoadProcedure<T extends BaseEntity> {
    * @param values
    * @return
    */
-  List<Map<String, ?>> transformAll(List<T> values);
+  List<Map<String, Object>> transformAll(List<T> values);
 
-  Map<String, ?> transform(T values);
+  Map<String, Object> transform(T values);
 
   /**
    * 数据清洗
@@ -55,7 +55,7 @@ public interface LoadProcedure<T extends BaseEntity> {
    * 数据插入
    * @return
    */
-  long insert(List<Map<String, ?>> data);
+  long insert(List<Map<String, Object>> data);
 
   /**
    * 数据入库任务启动

@@ -39,8 +39,6 @@ public class LayerFactory {
    * TODO 如何动态传递读取的图层类型？？现在的方法有点蠢
    * @param ss
    * @param config
-   * @param c
-   * @param <L>
    * @return
    */
   public static <L extends Layer> LayerReader<L> getReader(SparkSession ss, LayerReaderConfig config) {
@@ -82,7 +80,7 @@ public class LayerFactory {
   public static LayerReaderConfig getReaderConfig(String json) {
     JSONObject jo = new JSONObject(json);
     SourceType sourceType = SourceType.getSourceType(jo.getString("sourcePath"));
-    LayerReaderConfig r = (LayerReaderConfig) Term.GSON_CONTEXT.fromJson(json, sourceType.getReaderConfigClass());
+    LayerReaderConfig r = (LayerReaderConfig) Term.GSON_CONTEXT.fromJson(jo.toString(), sourceType.getReaderConfigClass());
     return r;
   }
 

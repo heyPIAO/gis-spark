@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.trajectory;
 
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 
 /**

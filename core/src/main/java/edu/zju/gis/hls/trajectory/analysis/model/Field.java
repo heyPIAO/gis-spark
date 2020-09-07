@@ -42,7 +42,7 @@ public class Field implements Serializable {
 
   // 字段默认为普通字段
   public Field(String name) {
-    this(name, FieldType.NORMA_FIELD);
+    this(name, FieldType.NORMAL_FIELD);
   }
 
   public Field(Field f) {

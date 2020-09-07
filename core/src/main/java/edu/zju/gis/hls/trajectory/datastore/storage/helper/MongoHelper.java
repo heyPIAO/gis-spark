@@ -109,7 +109,7 @@ public class MongoHelper implements JDBCHelper {
   }
 
 //  @Override
-  private boolean hasNext() {
+  public boolean hasNext() {
     this.checkConfig();
     if (this.reader == null){
       log.error("please verify the target table by function read(String)");
@@ -150,6 +150,11 @@ public class MongoHelper implements JDBCHelper {
 
   @Override
   public <T> void runSQL(String sql, SQLResultHandler<T> callBack) {
+    throw new GISSparkException("Under developing");
+  }
+
+  @Override
+  public boolean runSQL(String sql) {
     throw new GISSparkException("Under developing");
   }
 

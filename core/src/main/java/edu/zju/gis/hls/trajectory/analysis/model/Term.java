@@ -10,7 +10,6 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
-import java.util.Set;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.FieldType.*;
 
@@ -52,7 +51,7 @@ public class Term implements Serializable {
     .registerTypeAdapter(CoordinateReferenceSystem.class, new CRSJsonSerializer.CRSJsonDeserializer()).create();
 
   // 图层元数据信息的属性名称
-  public static Field LAYER_META_COUNT_FIELD = new Field("LAYER_COUNT", "count", Long.class.getName(), 0, FIELD_EXIST, NORMA_FIELD);
+  public static Field LAYER_META_COUNT_FIELD = new Field("LAYER_COUNT", "count", Long.class.getName(), 0, FIELD_EXIST, NORMAL_FIELD);
 
   public static CoordinateReferenceSystem getDefaultCrs() {
     try {

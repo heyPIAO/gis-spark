@@ -27,6 +27,7 @@ public class LayerMetadata extends Feature<Polygon> {
 
   private String layerId;
   private String layerName;
+  private Long layerCount;
   private CoordinateReferenceSystem crs;
   private double startTime;
   private double endTime;
@@ -75,7 +76,7 @@ public class LayerMetadata extends Feature<Polygon> {
   public void setAttributes(Field[] attributes) {
     LinkedHashMap<Field, Object> a = new LinkedHashMap<>();
     for (Field f: attributes) {
-      a.put(f, null);
+      a.put(f, f.getType());
     }
     super.setAttributes(a);
   }

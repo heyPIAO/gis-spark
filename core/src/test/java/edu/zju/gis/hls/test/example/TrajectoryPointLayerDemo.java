@@ -41,10 +41,10 @@ public class TrajectoryPointLayerDemo {
     String file = "D:\\Work\\Study\\GeRenXueXi\\笔记\\大规模轨迹数据计算与服务关键技术研究\\data\\杭州_骑手\\head_20_20170920_wkt.txt";
 
     // set up layer reader
-    Field orderIdf = new Field("orderId","订单ID", 0, FieldType.NORMA_FIELD);
-    Field statusf = new Field("status", "订单状态", 2, FieldType.NORMA_FIELD);
-    Field riderIdf = new Field("riderId", "骑手ID",3, FieldType.NORMA_FIELD);
-    Field dayf = new Field("day", "订单日期" ,4, FieldType.NORMA_FIELD);
+    Field orderIdf = new Field("orderId","订单ID", 0, FieldType.NORMAL_FIELD);
+    Field statusf = new Field("status", "订单状态", 2, FieldType.NORMAL_FIELD);
+    Field riderIdf = new Field("riderId", "骑手ID",3, FieldType.NORMAL_FIELD);
+    Field dayf = new Field("day", "订单日期" ,4, FieldType.NORMAL_FIELD);
 
     Field[] fields = new Field[]{orderIdf, statusf, riderIdf, dayf};
 

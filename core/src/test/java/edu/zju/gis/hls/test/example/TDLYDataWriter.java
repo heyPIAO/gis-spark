@@ -108,36 +108,36 @@ public class TDLYDataWriter {
   }
 
   private static Field[] getDltbFields() {
-    Field bsm = new Field("BSM","标识码", 2, FieldType.NORMA_FIELD);
-    Field dlmc = new Field("DLMC","地类名称", 7, FieldType.NORMA_FIELD);
-    Field tbbh = new Field("TBBH", "图斑编号", 5, FieldType.NORMA_FIELD);
-    Field zldwdm = new Field("ZLDWDM", "坐落单位代码", 11, FieldType.NORMA_FIELD);
-    Field tbmj = new Field("TBMJ", "图斑面积", 19, FieldType.NORMA_FIELD);
-    Field tkxs = new Field("TKXS", "田坎系数", 18, FieldType.NORMA_FIELD);
+    Field bsm = new Field("BSM","标识码", 2, FieldType.NORMAL_FIELD);
+    Field dlmc = new Field("DLMC","地类名称", 7, FieldType.NORMAL_FIELD);
+    Field tbbh = new Field("TBBH", "图斑编号", 5, FieldType.NORMAL_FIELD);
+    Field zldwdm = new Field("ZLDWDM", "坐落单位代码", 11, FieldType.NORMAL_FIELD);
+    Field tbmj = new Field("TBMJ", "图斑面积", 19, FieldType.NORMAL_FIELD);
+    Field tkxs = new Field("TKXS", "田坎系数", 18, FieldType.NORMAL_FIELD);
     return new Field[]{bsm, dlmc, tbbh, zldwdm, tbmj, tkxs};
   }
 
   private static Field[] getXzdwFields() {
-    Field bsm = new Field("BSM","标识码", 2, FieldType.NORMA_FIELD);
-    Field dlmc = new Field("DLMC","地类名称", 5, FieldType.NORMA_FIELD);
-    Field kcbl = new Field("KCBL", "扣除XX0", 21, FieldType.NORMA_FIELD);
-    Field kctbbh1 = new Field("KCTBBH1", "扣除图斑编号1", 16, FieldType.NORMA_FIELD);
-    Field kctbdwdm1 = new Field("KCTBDWDM1", "扣除图斑地物代码1", 17, FieldType.NORMA_FIELD);
-    Field kctbbh2 = new Field("KCTBBH2", "扣除图斑编号2", 18, FieldType.NORMA_FIELD);
-    Field kctbdwdm2 = new Field("KCTBDWDM2", "扣除图斑地物代码2", 19, FieldType.NORMA_FIELD);
-    Field cd = new Field("CD", "CD", 8, FieldType.NORMA_FIELD);
-    Field kd = new Field("KD", "KD", 9, FieldType.NORMA_FIELD);
-    Field xzdwmj = new Field("XZDWMJ", "现状地物面积", 10, FieldType.NORMA_FIELD);
-    Field shape_length = new Field("SHAPE_LENGTH", "长度", 25, FieldType.NORMA_FIELD);
+    Field bsm = new Field("BSM","标识码", 2, FieldType.NORMAL_FIELD);
+    Field dlmc = new Field("DLMC","地类名称", 5, FieldType.NORMAL_FIELD);
+    Field kcbl = new Field("KCBL", "扣除XX0", 21, FieldType.NORMAL_FIELD);
+    Field kctbbh1 = new Field("KCTBBH1", "扣除图斑编号1", 16, FieldType.NORMAL_FIELD);
+    Field kctbdwdm1 = new Field("KCTBDWDM1", "扣除图斑地物代码1", 17, FieldType.NORMAL_FIELD);
+    Field kctbbh2 = new Field("KCTBBH2", "扣除图斑编号2", 18, FieldType.NORMAL_FIELD);
+    Field kctbdwdm2 = new Field("KCTBDWDM2", "扣除图斑地物代码2", 19, FieldType.NORMAL_FIELD);
+    Field cd = new Field("CD", "CD", 8, FieldType.NORMAL_FIELD);
+    Field kd = new Field("KD", "KD", 9, FieldType.NORMAL_FIELD);
+    Field xzdwmj = new Field("XZDWMJ", "现状地物面积", 10, FieldType.NORMAL_FIELD);
+    Field shape_length = new Field("SHAPE_LENGTH", "长度", 25, FieldType.NORMAL_FIELD);
     return new Field[]{bsm, dlmc, kcbl, kctbbh1, kctbdwdm1, kctbbh2, kctbdwdm2, cd, kd, xzdwmj, shape_length};
   }
 
   private static Field[] getLxdwFields() {
-    Field dlmc = new Field("DLMC","地类名称", 5, FieldType.NORMA_FIELD);
-    Field zltbbh = new Field("ZLTBBH", "坐落图斑编号", 9, FieldType.NORMA_FIELD);
-    Field zldwdm = new Field("ZLDWDM", "坐落单位代码", 11, FieldType.NORMA_FIELD);
-    Field dlbz = new Field("DLBZ", "地类标志", 15, FieldType.NORMA_FIELD);
-    Field mj = new Field("MJ", "图斑面积", 10, FieldType.NORMA_FIELD);
+    Field dlmc = new Field("DLMC","地类名称", 5, FieldType.NORMAL_FIELD);
+    Field zltbbh = new Field("ZLTBBH", "坐落图斑编号", 9, FieldType.NORMAL_FIELD);
+    Field zldwdm = new Field("ZLDWDM", "坐落单位代码", 11, FieldType.NORMAL_FIELD);
+    Field dlbz = new Field("DLBZ", "地类标志", 15, FieldType.NORMAL_FIELD);
+    Field mj = new Field("MJ", "图斑面积", 10, FieldType.NORMAL_FIELD);
     return new Field[]{dlmc, zltbbh, zldwdm, dlbz, mj};
   }
 

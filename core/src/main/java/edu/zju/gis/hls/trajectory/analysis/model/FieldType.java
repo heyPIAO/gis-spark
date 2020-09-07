@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 
@@ -14,9 +15,10 @@ public enum FieldType implements Serializable {
   TIME_FIELD("TIME"),
   START_TIME_FIELD("START_TIME"),
   END_TIME_FIELD("END_TIME"),
-  NORMA_FIELD("NORMAL_FIELD");
+  NORMAL_FIELD("NORMAL_FIELD");
 
   @Getter
+  @Setter
   private String fname;
 
   FieldType(String name) {

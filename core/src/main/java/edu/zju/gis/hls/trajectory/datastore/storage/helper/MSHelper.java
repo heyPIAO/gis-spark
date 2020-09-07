@@ -33,4 +33,10 @@ public class MSHelper extends JDBCHelperImpl<MSConfig> {
     return String.format("jdbc:mysql://%s:%d/%s",
       this.config.getUrl(), this.config.getPort(), this.config.getDatabase());
   }
+
+  //TODO
+  @Override
+  public boolean hasNext() {
+    return false;
+  }
 }

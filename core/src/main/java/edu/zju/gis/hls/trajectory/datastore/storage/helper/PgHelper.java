@@ -14,23 +14,29 @@ import lombok.extern.slf4j.Slf4j;
 @ToString(callSuper = true)
 public class PgHelper extends JDBCHelperImpl<PgConfig> {
 
-  public PgHelper(PgConfig config) {
-    super(config);
-  }
+    public PgHelper(PgConfig config) {
+        super(config);
+    }
 
-  public PgHelper() {
-    this(new PgConfig());
-  }
+    public PgHelper() {
+        this(new PgConfig());
+    }
 
 
-  @Override
-  protected String dbUrl() {
-    return String.format("jdbc:postgresql://%s:%d/%s",
-      this.config.getUrl(), this.config.getPort(), this.config.getDatabase());
-  }
+    @Override
+    protected String dbUrl() {
+        return String.format("jdbc:postgresql://%s:%d/%s",
+                this.config.getUrl(), this.config.getPort(), this.config.getDatabase());
+    }
 
-  @Override
-  public String transformTableName(String tableName) {
-    return String.format("%s.\"%s\"", this.config.getSchema(), tableName);
-  }
+    @Override
+    public String transformTableName(String tableName) {
+        return String.format("%s.\"%s\"", this.config.getSchema(), tableName);
+    }
+
+    //TODO
+    @Override
+    public boolean hasNext() {
+        return false;
+    }
 }

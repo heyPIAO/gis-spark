@@ -38,7 +38,7 @@ public class MysqlIOExample {
         Field fid = new Field("id", FieldType.ID_FIELD);
         Field shapeField = new Field("wkt", FieldType.SHAPE_FIELD);
         // 除id，shape外，额外读取name字段
-        Field nameField = new Field("name", FieldType.NORMA_FIELD);
+        Field nameField = new Field("name", FieldType.NORMAL_FIELD);
         Field[] attributes = { nameField };
 
         // set up layer reader config
