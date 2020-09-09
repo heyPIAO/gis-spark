@@ -51,7 +51,7 @@ public class PgLayerReader <T extends Layer> extends LayerReader<T> {
 
   @Getter
   @Setter
-  private PgLayerReaderConfig readerConfig;
+  protected PgLayerReaderConfig readerConfig;
 
   public PgLayerReader(SparkSession ss, LayerType layerType) {
     super(ss, layerType);
@@ -66,22 +66,9 @@ public class PgLayerReader <T extends Layer> extends LayerReader<T> {
   public T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
     // TODO 封装 read procedure，去掉以下重复的图层读取参数设置
-    if (this.readerConfig == null) {
-      throw new LayerReaderException("set layer reader config");
-    }
+    checkReaderConfig();
 
-    if (!this.readerConfig.check()) {
-      throw new LayerReaderException("reader config is not set correctly");
-    }
-
-    Dataset<Row> df = this.ss.read().format("jdbc")
-      .option("url", this.readerConfig.getSourcePath())
-      .option("dbtable",  String.format("%s.%s", this.readerConfig.getSchema(), this.readerConfig.getDbtable()))
-      .option("user", this.readerConfig.getUsername())
-      .option("password", this.readerConfig.getPassword())
-      .option("continueBatchOnError",true)
-      .option("pushDownPredicate", true) // 默认请求下推
-      .load();
+    Dataset<Row> df = readFromSource();
 
     log.info("check field meta info");
     checkFields(df.schema());
@@ -180,11 +167,33 @@ public class PgLayerReader <T extends Layer> extends LayerReader<T> {
     return layer;
   }
 
+  protected Dataset<Row> readFromSource() {
+    String dbtableSql = String.format("(%s) as %s_t", this.getReaderConfig().getFilterSql(), this.readerConfig.getDbtable());
+    return this.ss.read().format("jdbc")
+      .option("url", this.readerConfig.getSourcePath())
+      .option("dbtable",  dbtableSql)
+      .option("user", this.readerConfig.getUsername())
+      .option("password", this.readerConfig.getPassword())
+      .option("continueBatchOnError",true)
+      .option("pushDownPredicate", true) // 默认请求下推
+      .load();
+  }
+
+  protected void checkReaderConfig() {
+    if (this.readerConfig == null) {
+      throw new LayerReaderException("set layer reader config");
+    }
+
+    if (!this.readerConfig.check()) {
+      throw new LayerReaderException("reader config is not set correctly");
+    }
+  }
+
   /**
    * 查看 dataframe 的 structtype 与 用户指定的 field 是否一致
    * @param st
    */
-  private void checkFields(StructType st) throws LayerReaderException {
+  protected void checkFields(StructType st) throws LayerReaderException {
     Field[] fs = this.readerConfig.getAllAttributes();
     StructField[] sfs = st.fields();
     boolean[] flags = new boolean[fs.length];
