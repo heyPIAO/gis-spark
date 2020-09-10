@@ -13,6 +13,10 @@ public class MultiPolygon extends Feature<org.locationtech.jts.geom.MultiPolygon
     super(fid, geometry, attributes);
   }
 
+  public MultiPolygon(String fid, org.locationtech.jts.geom.MultiPolygon geometry) {
+    super(fid, geometry);
+  }
+
   public MultiPolygon(MultiPolygon f) {
     super(f);
   }

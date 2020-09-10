@@ -116,8 +116,9 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
 
   @Override
   public void close() throws IOException {
-    this.ss.stop();
-    this.ss.close();
+    log.info("Close Layer Reader");
+//    this.ss.stop();
+//    this.ss.close();
   }
 
 }

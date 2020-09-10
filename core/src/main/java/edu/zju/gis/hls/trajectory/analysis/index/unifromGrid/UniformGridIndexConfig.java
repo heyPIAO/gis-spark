@@ -17,7 +17,7 @@ public class UniformGridIndexConfig extends IndexConfig {
   private boolean isClip;
 
   public UniformGridIndexConfig() {
-    this(Term.QUADTREE_DEFAULT_LEVEL, true);
+    this(Term.UNIFORMGRID_DEFAULT_LEVEL, true);
   }
 
   public UniformGridIndexConfig(int level) {

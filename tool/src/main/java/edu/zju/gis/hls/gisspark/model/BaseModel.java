@@ -25,7 +25,7 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
   transient protected JavaSparkContext jsc;
 
   public BaseModel(String args[]) {
-    this.init(SparkSessionType.LOCAL, this.getClass().getName(), new SparkConf(), args);
+    this.init(SparkSessionType.LOCAL, this.getClass().getSimpleName(), new SparkConf(), args);
   }
 
   public BaseModel(SparkSessionType type, String args[]) {
@@ -46,6 +46,7 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
 
   public void exec() throws Exception {
     this.prepare();
+    log.info("JOB START");
     this.run();
     this.finish();
   }
@@ -77,12 +78,13 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
   }
 
   protected void prepare() {
-
+    log.info("Job PREPARE");
   }
 
   protected void finish() {
     this.ss.stop();
     this.ss.close();
+    log.info("Job Finish");
   }
 
 }
