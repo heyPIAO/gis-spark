@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 import scala.reflect.ClassTag;

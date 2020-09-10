@@ -92,6 +92,14 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     return this.geometry == null || this.geometry.isEmpty();
   }
 
+  public Map<String, Object> getAttributesStr() {
+    Map<String, Object> result = new LinkedHashMap<>();
+    for (Field f: this.attributes.keySet()) {
+      result.put(f.getName(), this.attributes.get(f));
+    }
+    return result;
+  }
+
   public Object getAttribute(String key){
     for (Map.Entry<Field, Object> a: attributes.entrySet()) {
       if (a.getKey().getName().equals(key)) {
@@ -103,6 +111,15 @@ public abstract class Feature <T extends Geometry> implements Serializable {
 
   public Object getAttribute(Field key){
     return this.getAttribute(key.getName());
+  }
+
+  public Field getField(String name) {
+    for (Map.Entry<Field, Object> a: attributes.entrySet()) {
+      if (a.getKey().getName().equals(name)) {
+        return a.getKey();
+      }
+    }
+    return null;
   }
 
   public Feature(Feature f){
@@ -197,7 +214,11 @@ public abstract class Feature <T extends Geometry> implements Serializable {
         sb.append(String.valueOf(attributes.get(k)) + "\t");
       }
     }
-    sb.append(geometry.toString());
+    if (!this.geometry.isEmpty()) {
+      sb.append(geometry.toString());
+    } else {
+      sb.deleteCharAt(sb.lastIndexOf("\t"));
+    }
     return sb.toString();
   }
 
@@ -270,7 +291,9 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     }
     result.put("type", "Feature");
     result.put("properties", properties);
-    result.put("geometry", this.getGeometryMap());
+    if (!this.geometry.isEmpty()) {
+      result.put("geometry", this.getGeometryMap());
+    }
     String resultStr = gson.toJson(result);
     resultStr = resultStr.replace(",\"z\":NaN", "");
     return resultStr;
@@ -296,7 +319,9 @@ public abstract class Feature <T extends Geometry> implements Serializable {
     for (Field f: fields) {
       values.add(this.getAttribute(f));
     }
-    values.add(this.getGeometryWkt());
+    if (!this.geometry.isEmpty()) {
+      values.add(this.getGeometryWkt());
+    }
     Object[] result = new Object[values.size()];
     values.toArray(result);
     return result;

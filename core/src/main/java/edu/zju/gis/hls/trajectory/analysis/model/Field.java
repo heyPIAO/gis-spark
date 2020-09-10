@@ -91,15 +91,12 @@ public class Field implements Serializable {
     this.type = className;
   }
 
+  // TODO Field 同名就认为是同一个字段
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Field) {
       Field of = (Field) obj;
-      return of.getIndex() == this.index
-        && of.getName().equals(this.name)
-        && of.getAlias().equals(this.getAlias())
-        && of.getType().equals(this.type)
-        && of.getLength() == this.length;
+      return of.getName().equals(this.name);
     }
     return false;
   }

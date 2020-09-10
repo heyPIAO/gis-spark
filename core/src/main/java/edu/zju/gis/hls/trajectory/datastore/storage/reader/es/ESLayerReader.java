@@ -139,8 +139,8 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
 
     @Override
     public void close() throws IOException {
-        ss.close();
-        jsc.close();
+//        ss.close();
+//        jsc.close();
         log.info(String.format("EsLayerReader close: %s", readerConfig.toString()));
     }
 
