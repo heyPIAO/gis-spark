@@ -13,6 +13,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.es.ESLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.es.ESLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.CitusPgLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.ShpLayerReader;
@@ -23,9 +24,6 @@ import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
 import org.json.JSONObject;
 
@@ -54,6 +52,8 @@ public class LayerFactory {
       return new ESLayerReader<L>(ss, (ESLayerReaderConfig) config);
     } else if (sourceType.equals(SourceType.SHP)) {
       return new ShpLayerReader<L>(ss, (ShpLayerReaderConfig) config);
+    }else if (sourceType.equals(SourceType.CitusPG)) {
+      return new CitusPgLayerReader<L>(ss, (PgLayerReaderConfig) config);
     } else {
       throw new LayerReaderException("Unsupport layer reader type: " + layerType.name());
     }

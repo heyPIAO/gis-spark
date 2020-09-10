@@ -23,7 +23,7 @@ public enum SourceType {
 
   FILE(0, "file://"), MONGODB(1, "mongo://"), SHP(2, "shp://"), ES(3, "es://"),
   HDFS_FILE(4, "hdfs://"), HDFS_SHP(5, "hdfshp://"), PG(6, "jdbc:postgresql://"),
-  MYSQL(7, "jdbc:mysql://"), PLATFORM(8, "platform://");
+  MYSQL(7, "jdbc:mysql://"), PLATFORM(8, "platform://"),CitusPG(9, "citus:jdbc:postgresql://");
 
   @Getter
   private int type;
@@ -52,6 +52,7 @@ public enum SourceType {
       case 4: return FileLayerReaderConfig.class;
       case 6: return PgLayerReaderConfig.class;
       case 8: return PlatformLayerReaderConfig.class;
+      case 9: return PgLayerReaderConfig.class;
       default:
         throw new GISSparkException("Unsupport layer reader for type: " + type);
     }
