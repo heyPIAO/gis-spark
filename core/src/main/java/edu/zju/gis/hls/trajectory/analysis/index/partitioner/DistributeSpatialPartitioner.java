@@ -133,6 +133,14 @@ public abstract class DistributeSpatialPartitioner extends Partitioner
   }
 
   /**
+   * 分区器必须实现 equals，使得空间操作时能够进行相同分区器的判断
+   * @param o
+   * @return
+   */
+  @Override
+  public abstract boolean equals(Object o);
+
+  /**
    * 分区前的预处理函数
    * Hip：这一步已经将 PairRDD 的 key 转为分区 gridID 的 key
    * 处理一个 Geometry 可能会覆盖多个 Grid 的情况

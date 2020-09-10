@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.operate;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import org.locationtech.jts.geom.Geometry;
 
@@ -26,6 +27,8 @@ public interface BinaryOperator extends Serializable {
   Layer run(Layer layer1, IndexedLayer layer2);
 
   Layer run(IndexedLayer layer1, IndexedLayer layer2);
+
+  Layer run(KeyIndexedLayer layer1, KeyIndexedLayer layer2);
 
   Layer run(List<Feature> features, Layer layer);
 

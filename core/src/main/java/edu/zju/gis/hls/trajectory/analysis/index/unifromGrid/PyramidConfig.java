@@ -4,6 +4,8 @@ import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Objects;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.SCREEN_TILE_SIZE;
 
@@ -82,6 +84,16 @@ public class PyramidConfig implements Serializable{
 
     public double getGridSize(int zLevel){
         return this.gridSizes[zLevel - zLevelRange[0]];
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PyramidConfig that = (PyramidConfig) o;
+        return Objects.equals(extent, that.extent) &&
+          Arrays.equals(zLevelRange, that.zLevelRange) &&
+          Objects.equals(crs, that.crs);
     }
 
 }

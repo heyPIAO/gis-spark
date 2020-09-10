@@ -1,8 +1,14 @@
 package edu.zju.gis.hls.trajectory.analysis.operate;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.SparkSession;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
@@ -32,6 +38,13 @@ public class IntersectOperator extends BinaryOperatorImpl {
     return  layer.flatMapToLayer(this.intersectFunction(features.toArray(new Feature[]{}), attrReserve)).filterEmpty();
   }
 
+
+  @Override
+  public Layer run(KeyIndexedLayer layer1, KeyIndexedLayer layer2) {
+    return layer1.intersect(layer2, this.attrReserve).toLayer();
+  }
+
+  // TODO
   private FlatMapFunction intersectFunction(Feature[] features, Boolean attrReserved) {
     return new FlatMapFunction<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
       @Override

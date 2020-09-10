@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.operate;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import org.apache.spark.sql.SparkSession;
@@ -64,6 +65,15 @@ public abstract class BinaryOperatorImpl implements BinaryOperator {
 
   @Override
   public Layer run(IndexedLayer layer1, IndexedLayer layer2) {
+    if (layer1 instanceof KeyIndexedLayer && layer2 instanceof KeyIndexedLayer) {
+      return this.run(layer1, layer2);
+    } else {
+      throw new GISSparkException("Under developing");
+    }
+  }
+
+  @Override
+  public Layer run(KeyIndexedLayer layer1, KeyIndexedLayer layer2) {
     throw new GISSparkException("Under developing");
   }
 
@@ -72,6 +82,12 @@ public abstract class BinaryOperatorImpl implements BinaryOperator {
     throw new GISSparkException("Under developing");
   }
 
+  /**
+   * map-side join
+   * @param features
+   * @param layer
+   * @return
+   */
   @Override
   public Layer run(List<Feature> features, IndexedLayer layer) {
     return this.run(features,

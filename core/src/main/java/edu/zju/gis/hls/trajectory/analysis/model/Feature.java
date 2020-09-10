@@ -27,6 +27,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIMAL;
 
@@ -40,7 +42,7 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIM
 @NoArgsConstructor
 @AllArgsConstructor
 @Slf4j
-public abstract class Feature <T extends Geometry> implements Serializable {
+public class Feature <T extends Geometry> implements Serializable {
 
   protected String fid;
   protected T geometry;
@@ -124,6 +126,33 @@ public abstract class Feature <T extends Geometry> implements Serializable {
 
   public Feature(Feature f){
     this(f.getFid(), (T)f.getGeometry(), f.getAttributes());
+  }
+
+  public Feature intersect(Feature f, Boolean attrReserved) {
+    Geometry g2 = f.geometry;
+    Geometry g = this.getGeometry().intersection(g2);
+    if (g.isEmpty()) {
+      return Feature.empty();
+    }
+    Feature result = new Feature();
+    result.setGeometry(g);
+    result.setFid(this.getFid() + "_" + f.getFid());
+    LinkedHashMap<Field, Object> attr = new LinkedHashMap<>();
+    if (attrReserved) {
+      for (Field i: this.getAttributes().keySet()) {
+        Field io = new Field(i);
+        io.setName(i.getName() + "_1");
+        attr.put(io, this.getAttribute(i));
+      }
+      for (Object m: f.getAttributes().keySet()) {
+        Field mf = (Field)m;
+        Field io = new Field(mf);
+        io.setName(mf.getName() + "_1");
+        attr.put(io, f.getAttribute(mf));
+      }
+    }
+    result.setAttributes(attr);
+    return result;
   }
 
   public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException {

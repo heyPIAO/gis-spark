@@ -59,6 +59,11 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
                 scala.reflect.ClassTag$.MODULE$.apply(f));
     }
 
+    protected Layer(RDD<Tuple2<K, V>> rdd) {
+        super(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(Feature.class));
+        this.metadata = new LayerMetadata();
+    }
+
     protected Layer(RDD<Tuple2<K, V>> rdd, ClassTag<K> kClassTag, ClassTag<V> vClassTag) {
         super(rdd, kClassTag, vClassTag);
         this.metadata = new LayerMetadata();

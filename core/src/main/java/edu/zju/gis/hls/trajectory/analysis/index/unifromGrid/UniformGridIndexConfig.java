@@ -5,6 +5,8 @@ import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Objects;
+
 /**
  * @author Hu
  * @date 2020/6/23
@@ -28,4 +30,14 @@ public class UniformGridIndexConfig extends IndexConfig {
     this.indexLevel = indexLevel;
     this.isClip = isClip;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    UniformGridIndexConfig that = (UniformGridIndexConfig) o;
+    return indexLevel == that.indexLevel &&
+      isClip == that.isClip;
+  }
+
 }
