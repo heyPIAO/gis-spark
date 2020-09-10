@@ -16,6 +16,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.helper.PgHelper;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.spark.sql.SaveMode;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -55,10 +56,19 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
         PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
         this.initPgConfig(writerConfig);
         PgHelper pgHelper = new PgHelper(this.pgConfig);
-        log.info("CREATE TARGET TABLE: " + writerConfig.getTablename());
-        pgHelper.runSQL(this.createTableSql(readerConfig, writerConfig));
-        log.info("DISTRIBUTE TARGET TABLE");
-        pgHelper.runSQL(this.distributeTableSql(readerConfig, writerConfig));
+        switch (writerConfig.getSaveMode()) {
+            case Overwrite:
+                log.info("Drop TARGET TABLE: " + writerConfig.getTablename());
+                log.info("CREATE TARGET TABLE: " + writerConfig.getTablename());
+                pgHelper.runSQL(this.createTableSqlWithDrop(readerConfig, writerConfig));
+                break;
+            case Append:
+                log.info("CREATE TARGET TABLE : " + writerConfig.getTablename());
+                pgHelper.runSQL(this.createTableSql(readerConfig, writerConfig));
+                break;
+            default:
+                break;
+        }
         pgHelper.close();
     }
 
@@ -86,7 +96,7 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
         Field idField = rc.getIdField();
         Field geomField = rc.getShapeField();
         String tableName = wc.getTablename();
-        StringBuffer sb = new StringBuffer("CREATE TABLE " + tableName + "( ");
+        StringBuffer sb = new StringBuffer("CREATE TABLE IF NOT EXISTS " + tableName + "( ");
         sb.append(getAttrFromField(idField) + ", \n");
         for (Field f : fields) {
             sb.append(getAttrFromField(f) + ", \n");
@@ -94,6 +104,13 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
         sb.append(getAttrFromField(geomField) + " \n");
         sb.append(");");
         return sb.toString();
+    }
+
+    private String createTableSqlWithDrop(LayerReaderConfig rc, PgLayerWriterConfig wc) {
+        String tableName = wc.getTablename();
+        String dropTable = "DROP TABLE IF EXISTS" + tableName + ";";
+        String createTabelSql = createTableSql(rc, wc);
+        return dropTable + createTabelSql;
     }
 
     private String distributeTableSql(LayerReaderConfig rc, PgLayerWriterConfig wc) {
@@ -115,17 +132,17 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
     private String getAttrFromField(Field f) {
         StringBuffer sb = new StringBuffer();
         if (f.getFieldType().equals(FieldType.ID_FIELD)) {
-            sb.append(f.getName() + " VARCHAR PRIMARY KEY NOT NULL");
+            sb.append("\""+f.getName() + "\" VARCHAR PRIMARY KEY NOT NULL");
         } else if (f.getFieldType().equals(FieldType.SHAPE_FIELD)) {
-            sb.append(f.getName() + " VARCHAR NOT NULL");
+            sb.append("\""+f.getName() + "\"  VARCHAR NOT NULL");
         } else {
             if (!f.isNumeric()) {
-                sb.append(f.getName() + " VARCHAR");
+                sb.append("\""+f.getName() + "\"  VARCHAR");
             } else {
                 if (f.getType().equals(Integer.class.getName())) {
-                    sb.append(f.getName() + " INTEGER");
+                    sb.append("\""+f.getName() + "\"  INTEGER");
                 } else {
-                    sb.append(f.getName() + " REAL");
+                    sb.append("\""+f.getName() + "\"  REAL");
                 }
             }
         }
@@ -168,9 +185,11 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
         super.finish();
         LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
         PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
-        log.info(String.format("CREATE SPATIAL INDEX FOR %s USING GIST", writerConfig.getTablename()));
         PgHelper pgHelper = new PgHelper(this.pgConfig);
         try {
+            log.info("DISTRIBUTE TARGET TABLE");
+            pgHelper.runSQL(this.distributeTableSql(readerConfig, writerConfig));
+            log.info(String.format("CREATE SPATIAL INDEX FOR %s USING GIST", writerConfig.getTablename()));
             pgHelper.runSQL(this.createSpatialIndexSql(readerConfig, writerConfig, CRS.parseWKT(this.arg.getTargetCrs())));
         } catch (FactoryException e) {
             throw new GISSparkException(e.getMessage());

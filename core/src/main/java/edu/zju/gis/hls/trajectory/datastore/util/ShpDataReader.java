@@ -3,6 +3,7 @@ package edu.zju.gis.hls.trajectory.datastore.util;
 import edu.zju.gis.hls.trajectory.analysis.util.FileUtil;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderExceptionEnum;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.dbf.DbaseFileHeader;
 import org.geotools.data.shapefile.dbf.DbaseFileReader;
@@ -40,7 +41,7 @@ public class ShpDataReader extends DataReader {
   private ShapefileDataStore shpDataStore;
 
   public ShpDataReader(String filename){
-    this.filename = filename;
+    this.filename = filename.replace(SourceType.SHP.getPrefix(),"");
   }
 
   @Override
