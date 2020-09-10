@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.storage.StorageLevel;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
@@ -58,6 +59,8 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
     this.indexType = l.getIndexType();
   }
 
+
+
   public List<String> queryPartitionsIds(Geometry geometry) {
     return this.partitioner.getKey(geometry);
   }
@@ -90,6 +93,14 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
     });
     Layer olayer = new Layer(res.rdd());
     return new KeyIndexedLayer(olayer, this);
+  }
+
+  public void makeSureCached() {
+    this.makeSureCached(StorageLevel.MEMORY_ONLY());
+  }
+
+  public void makeSureCached(StorageLevel level) {
+    this.layer.makeSureCached(level);
   }
 
 }

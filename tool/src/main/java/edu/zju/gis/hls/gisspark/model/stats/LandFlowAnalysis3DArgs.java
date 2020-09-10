@@ -25,7 +25,13 @@ public class LandFlowAnalysis3DArgs extends BaseArgs {
   @Option(name = "-attrReserved",usage = "是否保留两个图层的字段信息", required = false)
   private Boolean attrReserved = Boolean.TRUE;
 
-  @Option(name = "-writer",usage = "结果图层写出,json", required = true)
-  private LayerWriterConfig writerConfig; // 二调图层二
+  @Option(name = "-geomWriter",usage = "结果图层写出,json", required = true)
+  private LayerWriterConfig geomWriterConfig; // 空间数据写出配置
+
+  @Option(name = "-statWriter",usage = "结果图层聚合结果写出,json", required = true)
+  private LayerWriterConfig statWriterConfig; // 统计数据写出配置
+
+  @Option(name = "-aggregateFieldName",usage = "聚合字段名称", required = true)
+  private String aggregateFieldName;
 
 }

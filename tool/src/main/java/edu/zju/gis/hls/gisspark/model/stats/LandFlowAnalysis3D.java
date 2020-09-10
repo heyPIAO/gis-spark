@@ -8,6 +8,7 @@ import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
@@ -40,9 +41,15 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
 
     KeyIndexedLayer<MultiPolygonLayer> resultLayer = indexedLayer1.intersect(indexedLayer2, this.arg.getAttrReserved());
 
-    LayerWriter writer = LayerFactory.getWriter(this.ss, this.arg.getWriterConfig());
+    resultLayer.makeSureCached();
 
-    writer.write(resultLayer);
+    LayerWriter geomWriter = LayerFactory.getWriter(this.ss, this.arg.getGeomWriterConfig());
+    geomWriter.write(resultLayer);
+
+    MultiPolygonLayer layer = resultLayer.getLayer();
+    StatLayer statLayer = layer.aggregateByField(this.arg.getAggregateFieldName());
+    LayerWriter statWriter = LayerFactory.getWriter(this.ss, this.arg.getStatWriterConfig());
+    statWriter.write(statLayer);
   }
 
   public static void main(String[] args) throws Exception {
