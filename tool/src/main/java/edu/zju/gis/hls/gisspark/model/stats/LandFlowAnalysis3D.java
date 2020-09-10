@@ -46,6 +46,7 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
     LayerWriter geomWriter = LayerFactory.getWriter(this.ss, this.arg.getGeomWriterConfig());
     geomWriter.write(resultLayer);
 
+    // TODO 流量变化判断如何做？
     MultiPolygonLayer layer = resultLayer.getLayer();
     StatLayer statLayer = layer.aggregateByField(this.arg.getAggregateFieldName());
     LayerWriter statWriter = LayerFactory.getWriter(this.ss, this.arg.getStatWriterConfig());
