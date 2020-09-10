@@ -6,6 +6,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
 import edu.zju.gis.hls.trajectory.datastore.util.ShpDataReader;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +21,7 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -66,7 +68,24 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
             paths.add(path);
         }
 
-        data = this.jsc.parallelize(paths, paths.size());
+        //判断路径是否为文件夹，支持二级目录下所有.shp文件路径的获取
+        List<String> paths2File = new ArrayList<>();
+        for (String subPath : paths) {
+            File subFile = new File(subPath.replace(SourceType.SHP.getPrefix(),""));
+            if (subFile.exists()) {
+                if (subFile.isFile() && subFile.getName().endsWith(".shp")) {
+                    paths2File.add(subFile.getAbsolutePath());
+                } else {
+                    File[] subSubFiles = subFile.listFiles();
+                    for (File subSubFile : subSubFiles) {
+                        if (subSubFile.isFile() && subSubFile.getName().endsWith(".shp"))
+                            paths2File.add(subSubFile.getAbsolutePath());
+                    }
+                }
+            }
+        }
+
+        data = this.jsc.parallelize(paths2File, paths2File.size());
 
         JavaRDD<Tuple2<String, Feature>> features = data.flatMap(new FlatMapFunction<String, Tuple2<String, Feature>>() {
             @Override
