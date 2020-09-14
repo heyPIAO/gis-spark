@@ -48,7 +48,8 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
   @Override
   protected void run() throws Exception {
-    LayerReader extendLayerReader = LayerFactory.getReader(this.ss, this.arg.getExtentReaderConfig());
+    LayerReaderConfig extentLayerReaderConfig=LayerFactory.getReaderConfig(this.arg.getExtentReaderConfig());
+    LayerReader extendLayerReader = LayerFactory.getReader(this.ss, extentLayerReaderConfig);
     List<Geometry> extendGeometries = ((List<Tuple2<String, Feature>>)extendLayerReader.read().filterEmpty().collect())
       .stream().map(x->x._2.getGeometry()).collect(Collectors.toList());
 
@@ -57,13 +58,15 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
       extendGeometry.union(extendGeometries.get(i));
     }
 
-    LayerReaderConfig targetLayerReaderConfig = this.arg.getTargetReaderConfig();
+
+    LayerReaderConfig targetLayerReaderConfig=LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
+
     SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
     if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
       // 基于范围图斑构造空间查询语句
       String sql = String.format("");
     }
-    LayerReader targetLayerReader = LayerFactory.getReader(this.ss, this.arg.getTargetReaderConfig());
+    LayerReader targetLayerReader = LayerFactory.getReader(this.ss, targetLayerReaderConfig);
     Layer targetLayer = targetLayerReader.read();
 
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
@@ -152,7 +155,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
     });
 
     Map<String, Double> result = resultRDD.collectAsMap();
-    File file = new File("");
+    File file = new File("G:\\DATA\\flow\\out\\result.txt");
     if (file.exists()) {
       file.delete();
     }
