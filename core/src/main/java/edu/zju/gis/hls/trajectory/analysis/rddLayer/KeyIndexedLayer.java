@@ -5,6 +5,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
@@ -24,6 +25,7 @@ import java.util.List;
  * 基于 Key 构建索引，用于数据分区
  **/
 @Slf4j
+@NoArgsConstructor
 public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
 
   @Getter

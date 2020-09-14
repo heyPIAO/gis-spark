@@ -125,7 +125,15 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   public Feature(Feature f){
-    this(f.getFid(), (T)f.getGeometry(), f.getAttributes());
+    LinkedHashMap<Field, Object> map = new LinkedHashMap<>();
+    map.putAll(f.getAttributes());
+    this.fid = f.getFid();
+    this.attributes = map;
+    if (f.isEmpty() && f.getGeometry() == null) {
+      this.geometry = null;
+    } else {
+      this.geometry = (T)f.getGeometry().copy();
+    }
   }
 
   public Feature intersect(Feature f, Boolean attrReserved) {
@@ -243,7 +251,7 @@ public class Feature <T extends Geometry> implements Serializable {
         sb.append(String.valueOf(attributes.get(k)) + "\t");
       }
     }
-    if (!this.geometry.isEmpty()) {
+    if (!this.isEmpty()) {
       sb.append(geometry.toString());
     } else {
       sb.deleteCharAt(sb.lastIndexOf("\t"));
@@ -278,6 +286,10 @@ public class Feature <T extends Geometry> implements Serializable {
     return a;
   }
 
+  public void addAttribute(Field field, Object o) {
+    this.attributes.put(field, o);
+  }
+
   public void addAttributes(LinkedHashMap<Field, Object> o) {
     this.attributes.putAll(o);
   }
@@ -290,6 +302,20 @@ public class Feature <T extends Geometry> implements Serializable {
       of.put(f, v);
     }
     this.addAttributes(of);
+  }
+
+  public boolean updateAttribute(Field f, Object o) {
+    return this.updateAttribute(f.getName(), o);
+  }
+
+  public boolean updateAttribute(String fname, Object o) {
+    if (this.getAttribute(fname) == null) {
+      log.warn(String.format("Field %s not exist, do nothing", fname));
+      return false;
+    }
+    Field f = this.getField(fname);
+    this.attributes.put(f, o);
+    return true;
   }
 
   /**
@@ -320,7 +346,7 @@ public class Feature <T extends Geometry> implements Serializable {
     }
     result.put("type", "Feature");
     result.put("properties", properties);
-    if (!this.geometry.isEmpty()) {
+    if (!this.isEmpty()) {
       result.put("geometry", this.getGeometryMap());
     }
     String resultStr = gson.toJson(result);
@@ -348,7 +374,7 @@ public class Feature <T extends Geometry> implements Serializable {
     for (Field f: fields) {
       values.add(this.getAttribute(f));
     }
-    if (!this.geometry.isEmpty()) {
+    if (!this.isEmpty()) {
       values.add(this.getGeometryWkt());
     }
     Object[] result = new Object[values.size()];
