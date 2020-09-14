@@ -82,8 +82,8 @@ public class MdbDataReader extends DataReader {
   }
 
   @Override
-  protected void readCRS() {
-    this.crs = this.featureLayer.GetSpatialRef().ExportToWkt();
+  protected String readCRS() {
+    return this.featureLayer.GetSpatialRef().ExportToWkt();
   }
 
   @Override
@@ -98,6 +98,8 @@ public class MdbDataReader extends DataReader {
       return null;
     }
     return mapToObject(f, ft);
+//    String fieldTypeName = ft.GetTypeName();
+//    return f.GetFieldAsString(fieldName);
   }
 
   public static String getId(Feature f) {
@@ -114,4 +116,5 @@ public class MdbDataReader extends DataReader {
       default: return f.GetFieldAsString(ft.GetName());
     }
   }
+
 }
