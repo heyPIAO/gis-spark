@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author Hu
  * @date 2019/6/19
- * 数据读取基类
+ * 文件类型数据读取基类
  **/
 @Getter
 @Setter

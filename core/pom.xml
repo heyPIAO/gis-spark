@@ -171,6 +171,11 @@
             <version>${es.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.gdal</groupId>
+            <artifactId>gdal</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
