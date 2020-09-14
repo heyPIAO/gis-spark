@@ -4,6 +4,7 @@ import edu.zju.gis.hls.trajectory.analysis.util.FileUtil;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderException;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataReaderExceptionEnum;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
+import lombok.extern.slf4j.Slf4j;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.dbf.DbaseFileHeader;
 import org.geotools.data.shapefile.dbf.DbaseFileReader;
@@ -13,8 +14,6 @@ import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,9 +31,8 @@ import static edu.zju.gis.hls.trajectory.datastore.base.Seperator.SINGLE_LINE;
  * TODO Attach datasource to support not only sysytem file, but also hdfs file and obs file
  * TODO only support utf8 now, read encode type from cpg file and support different encode type
  **/
+@Slf4j
 public class ShpDataReader extends DataReader {
-
-  private static final Logger logger = LoggerFactory.getLogger(ShpDataReader.class);
 
   private FeatureIterator<SimpleFeature> reader;
 
