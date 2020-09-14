@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.datastore.base.FieldBasicStat;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Dataset;
@@ -33,6 +35,8 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -57,6 +61,11 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         return new Layer<String, F>(jsc.parallelize(fs).rdd(),
                 scala.reflect.ClassTag$.MODULE$.apply(String.class),
                 scala.reflect.ClassTag$.MODULE$.apply(f));
+    }
+
+    protected Layer(RDD<Tuple2<K, V>> rdd) {
+        super(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(Feature.class));
+        this.metadata = new LayerMetadata();
     }
 
     protected Layer(RDD<Tuple2<K, V>> rdd, ClassTag<K> kClassTag, ClassTag<V> vClassTag) {
@@ -307,6 +316,36 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         }
 
         this.isAnalyzed = true;
+    }
+
+    public StatLayer aggregateByField(String fieldName) {
+        for (Field f: this.getMetadata().getAttributes().keySet()) {
+            if (f.getName().equals(fieldName)) return this.aggregateByField(f);
+        }
+        throw new GISSparkException("no field named after " + fieldName);
+    }
+
+    public StatLayer aggregateByField(Field f) {
+        if (f.isNumeric()) {
+            return this.aggregateByField(f, (v1, v2)->((Number)v1).doubleValue()+((Number)v2).doubleValue());
+        }
+        throw new GISSparkException("Unvalid field for aggregator, default is set for numeric field");
+    }
+
+    /**
+     * 自定义聚合函数
+     * @param f
+     * @return
+     */
+    public <F> StatLayer aggregateByField(Field f, BiFunction<F, F, F> aggregator) {
+        JavaPairRDD<Field, Object> r = this.mapToPair(x->new Tuple2<>(f, x._2.getAttribute(f)));
+        JavaRDD<Tuple2<String, LinkedHashMap<Field, Object>>> r2 = r.reduceByKey((v1,v2)->aggregator.apply((F)v1, (F)v2))
+          .map(p ->{
+              LinkedHashMap<Field, Object> m = new LinkedHashMap<>();
+              m.put(p._1, p._2);
+              return new Tuple2<>(p._1.getName(), m);
+          });
+        return new StatLayer(r2);
     }
 
     public void print() {

@@ -1,6 +1,5 @@
 package edu.zju.gis.hls.trajectory.analysis.index.partitioner;
 
-import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTree;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

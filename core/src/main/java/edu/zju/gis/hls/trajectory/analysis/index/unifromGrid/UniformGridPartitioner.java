@@ -12,6 +12,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Hu
@@ -68,6 +69,16 @@ public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartition
       }
     }
     return keys;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    UniformGridPartitioner that = (UniformGridPartitioner) o;
+    return z == that.z &&
+      Objects.equals(pc, that.pc) &&
+      Objects.equals(conf, that.conf);
   }
 
 }

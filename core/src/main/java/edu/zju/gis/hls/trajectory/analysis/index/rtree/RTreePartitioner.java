@@ -8,6 +8,7 @@ import lombok.ToString;
 import org.locationtech.jts.geom.Geometry;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Hu
@@ -34,6 +35,14 @@ public class RTreePartitioner extends PreBuildDistributeSpatialPartitioner {
   @Override
   public KeyRangeFeature getKeyRangeFeature(String key) {
     return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RTreePartitioner that = (RTreePartitioner) o;
+    return Objects.equals(rTree, that.rTree);
   }
 
 }

@@ -1,7 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.index.rtree;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import lombok.Getter;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -9,6 +8,7 @@ import org.locationtech.jts.index.strtree.STRtree;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -25,12 +25,8 @@ public class RTree {
   @Getter
   private List<Envelope> grids;
 
-//  @Getter
-//  private LayerType layerType;
-//
 
   public RTree() {
-//    this.layerType = layerType;
     this.grids = new ArrayList<>();
     si = new STRtree();
   }
@@ -62,4 +58,13 @@ public class RTree {
     this.si.build();
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RTree rTree = (RTree) o;
+    return Objects.equals(si.depth(), rTree.si.depth())
+      && Objects.equals(si.size(), rTree.si.size())
+      && Objects.equals(grids.size(), rTree.grids.size());
+  }
 }
