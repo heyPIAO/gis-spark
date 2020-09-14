@@ -422,7 +422,16 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         MultiPolygonLayer intersectedLayer = new MultiPolygonLayer(intersected.map(new Function<Tuple2<String, Geometry>, Tuple2<String, MultiPolygon>>() {
             @Override
             public Tuple2<String, MultiPolygon> call(Tuple2<String, Geometry> in) throws Exception {
-                MultiPolygon p = new MultiPolygon(in._1, (org.locationtech.jts.geom.MultiPolygon) in._2);
+                MultiPolygon p;
+                if (in._2.isSimple()) {
+                    GeometryFactory gf = new GeometryFactory();
+                    org.locationtech.jts.geom.Polygon[] ps = new org.locationtech.jts.geom.Polygon[]{(org.locationtech.jts.geom.Polygon) in._2};
+                    org.locationtech.jts.geom.MultiPolygon mp = gf.createMultiPolygon(ps);
+                    p = new MultiPolygon(in._1, mp);
+                } else {
+                    p = new MultiPolygon(in._1, (org.locationtech.jts.geom.MultiPolygon) in._2);
+                }
+
                 return new Tuple2<>(in._1, p);
             }
         }).rdd());
