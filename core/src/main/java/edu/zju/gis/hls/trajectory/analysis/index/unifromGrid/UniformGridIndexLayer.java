@@ -27,6 +27,7 @@ public class UniformGridIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
   private UniformGridIndexConfig conf;
 
   public UniformGridIndexLayer(PyramidConfig pc, UniformGridIndexConfig conf) {
+    super();
     this.indexType = IndexType.UNIFORM_GRID;
     this.pc = pc;
     this.conf = conf;

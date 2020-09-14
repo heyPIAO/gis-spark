@@ -173,7 +173,6 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
     }
 
     private void initPgConfig(PgLayerWriterConfig config) {
-        // sinkpath example: jdbc:postgresql://localhost:5432/postgres
         // TODO 用正则取出来
         String[] s = config.getSinkPath().split(":");
         this.pgConfig.setUrl(s[2].replace("//", ""));

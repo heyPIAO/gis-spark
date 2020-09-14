@@ -71,7 +71,7 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
         //判断路径是否为文件夹，支持二级目录下所有.shp文件路径的获取
         List<String> paths2File = new ArrayList<>();
         for (String subPath : paths) {
-            File subFile = new File(subPath.replace(SourceType.SHP.getPrefix(),""));
+            File subFile = new File(subPath.replace(SourceType.SHP.getPrefix(), ""));
             if (subFile.exists()) {
                 if (subFile.isFile() && subFile.getName().endsWith(".shp")) {
                     paths2File.add(subFile.getAbsolutePath());
@@ -125,7 +125,14 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
                     Field[] keys = readerConfig.getAttributes();
 
                     for (Field key : keys) {
-                        attributes.put(key, sf.getAttribute(key.getName()));
+                        Object shpField = sf.getAttribute(key.getName());
+                        if (shpField != null && shpField.getClass().equals(java.util.Date.class)) {
+                            Date d = (java.util.Date) shpField;
+                            java.sql.Date sqlDate = new java.sql.Date(d.getTime());
+                            attributes.put(key, sqlDate);
+                        } else {
+                            attributes.put(key, shpField);
+                        }
                     }
 
                     // build feature

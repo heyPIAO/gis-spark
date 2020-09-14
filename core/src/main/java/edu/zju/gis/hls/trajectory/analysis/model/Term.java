@@ -78,7 +78,7 @@ public class Term implements Serializable {
   public static CoordinateReferenceSystem DEFAULT_CRS() {
     try {
       // return CRS.parseWKT(WKT_4528);
-      return CRS.decode("epsg:4326");
+      return CRS.decode("epsg:4528");
     } catch (FactoryException e) {
       e.printStackTrace();
     }
