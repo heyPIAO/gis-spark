@@ -81,7 +81,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         LayerReader targetLayerReader = null;
         if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
             // 基于范围图斑构造空间查询语句
-            // todo
             String extentWKT = approximateExtendGeom.toText();
             String filterSql = String.format("st_intersects(st_geomFromWKT(%s),st_geomfromtext(\"WKT\",%d))", extentWKT, CRS.lookupEpsgCode(targetLayerReaderConfig.getCrs(), false));
             PgLayerReaderConfig pgLayerReaderConfig = (PgLayerReaderConfig) targetLayerReaderConfig;
@@ -143,7 +142,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 return new Tuple2<>(input._1, fo);
             }
         }).distinct();
-
 
         Layer kcLayer = ((Layer<String, Feature>) intersectedLayer).mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
@@ -210,7 +208,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                         attr.put(key, tbdlmj);
                     }
                 }
-//        f.setAttributes(attr);
                 return f;
             }
         }).mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
@@ -220,18 +217,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         });
 
-//    Map<String, Feature> result = resultRDD.collectAsMap();
-//    File file = new File("G:\\DATA\\flow\\out\\result.txt");
-//    if (file.exists()) {
-//      file.delete();
-//    }
-//    FileWriter writer = new FileWriter(file);
-//    for(String key :result.keySet()){
-//      writer.write(key+"##"+result.get(key).getAttribute("TBDLMJ")+"\t\n");
-//    }
-//    writer.close();
-//    StatLayer statLayer = layer.aggregateByField(this.arg.getAggregateFieldName());
-//
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter resultWriter = LayerFactory.getWriter(this.ss, writerConfig);
         resultWriter.write(resultLayer);
