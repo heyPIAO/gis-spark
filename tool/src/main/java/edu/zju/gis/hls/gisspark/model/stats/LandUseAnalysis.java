@@ -63,11 +63,12 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
     LayerReaderConfig targetLayerReaderConfig=LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
 
-//    SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
-//    if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
-//      // 基于范围图斑构造空间查询语句
-//      String sql = String.format("");
-//    }
+    SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
+    if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
+      // 基于范围图斑构造空间查询语句
+      String sql = String.format("");
+    }
+
     LayerReader targetLayerReader = LayerFactory.getReader(this.ss, targetLayerReaderConfig);
     Layer targetLayer = targetLayerReader.read();
 

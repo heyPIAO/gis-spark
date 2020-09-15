@@ -4,6 +4,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
@@ -83,6 +84,10 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
                     }
                 }
             }
+        }
+
+        if (paths2File.size() == 0) {
+            throw new GISSparkException("Shapefile Layer Reader Failed, File Path Number Is 0 ");
         }
 
         data = this.jsc.parallelize(paths2File, paths2File.size());

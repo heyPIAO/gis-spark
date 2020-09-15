@@ -78,13 +78,13 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
   }
 
   protected void prepare() {
-    log.info("Job PREPARE");
+    log.info("JOB PREPARE");
   }
 
   protected void finish() {
     this.ss.stop();
     this.ss.close();
-    log.info("Job Finish");
+    log.info("JOB FINISH");
   }
 
 }
