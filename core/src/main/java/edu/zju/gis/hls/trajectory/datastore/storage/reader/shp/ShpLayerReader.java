@@ -135,6 +135,7 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
                     sf = reader.nextFeature();
                 }
                 result.add(new Tuple2<>("PRJ: " + reader.getCrs(), null));
+                reader.close();
                 return result.iterator();
             }
         });

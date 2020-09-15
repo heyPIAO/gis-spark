@@ -17,6 +17,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
  * 土地利用现状分析模型
  * Hint：默认 Extent Layer 不会有非常多图斑
  **/
+@Slf4j
 public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
   private static Integer DEFAULT_INDEX_LEVEL = 14;
@@ -68,6 +70,10 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
     }
     LayerReader targetLayerReader = LayerFactory.getReader(this.ss, targetLayerReaderConfig);
     Layer targetLayer = targetLayerReader.read();
+
+    targetLayer.makeSureCached();
+
+    log.info(String.format("Target Layer Count: " + targetLayer.count()));
 
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
     KeyIndexedLayer indexedLayer = si.index(targetLayer);
