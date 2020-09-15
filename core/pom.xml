@@ -22,11 +22,6 @@
             <name>Open Source Geospatial Foundation Repository</name>
             <url>https://repo.osgeo.org/repository/release/</url>
         </repository>
-<!--        <repository>-->
-<!--            <id>boundless</id>-->
-<!--            <name>Boundless Repository</name>-->
-<!--            <url>https://repo.boundlessgeo.com/main/</url>-->
-<!--        </repository>-->
     </repositories>
 
     <build>
@@ -54,14 +49,6 @@
                     </descriptorRefs>
                 </configuration>
             </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-compiler-plugin</artifactId>-->
-<!--                <configuration>-->
-<!--                    <source>1.8</source>-->
-<!--                    <target>1.8</target>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
         </plugins>
     </build>
 
@@ -151,8 +138,6 @@
             <version>1.0.0</version>
         </dependency>
 
-
-        <!-- org.elasticsearch -->
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-spark-20_2.11</artifactId>
