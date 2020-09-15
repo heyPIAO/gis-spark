@@ -34,33 +34,30 @@ public class SparkUtil {
   }
 
   private static SparkSession createLocalSparkSession(String appName, SparkConf conf) {
-    SparkSession ss = SparkSession
+    return SparkSession
       .builder()
       .appName(appName)
-      .master("local[4]")
+      .master("local[1]")
       .config(overrideConf(conf))
       .getOrCreate();
-    return ss;
   }
 
   // TODO put remote spark url to property file
   private static SparkSession createRemoteSparkSession(String appName, SparkConf conf) {
-    SparkSession ss = SparkSession
+    return SparkSession
       .builder()
       .appName(appName)
 //      .master("spark://192.168.1.5:7077")
       .config(overrideConf(conf))
       .getOrCreate();
-    return ss;
   }
 
   private static SparkSession createShellSparkSession(String appName, SparkConf conf) {
-    SparkSession ss = SparkSession
+   return SparkSession
       .builder()
 //      .appName(appName).master("yarn")
       .config(overrideConf(conf))
       .getOrCreate();
-    return ss;
   }
 
 }

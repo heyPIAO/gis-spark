@@ -36,6 +36,8 @@ public abstract class DistributeSpatialPartitioner extends Partitioner
 
   protected int partitionNum;
 
+  protected boolean isClip = true;
+
   public DistributeSpatialPartitioner(int partitionNum) {
     super();
     this.partitionNum = partitionNum;
@@ -99,8 +101,6 @@ public abstract class DistributeSpatialPartitioner extends Partitioner
   public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Feature> in) throws Exception {
     List<Tuple2<String, Feature>> result = new ArrayList<>();
     List<KeyRangeFeature> keyRangeFeatures = this.getKeyRangeFeatures(in._2);
-    // TODO 作为参数传入
-    boolean isClip = true;
     for (KeyRangeFeature keyRangeFeature : keyRangeFeatures) {
       if (isClip) {
         Polygon p = keyRangeFeature.getGeometry();
@@ -121,7 +121,7 @@ public abstract class DistributeSpatialPartitioner extends Partitioner
           }
         }
         if (!finalGeom.isEmpty()) {
-          Feature f = in._2.getSelfCopyObject();
+          Feature f = new Feature(in._2);
           f.setGeometry(finalGeom);
           result.add(new Tuple2<>(keyRangeFeature.getFid(), f));
         }
