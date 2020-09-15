@@ -155,7 +155,7 @@ public class Feature <T extends Geometry> implements Serializable {
       for (Object m: f.getAttributes().keySet()) {
         Field mf = (Field)m;
         Field io = new Field(mf);
-        io.setName(mf.getName() + "_1");
+        io.setName(mf.getName() + "_2");//_2吧？
         attr.put(io, f.getAttribute(mf));
       }
     }
