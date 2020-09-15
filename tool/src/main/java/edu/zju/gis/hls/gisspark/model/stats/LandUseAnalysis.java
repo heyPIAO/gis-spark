@@ -10,15 +10,14 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
-import edu.zju.gis.hls.trajectory.analysis.util.FileUtil;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
@@ -27,42 +26,51 @@ import scala.Tuple2;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Hu
  * @date 2020/9/10
  * 土地利用现状分析模型
- * Hint：默认 Extent Layer 不会有非常多图斑
  **/
 @Slf4j
 public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
-  private static Integer DEFAULT_INDEX_LEVEL = 14;
+  private static Integer DEFAULT_INDEX_LEVEL = 12;
 
   public LandUseAnalysis(SparkSessionType type, String[] args) {
     super(type, args);
   }
 
+  /**
+   * 范围图层字段不得包含三调地类数据的标准字段名
+   * @return
+   */
+  private boolean checkExtendLayerFieldValid(Field f) {
+    String name = f.getName();
+    return !(name.equals("DLBM") || name.equals("BSM") || name.equals("KCDLBM") || name.equals("ZLDWDM")
+      || name.equals("TBMJ") || name.equals("TBDLMJ") || name.equals("EMPTY"));
+  }
+
   @Override
   protected void run() throws Exception {
     LayerReaderConfig extentLayerReaderConfig=LayerFactory.getReaderConfig(this.arg.getExtentReaderConfig());
-    LayerReader extendLayerReader = LayerFactory.getReader(this.ss, extentLayerReaderConfig);
-    List<Geometry> extendGeometries = ((List<Tuple2<String, Feature>>)extendLayerReader.read().filterEmpty().collect())
-      .stream().map(x->x._2.getGeometry()).collect(Collectors.toList());
-
-    Geometry extendGeometry = extendGeometries.get(0);
-    for (int i=1; i<extendGeometries.size(); i++) {
-      extendGeometry.union(extendGeometries.get(i));
+    for (Field f: extentLayerReaderConfig.getAttributes()) {
+      if (!checkExtendLayerFieldValid(f))
+        throw new GISSparkException(String.format("Unvalid extend layer field %s, " +
+          "field name cannot be in [DLBM, BSM, KCDLBM, ZLDWDM, TBMJ, TBDLMJ, EMPTY]", f.toString()));
     }
 
+    LayerReader extendLayerReader = LayerFactory.getReader(this.ss, extentLayerReaderConfig);
+
+    Layer extendLayer = extendLayerReader.read();
+    extendLayer.makeSureCached();
+    extendLayer.analyze();
+
+    Geometry approximateExtendGeom = extendLayer.getMetadata().getGeometry();
 
     LayerReaderConfig targetLayerReaderConfig=LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
-
     SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
     if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
       // 基于范围图斑构造空间查询语句
@@ -72,46 +80,48 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
     LayerReader targetLayerReader = LayerFactory.getReader(this.ss, targetLayerReaderConfig);
     Layer targetLayer = targetLayerReader.read();
 
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID,
+      new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
     KeyIndexedLayer indexedLayer = si.index(targetLayer);
+    KeyIndexedLayer extendIndexedLayer = si.index(extendLayer);
 
-    Layer filteredLayer = indexedLayer.query(extendGeometry).toLayer();//裁过了吗？没有裁，仅过滤
+    Layer filteredLayer = indexedLayer.intersect(extendIndexedLayer, true).toLayer();
 
-//    filteredLayer.makeSureCached();
-//    List<Tuple2<String, Feature>> fs = filteredLayer.collect();
-//    log.info("Target Layer Count: " + fs.size());
-    // fs.forEach(f->System.out.println(f._2.toString()));
-//    fs.stream().filter(x->x._2.getAttribute("BSM") == null).collect(Collectors.toList()).forEach(x->System.out.println(x._2.toString()));
-
-    Layer intersectedLayer = filteredLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
+    Layer intersectedLayer = filteredLayer.flatMapToLayer(new FlatMapFunction<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
       @Override
-      public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
+      public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Feature> input) throws Exception {
+
+        List<Tuple2<String, Feature>> result = new ArrayList<>();
         Feature feature=input._2;
         Geometry geometry=feature.getGeometry();
-        Geometry intersection=geometry.intersection(extendGeometry);
-        String dlbm=feature.getAttribute("DLBM").toString();
-        String bsm=feature.getAttribute("BSM").toString();
-        String kcdlbm=feature.getAttribute("KCDLBM").toString();
-        String zldwdm=feature.getAttribute("ZLDWDM").toString();
-        Double tbmj=Double.valueOf(feature.getAttribute("TBMJ").toString());
+        for (Feature f: extendFeatures) {
+          if (!geometry.intersects(f.getGeometry())) continue;
+          Geometry intersection=geometry.intersection(f.getGeometry());
+          if (intersection == null || intersection.isEmpty()) continue;
+          String dlbm=feature.getAttribute("DLBM").toString();
+          String bsm=feature.getAttribute("BSM").toString();
+          String kcdlbm=feature.getAttribute("KCDLBM").toString();
+          String zldwdm=feature.getAttribute("ZLDWDM").toString();
+          Double tbmj=Double.valueOf(feature.getAttribute("TBMJ").toString());
 
-        Double tbdlmj=Double.valueOf(feature.getAttribute("TBDLMJ").toString());
-        //Double kcmj=Double.valueOf(feature.getAttribute("KCMJ").toString());
-        Double xtbmj=intersection.getArea();
-        Double ytbmj=geometry.getArea();
+          Double tbdlmj=Double.valueOf(feature.getAttribute("TBDLMJ").toString());
+          Double xtbmj=intersection.getArea();
+          Double ytbmj=geometry.getArea();
 
-        Double area=tbdlmj*xtbmj/ytbmj;
-        Double xarea=tbmj*xtbmj/ytbmj;
-        LinkedHashMap<Field,Object> fields=new LinkedHashMap<>();
-        fields.put(new Field("DLBM"),dlbm);
-        fields.put(new Field("KCDLBM"),kcdlbm);
-        fields.put(new Field("ZLDWDM"),zldwdm);
-        fields.put(new Field("TBDLMJ"),area);
-        fields.put(new Field("TBMJ"),xarea);
+          Double area=tbdlmj*xtbmj/ytbmj;
+          Double xarea=tbmj*xtbmj/ytbmj;
+          LinkedHashMap<Field,Object> fields=new LinkedHashMap<>();
+          fields.put(new Field("DLBM"),dlbm);
+          fields.put(new Field("KCDLBM"),kcdlbm);
+          fields.put(new Field("ZLDWDM"),zldwdm);
+          fields.put(new Field("TBDLMJ"),area);
+          fields.put(new Field("TBMJ"),xarea);
 
-        Feature f = new Feature(feature);//生拷贝
-        f.setAttributes(fields);
-        return new Tuple2<>(bsm,f);
+          Feature fo = new Feature(feature);//深拷贝
+          fo.setAttributes(fields);
+          result.add(new Tuple2<>(bsm,fo));
+        }
+        return result.iterator();
       }
     }).distinct();
 
@@ -130,7 +140,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
           fields.put(new Field("DLBM"),kcdlbm);
           fields.put(new Field("ZLDWDM"),zldwdm);
           fields.put(new Field("TBDLMJ"),tbmj-tbdlmj);
-          Feature f = new Feature(feature);//生拷贝
+          Feature f = new Feature(feature);
           f.setAttributes(fields);
 
           return new Tuple2<>(input._1,f);

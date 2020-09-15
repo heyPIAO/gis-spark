@@ -45,7 +45,7 @@ import java.util.*;
 @Slf4j
 public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements Serializable {
 
-    private static Integer DEFAULT_INDEX_LEVEL = 14;
+    private static Integer DEFAULT_INDEX_LEVEL = 12;
 
 
     public LandFlowAnalysis(SparkSessionType type, String[] args) {

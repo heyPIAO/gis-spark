@@ -138,6 +138,7 @@ public class Feature <T extends Geometry> implements Serializable {
 
   public Feature intersect(Feature f, Boolean attrReserved) {
     Geometry g2 = f.geometry;
+    if (f.getGeometry().isEmpty() || g2.isEmpty() || !this.getGeometry().intersects(g2)) return Feature.empty();
     Geometry g = this.getGeometry().intersection(g2);
     if (g.isEmpty()) {
       return Feature.empty();
@@ -155,7 +156,7 @@ public class Feature <T extends Geometry> implements Serializable {
       for (Object m: f.getAttributes().keySet()) {
         Field mf = (Field)m;
         Field io = new Field(mf);
-        io.setName(mf.getName() + "_2");//_2吧？
+        io.setName(mf.getName() + "_2");
         attr.put(io, f.getAttribute(mf));
       }
     }
