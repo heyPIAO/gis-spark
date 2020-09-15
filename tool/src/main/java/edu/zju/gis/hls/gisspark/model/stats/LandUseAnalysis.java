@@ -63,20 +63,17 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
     LayerReaderConfig targetLayerReaderConfig=LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
 
-    SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
-    if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
-      // 基于范围图斑构造空间查询语句
-      String sql = String.format("");
-    }
+//    SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
+//    if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
+//      // 基于范围图斑构造空间查询语句
+//      String sql = String.format("");
+//    }
     LayerReader targetLayerReader = LayerFactory.getReader(this.ss, targetLayerReaderConfig);
     Layer targetLayer = targetLayerReader.read();
 
-    targetLayer.makeSureCached();
-
-    log.info(String.format("Target Layer Count: " + targetLayer.count()));
-
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
     KeyIndexedLayer indexedLayer = si.index(targetLayer);
+
 
     Layer filteredLayer = indexedLayer.query(extendGeometry).toLayer();//裁过了吗？没有裁，仅过滤
 
@@ -110,7 +107,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
       }
     }).distinct();
-
 
     Layer kcLayer=((Layer<String, Feature>) intersectedLayer).mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
       @Override

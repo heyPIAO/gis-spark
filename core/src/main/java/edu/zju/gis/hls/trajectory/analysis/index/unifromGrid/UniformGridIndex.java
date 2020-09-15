@@ -44,8 +44,8 @@ public class UniformGridIndex implements DistributeSpatialIndex, Serializable {
     PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build();
     UniformGridIndexLayer<L> result = new UniformGridIndexLayer<L>(pc, c);
     UniformGridPartitioner partitioner = new UniformGridPartitioner(pc, c, layer.getNumPartitions());
+    layer.print();
     L klayer = (L) layer.flatMapToLayer(partitioner).partitionByToLayer(partitioner);
-    klayer.makeSureCached();
     partitioner.collectPartitionMeta(klayer);
     result.setLayer(klayer);
     result.setPartitioner(partitioner);
