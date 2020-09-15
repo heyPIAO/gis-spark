@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.gisspark.model.loader.cluster;
 
-import edu.zju.gis.hls.gisspark.model.args.DataLoaderArgs;
+import edu.zju.gis.hls.gisspark.model.args.PgDataLoaderArgs;
 import edu.zju.gis.hls.gisspark.model.base.Constant;
 import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
@@ -12,8 +12,10 @@ import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.MSConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.config.PgConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.helper.ListStringSQLResultHandler;
+import edu.zju.gis.hls.trajectory.datastore.storage.helper.MSHelper;
 import edu.zju.gis.hls.trajectory.datastore.storage.helper.PgHelper;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.referencing.CRS;
@@ -23,25 +25,28 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.Instant;
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * @author Hu
  * @date 2020/9/3
  **/
 @Slf4j
-public class PgDataLoader extends DataLoader<DataLoaderArgs> {
+public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
 
     private PgConfig pgConfig = new PgConfig();
     private MSConfig msConfig = new MSConfig();
 
     public PgDataLoader(String[] args) {
         super(args);
-        this.initMsConfig();
+        this.initMs();
     }
 
     public PgDataLoader(SparkSessionType type, String[] args) {
         super(type, args);
+        this.initMs();
     }
 
     /**
@@ -53,6 +58,7 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
         super.prepare();
         LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
         PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
+        writerConfig.setTablename(this.arg.getTableName());
         this.initPgConfig(writerConfig);
         PgHelper pgHelper = new PgHelper(this.pgConfig);
         switch (writerConfig.getSaveMode()) {
@@ -90,9 +96,45 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
     @Override
     protected void storeMetadata(LayerMetadata metadata) {
         super.storeMetadata(metadata);
+        MSHelper msHelper = new MSHelper(this.msConfig);
         // TODO 将图层元数据信息存储到平台的 mysql 数据库中
-//        MSHelper helper = new MSHelper(msConfig);
-//        helper.close();
+        try {
+            LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
+            LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
+            ListStringSQLResultHandler handler = new ListStringSQLResultHandler();
+            msHelper.runSQL(countSourceTable(this.arg.getTableName()), handler);
+            if (handler.getResult().size() == 0) {
+                log.info("create new dataset.");
+                msHelper.runSQL(insertDatasetInfo(),
+                        UUID.randomUUID().toString()
+                        , this.arg.getLayerName()
+                        , this.arg.getLayerAlias()
+                        , "admin"
+                        , this.arg.getTableName()
+                        , this.arg.getLayerDescription()
+                        , writerConfig.getSinkPath()
+                        , "ParallelTool"
+                        , this.arg.getInput()
+                        , this.arg.getLayerTemplate()
+                        , "pgDataLoader"
+                        , this.arg.getLayerYear()
+                        , java.sql.Date.from(Instant.now())
+                        , java.sql.Date.from(Instant.now())
+                        , metadata.getLayerCount());
+            } else {
+                log.info("update dataset info.");
+                msHelper.runSQL(updateDatasetInfo(this.arg.getTableName()),
+                        metadata.getLayerCount()
+                        , java.sql.Date.from(Instant.now()));
+            }
+
+            msHelper.close();
+        } catch (Exception e) {
+            log.error("Metadata store failed.");
+            log.error(e.getMessage());
+            msHelper.close();
+            throw e;
+        }
     }
 
     /**
@@ -152,6 +194,24 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
         return String.format("CREATE INDEX IF NOT EXISTS %s ON %s USING GIST(st_geomfromtext(\"%s\", %d))", indexName, tableName, shapeField.getName(), Term.getEpsgCode(targetCrs));
     }
 
+    private String countSourceTable(String tbName) {
+        return "SELECT * FROM `di_md_dsinfo` WHERE `SOURCETABLE` = '" + tbName + "'";
+    }
+
+    private String insertDatasetInfo() {
+        return "INSERT INTO `di_md_dsinfo`(`ID`, `DSNAME`, `ALIAS`, `CREATEBY`," +
+                " `SOURCETABLE`, `SOURCE`, `DESCRIPTION`," +
+                " `USAGES`, `METADATAPARAM`, `TEMPLATENAME`, `RELATIVEID`, `DATAYEAR`," +
+                " `CREATETIME`, `LASTMODIFYTIME`, `SIZE`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    }
+
+    private String updateDatasetInfo(String tbName) {
+        return "UPDATE `di_md_dsinfo` SET " +
+                "`SIZE` = `SIZE`+? ," +
+                "`LASTMODIFYTIME` = ? " +
+                "WHERE `SOURCETABLE` = '" + tbName + "'";
+    }
+
     private String getAttrFromField(Field f) {
         StringBuffer sb = new StringBuffer();
         if (f.getFieldType().equals(FieldType.ID_FIELD)) {
@@ -183,14 +243,14 @@ public class PgDataLoader extends DataLoader<DataLoaderArgs> {
         this.pgConfig.setSchema(config.getSchema());
     }
 
-    private void initMsConfig() {
+    private void initMs() {
         InputStream in = this.getClass().getResourceAsStream("/mysqlConfig.properties");
         Properties props = new Properties();
         try {
             InputStreamReader inputStreamReader = new InputStreamReader(in, "UTF-8");
             props.load(inputStreamReader);
             this.msConfig.setUrl((String) (props.getOrDefault("url", msConfig.getUrl())));
-            this.msConfig.setPort((Integer) props.getOrDefault("port", msConfig.getPort()));
+            this.msConfig.setPort(Integer.valueOf(props.getOrDefault("port", msConfig.getPort()).toString()));
             this.msConfig.setDatabase((String) props.getOrDefault("database", msConfig.getDatabase()));
             this.msConfig.setUsername((String) props.getOrDefault("username", msConfig.getUsername()));
             this.msConfig.setPassword((String) props.getOrDefault("password", msConfig.getPassword()));
