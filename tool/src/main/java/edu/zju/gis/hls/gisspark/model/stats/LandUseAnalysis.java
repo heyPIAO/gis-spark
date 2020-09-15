@@ -74,8 +74,13 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
     KeyIndexedLayer indexedLayer = si.index(targetLayer);
 
-
     Layer filteredLayer = indexedLayer.query(extendGeometry).toLayer();//裁过了吗？没有裁，仅过滤
+
+//    filteredLayer.makeSureCached();
+//    List<Tuple2<String, Feature>> fs = filteredLayer.collect();
+//    log.info("Target Layer Count: " + fs.size());
+    // fs.forEach(f->System.out.println(f._2.toString()));
+//    fs.stream().filter(x->x._2.getAttribute("BSM") == null).collect(Collectors.toList()).forEach(x->System.out.println(x._2.toString()));
 
     Layer intersectedLayer = filteredLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
       @Override
@@ -102,11 +107,13 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         fields.put(new Field("ZLDWDM"),zldwdm);
         fields.put(new Field("TBDLMJ"),area);
         fields.put(new Field("TBMJ"),xarea);
-        feature.setAttributes(fields);
-        return new Tuple2<>(bsm,feature);
 
+        Feature f = new Feature(feature);//生拷贝
+        f.setAttributes(fields);
+        return new Tuple2<>(bsm,f);
       }
     }).distinct();
+
 
     Layer kcLayer=((Layer<String, Feature>) intersectedLayer).mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
       @Override
@@ -122,8 +129,10 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
           fields.put(new Field("DLBM"),kcdlbm);
           fields.put(new Field("ZLDWDM"),zldwdm);
           fields.put(new Field("TBDLMJ"),tbmj-tbdlmj);
-          feature.setAttributes(fields);
-          return new Tuple2<>(input._1,feature);
+          Feature f = new Feature(feature);//生拷贝
+          f.setAttributes(fields);
+
+          return new Tuple2<>(input._1,f);
         }
         return new Tuple2<>("EMPTY",null);
       }
@@ -141,29 +150,38 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
       public Tuple2 call(Tuple2<String,Feature> input) throws Exception {
         String dlbm=input._2.getAttribute("DLBM").toString();
         String zldwdm=input._2.getAttribute("ZLDWDM").toString();
-        return new Tuple2<>(dlbm+"##"+zldwdm,input._2);
+        Feature f = new Feature(input._2);
+        return new Tuple2<>(dlbm+"##"+zldwdm,f);
       }
     });
 
-    JavaPairRDD<String,Double> resultRDD=resultLayer.reduceByKey(new Function2<Feature,Feature,Double>() {
+    JavaPairRDD<String,Feature> resultRDD=resultLayer.reduceByKey(new Function2<Feature,Feature,Feature>() {
       @Override
-      public Double call(Feature input1, Feature input2) throws Exception {
+      public Feature call(Feature input1, Feature input2) throws Exception {
 
         Double tbdlmj1=Double.valueOf(input1.getAttribute("TBDLMJ").toString());
         Double tbdlmj2=Double.valueOf(input2.getAttribute("TBDLMJ").toString());
         Double tbdlmj=tbdlmj1+tbdlmj2;
-        return tbdlmj;
+        Feature f=new Feature(input1);
+        LinkedHashMap<Field,Object> attr=f.getAttributes();
+        for(Field key:attr.keySet()){
+          if(key.getName().equals("TBDLMJ")){
+            attr.put(key,tbdlmj);
+          }
+        }
+        f.setAttributes(attr);
+        return f;
       }
     });
 
-    Map<String, Double> result = resultRDD.collectAsMap();
+    Map<String, Feature> result = resultRDD.collectAsMap();
     File file = new File("G:\\DATA\\flow\\out\\result.txt");
     if (file.exists()) {
       file.delete();
     }
     FileWriter writer = new FileWriter(file);
     for(String key :result.keySet()){
-      writer.write(key+"##"+result.get(key));
+      writer.write(key+"##"+result.get(key).getAttribute("TBDLMJ")+"\t\n");
     }
     writer.close();
 //    StatLayer statLayer = layer.aggregateByField(this.arg.getAggregateFieldName());

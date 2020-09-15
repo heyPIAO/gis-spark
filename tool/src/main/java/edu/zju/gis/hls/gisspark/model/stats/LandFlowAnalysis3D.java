@@ -13,6 +13,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -40,8 +41,10 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
   @Override
   protected void run() throws Exception {
 
-    LayerReader layer1Reader = LayerFactory.getReader(this.ss, this.arg.getLayer1ReaderConfig());
-    LayerReader layer2Reader = LayerFactory.getReader(this.ss, this.arg.getLayer2ReaderConfig());
+    LayerReaderConfig layer1ReaderConfig=LayerFactory.getReaderConfig(this.arg.getLayer1ReaderConfig());
+    LayerReaderConfig layer2ReaderConfig=LayerFactory.getReaderConfig(this.arg.getLayer2ReaderConfig());
+    LayerReader layer1Reader = LayerFactory.getReader(this.ss, layer1ReaderConfig);
+    LayerReader layer2Reader = LayerFactory.getReader(this.ss, layer2ReaderConfig);
 
     MultiPolygonLayer layer1 = (MultiPolygonLayer)layer1Reader.read();
     MultiPolygonLayer layer2 = (MultiPolygonLayer)layer2Reader.read();
@@ -74,8 +77,8 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
 
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
 
-    KeyIndexedLayer<MultiPolygonLayer> indexedLayer1 = si.index(gareaLayer1);
-    KeyIndexedLayer<MultiPolygonLayer> indexedLayer2 = si.index(gareaLayer2);
+    KeyIndexedLayer indexedLayer1 = si.index(gareaLayer1);
+    KeyIndexedLayer indexedLayer2 = si.index(gareaLayer2);
 
 
 
@@ -92,7 +95,7 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
 
         String qdlbm=multiPolygon.getAttribute("DLBM_1").toString();
         String qkcdlbm=multiPolygon.getAttribute("KCDLBM_1").toString();
-        String qzldwdm=multiPolygon.getAttribute("ZLDWDM_1").toString();
+        //String qzldwdm=multiPolygon.getAttribute("ZLDWDM_1").toString();
         Double qtbmj=Double.valueOf(multiPolygon.getAttribute("TBMJ_1").toString());
         Double qtbdlmj=Double.valueOf(multiPolygon.getAttribute("TBDLMJ_1").toString());
         Double qytbmj=Double.valueOf(multiPolygon.getAttribute("YTBMJ_1").toString());

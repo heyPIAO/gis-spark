@@ -17,19 +17,19 @@ import org.kohsuke.args4j.Option;
 public class LandFlowAnalysis3DArgs extends BaseArgs {
 
   @Option(name = "-layer1",usage = "图斑三调图层读取参数定义,json", required = true)
-  private LayerReaderConfig layer1ReaderConfig; // 三调图层一
+  private String layer1ReaderConfig; // 三调图层一
 
-  @Option(name = "-layer2",usage = "图斑二调图层读取参数定义,json", required = true)
-  private LayerReaderConfig layer2ReaderConfig; // 二调图层二
+  @Option(name = "-layer2",usage = "图斑三调图层读取参数定义,json", required = true)
+  private String layer2ReaderConfig; // 三调图层二
 
   @Option(name = "-attrReserved",usage = "是否保留两个图层的字段信息", required = false)
   private Boolean attrReserved = Boolean.TRUE;
 
   @Option(name = "-geomWriter",usage = "结果图层写出,json", required = true)
-  private LayerWriterConfig geomWriterConfig; // 空间数据写出配置
+  private String geomWriterConfig; // 空间数据写出配置
 
   @Option(name = "-statWriter",usage = "结果图层聚合结果写出,json", required = true)
-  private LayerWriterConfig statWriterConfig; // 统计数据写出配置
+  private String statWriterConfig; // 统计数据写出配置
 
   @Option(name = "-aggregateFieldName",usage = "聚合字段名称", required = true)
   private String aggregateFieldName;
