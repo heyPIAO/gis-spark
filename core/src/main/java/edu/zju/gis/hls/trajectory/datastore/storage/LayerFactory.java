@@ -16,6 +16,8 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderC
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.CitusPgLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.MdbLayerReader;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.MdbLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.ShpLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.ShpLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
@@ -54,6 +56,8 @@ public class LayerFactory {
       return new ShpLayerReader<L>(ss, (ShpLayerReaderConfig) config);
     }else if (sourceType.equals(SourceType.CitusPG)) {
       return new CitusPgLayerReader<L>(ss, (PgLayerReaderConfig) config);
+    } else if (sourceType.equals(SourceType.MDB)){
+      return new MdbLayerReader<L>(ss, (MdbLayerReaderConfig) config);
     } else {
       throw new LayerReaderException("Unsupport layer reader type: " + layerType.name());
     }

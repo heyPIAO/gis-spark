@@ -11,10 +11,7 @@ import org.apache.spark.Partitioner;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.api.java.function.*;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -104,6 +101,7 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         this.metadata = from.metadata;
     }
 
+
     public Field findAttribute(String name) {
         for (Field f : this.metadata.getAttributes().keySet()) {
             if (f.getName().equals(name)) {
@@ -176,6 +174,18 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
 
     public Layer<K, V> mapToLayer(Function<Tuple2<K, V>, Tuple2<K, V>> f) {
         return this.initialize(this, this.map(f).rdd());
+    }
+
+    public Layer<K, V> union(Layer<K, V> layer) {
+        return this.initialize(this,this.rdd().union(layer.rdd()) );
+    }
+
+    public Layer<K, V> distinct() {
+        return this.initialize(this,this.rdd().distinct() );
+    }
+
+    public Layer<K, V> mapToLayer(PairFunction<Tuple2<K, V>, K, V> f) {
+        return this.initialize(this, this.mapToPair(f).rdd());
     }
 
     public Layer<K, V> flatMapToLayer(FlatMapFunction<Tuple2<K, V>, Tuple2<K, V>> f) {

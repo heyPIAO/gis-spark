@@ -35,6 +35,7 @@ public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartition
     int zmin = pc.getZMin();
     int zmax = pc.getZMax();
     this.z = Math.min(Math.max(zmin, this.conf.getIndexLevel()), zmax);
+    this.isClip = conf.isClip();
   }
 
   public UniformGridPartitioner(PyramidConfig pc, int partitionNum) {

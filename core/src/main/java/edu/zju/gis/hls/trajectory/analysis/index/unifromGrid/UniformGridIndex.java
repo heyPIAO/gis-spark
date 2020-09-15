@@ -45,7 +45,6 @@ public class UniformGridIndex implements DistributeSpatialIndex, Serializable {
     UniformGridIndexLayer<L> result = new UniformGridIndexLayer<L>(pc, c);
     UniformGridPartitioner partitioner = new UniformGridPartitioner(pc, c, layer.getNumPartitions());
     L klayer = (L) layer.flatMapToLayer(partitioner).partitionByToLayer(partitioner);
-    klayer.makeSureCached();
     partitioner.collectPartitionMeta(klayer);
     result.setLayer(klayer);
     result.setPartitioner(partitioner);
