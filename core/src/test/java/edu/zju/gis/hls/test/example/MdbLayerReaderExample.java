@@ -27,7 +27,7 @@ public class MdbLayerReaderExample {
     MdbLayerReaderConfig config = new MdbLayerReaderConfig();
     config.setLayerType(LayerType.MULTI_POLYGON_LAYER);
     config.setTargetLayerName("DLTB");
-    config.setSourcePath("C:\\Users\\Hu\\Desktop\\test.mdb");
+    config.setSourcePath(args[0]);
 
     MdbLayerReader<MultiPolygonLayer> dltbLayerReader = new MdbLayerReader<>(ss, config);
     MultiPolygonLayer dltbLayer = dltbLayerReader.read();
@@ -35,7 +35,7 @@ public class MdbLayerReaderExample {
     // dltbLayer.cache();
 
     log.info(String.format("Layer Count: %d", dltbLayer.count()));
-    // dltbLayer.print();
+    dltbLayer.print();
 
     ss.close();
     ss.stop();

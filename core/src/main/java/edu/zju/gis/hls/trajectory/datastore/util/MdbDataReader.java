@@ -98,8 +98,6 @@ public class MdbDataReader extends DataReader {
       return null;
     }
     return mapToObject(f, ft);
-//    String fieldTypeName = ft.GetTypeName();
-//    return f.GetFieldAsString(fieldName);
   }
 
   public static String getId(Feature f) {
@@ -116,5 +114,4 @@ public class MdbDataReader extends DataReader {
       default: return f.GetFieldAsString(ft.GetName());
     }
   }
-
 }

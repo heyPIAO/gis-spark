@@ -21,52 +21,52 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * 数据入库到指定后端
  **/
 @Slf4j
-public class DataLoader<DataLoadArgs> extends BaseModel<DataLoaderArgs> {
+public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
 
-  public DataLoader(String[] args) {
-    super(args);
-  }
+    public DataLoader(String[] args) {
+        super(args);
+    }
 
-  public DataLoader(SparkSessionType type, String[] args) {
-    super(type, args);
-  }
+    public DataLoader(SparkSessionType type, String[] args) {
+        super(type, args);
+    }
 
-  @Override
-  protected void run() throws Exception {
+    @Override
+    protected void run() throws Exception {
 
-    LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
-    LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
+        LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
+        LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
 
-    LayerReader layerReader = LayerFactory.getReader(this.ss, readerConfig);
-    Layer<String, Feature> layer = (Layer<String, Feature>)layerReader.read();
+        LayerReader layerReader = LayerFactory.getReader(this.ss, readerConfig);
+        Layer<String, Feature> layer = (Layer<String, Feature>) layerReader.read();
 
 //    CoordinateReferenceSystem targetCrs = CRS.decode(this.arg.getTargetCrs());
 //    if (!layer.getMetadata().getCrs().equals(targetCrs))
 //      layer = layer.transform(targetCrs);
 
-    // 计算图层四至
-    layer.makeSureCached();
-    layer.analyze();
-    storeMetadata(layer.getMetadata());
+        // 计算图层四至
+        layer.makeSureCached();
+        layer.analyze();
+        storeMetadata(layer.getMetadata());
 
-    LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
-    writer.write(layer);
-  }
+        LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
+        writer.write(layer);
+    }
 
-  protected void storeMetadata(LayerMetadata metadata) {
-    log.info("Store Layer Metadata for Layer " + metadata.getLayerName() + ": " + metadata.toJson());
-    log.info("Layer Count:" + metadata.getLayerCount());
-}
+    protected void storeMetadata(LayerMetadata metadata) {
+        log.info("Store Layer Metadata for Layer " + metadata.getLayerName() + ": " + metadata.toJson());
+        log.info("Layer Count:" + metadata.getLayerCount());
+    }
 
-  @Override
-  protected void finish() {
-    log.info("DataLoader Job Finish");
-    super.finish();
-  }
+    @Override
+    protected void finish() {
+        log.info("DataLoader Job Finish");
+        super.finish();
+    }
 
-  public static void main(String[] args) throws Exception {
-    DataLoader pgLoader = new DataLoader(SparkSessionType.LOCAL, args);
-    pgLoader.exec();
-  }
+    public static void main(String[] args) throws Exception {
+        DataLoader pgLoader = new DataLoader(SparkSessionType.LOCAL, args);
+        pgLoader.exec();
+    }
 
 }

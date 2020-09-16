@@ -1,8 +1,8 @@
 package edu.zju.gis.hls.gisspark.model.args;
 
-import com.sun.deploy.util.StringUtils;
 import edu.zju.gis.hls.gisspark.model.exception.ModelFailedException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 

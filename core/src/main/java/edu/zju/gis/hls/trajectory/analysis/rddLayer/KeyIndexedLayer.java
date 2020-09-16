@@ -68,7 +68,7 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
   }
 
   public KeyIndexedLayer<L> intersect(KeyIndexedLayer layer2, Boolean attrReserved) {
-    if (this.getPartitioner().equals(layer2.getPartitioner())) {//什么意思？？
+    if (this.getPartitioner().equals(layer2.getPartitioner())) {
       throw new GISSparkException("two layer mush have the same partitioner with the same key");
     }
 
@@ -86,7 +86,7 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
           for(Feature f2: in2) {
             Feature r = f1.intersect(f2, attrReserved);
             if (!r.isEmpty()) {
-              result.add(new Tuple2<>(input._1, f1.intersect(f2, attrReserved)));
+              result.add(new Tuple2<>(input._1, r));
             }
           }
         }

@@ -65,7 +65,7 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         this.metadata = new LayerMetadata();
     }
 
-    protected Layer(RDD<Tuple2<K, V>> rdd, ClassTag<K> kClassTag, ClassTag<V> vClassTag) {
+    public Layer(RDD<Tuple2<K, V>> rdd, ClassTag<K> kClassTag, ClassTag<V> vClassTag) {
         super(rdd, kClassTag, vClassTag);
         this.metadata = new LayerMetadata();
     }
@@ -174,6 +174,10 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
 
     public Layer<K, V> mapToLayer(Function<Tuple2<K, V>, Tuple2<K, V>> f) {
         return this.initialize(this, this.map(f).rdd());
+    }
+
+    public Layer<K, V> reduceToLayer(Function2<V,V,V> f) {
+        return this.initialize(this, this.reduceByKey(f).rdd());
     }
 
     public Layer<K, V> union(Layer<K, V> layer) {

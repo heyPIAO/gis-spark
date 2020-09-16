@@ -37,7 +37,7 @@ public abstract class IndexedLayer<L extends Layer> implements Serializable {
    * 获取指定空间对象范围内的对象
    * @param geometries
    * @return
-   * TODO It's dangerous to return null, modify it later by return an empty layer
+   * TODO It's dangerous to return null, modify it by return an empty layer
    */
   public <I extends IndexedLayer<L>> I query(List<Geometry> geometries) {
     if (geometries.size() == 0) {
