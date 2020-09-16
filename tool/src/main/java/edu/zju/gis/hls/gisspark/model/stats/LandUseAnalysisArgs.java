@@ -19,9 +19,10 @@ public class LandUseAnalysisArgs extends BaseArgs {
   @Option(name = "-target",usage = "被统计图层,json", required = true)
   private String targetReaderConfig; // 被统计图层
 
-  @Option(name = "-statOutput",usage = "分析结果存储位置,json", required = false)
-  private String statsWriterConfig = "{}";
+  @Option(name = "-statOutput",usage = "分析结果存储位置,json", required = true)
+  private String statsWriterConfig;
 
-  @Option(name = "-aggregateFieldName",usage = "聚合字段名称", required = false)
-  private String aggregateFieldName = "{}";
+  @Option(name = "-geomOutput",usage = "Intersect结果存储位置,json", required = true)
+  private String geomWriterConfig;
+
 }
