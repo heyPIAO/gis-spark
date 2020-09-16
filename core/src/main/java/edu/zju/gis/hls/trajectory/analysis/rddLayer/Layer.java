@@ -27,6 +27,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
+import sun.plugin.com.Utils;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
@@ -51,6 +52,15 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
     protected LayerMetadata metadata;
 
     private boolean isAnalyzed = false;
+
+    /**
+     * 推断图层属性字段元信息
+     */
+    public void inferFieldMetadata() {
+        Feature f = this.first()._2;
+        Field[] fields = (Field[])IteratorUtils.toArray(f.getExistAttributes().keySet().iterator());
+        this.metadata.setAttributes(fields);
+    }
 
     public static <F extends Feature> Layer<String, F> empty(JavaSparkContext jsc, Class<F> f) {
         List<Tuple2<String, F>> fs = new ArrayList<>();

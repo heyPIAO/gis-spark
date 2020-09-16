@@ -317,6 +317,8 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         String layername = result.getMetadata().getLayerName();
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter resultWriter = LayerFactory.getWriter(this.ss, writerConfig);
+
+        result.inferFieldMetadata();
         resultWriter.write(result);
 
         // 转换到亩，控平差并输出
@@ -342,6 +344,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         });
         Layer resultM = new Layer(resultRDDM.rdd());
+        resultM.inferFieldMetadata();
         layer.setName(layername + "_mu");
         resultWriter.write(resultM);
 
@@ -368,6 +371,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         });
         Layer resultKM = new Layer(resultRDDKM.rdd());
+        resultM.inferFieldMetadata();
         layer.setName(layername + "_km");
         resultWriter.write(resultKM);
     }
