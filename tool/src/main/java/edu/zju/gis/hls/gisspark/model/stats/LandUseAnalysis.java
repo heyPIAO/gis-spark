@@ -266,9 +266,9 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         layer.cache();
 
         // 写出裁切以后面积调整过的图层
-        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
-        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
-        geomWriter.write(layer);
+//        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+//        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+//        geomWriter.write(layer);
 
         Layer resultLayer = layer.mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
@@ -307,10 +307,11 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 List<String> extendFieldStr = Arrays.stream(extentLayerReaderConfig.getAttributes()).map(x->x.getName()).collect(Collectors.toList());
                 return new Tuple2<>(StringUtils.join(extendFieldStr, "##"), v1._2);
             }
-        }).groupByKey().mapToPair(new PairFunction<Tuple2<String, Iterator<Feature>>, String, Iterator<Feature>> () {
+        }).groupByKey().mapToPair(new PairFunction<Tuple2<String, Iterable<Feature>>, String, Iterator<Feature>> () {/////groupbykey
             @Override
-            public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterator<Feature>> v1) throws Exception {
-                List<Feature> features = IteratorUtils.toList(v1._2);
+            public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterable<Feature>> v1) throws Exception {
+//                Iterator<Feature> v1f = v1._2;
+                List<Feature> features = IteratorUtils.toList(v1._2.iterator());
                 Double tarea = (Double) tareas.get(v1._1).getAttribute("KZMJ");
                 return new Tuple2<>(v1._1, AreaAdjustment.adjust(tarea, "TBDLMJ_1", features, DEFAULT_SCALE).iterator());
             }
@@ -325,6 +326,11 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 return features.stream().map(x->new Tuple2<>(x.getFid(), x)).collect(Collectors.toList()).iterator();
             }
         });
+
+        resultRDD.cache();
+        Map<String,Feature> result_list=resultRDD.collectAsMap();
+        log.info(""+result_list.size());
+
 
         Layer result = new Layer(resultRDD.rdd());
         String layername = result.getMetadata().getLayerName();

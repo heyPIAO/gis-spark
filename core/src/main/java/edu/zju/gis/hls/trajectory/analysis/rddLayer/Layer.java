@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.spark.Partitioner;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -58,8 +59,14 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
      */
     public void inferFieldMetadata() {
         Feature f = this.first()._2;
-        Field[] fields = (Field[])IteratorUtils.toArray(f.getExistAttributes().keySet().iterator());
-        this.metadata.setAttributes(fields);
+        Iterator<Field> fields = f.getExistAttributes().keySet().iterator();
+        List<Field> fo = new ArrayList<>();
+        while (fields.hasNext()) fo.add(fields.next());
+        Field[] foo = new Field[fo.size()];
+        for (int i=0; i<foo.length; i++) {
+            foo[i] = fo.get(i);
+        }
+        this.metadata.setAttributes(foo);
     }
 
     public static <F extends Feature> Layer<String, F> empty(JavaSparkContext jsc, Class<F> f) {
