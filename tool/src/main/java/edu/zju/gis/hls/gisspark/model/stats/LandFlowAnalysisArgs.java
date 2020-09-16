@@ -17,15 +17,15 @@ import org.kohsuke.args4j.Option;
 public class LandFlowAnalysisArgs extends BaseArgs {
 
   @Option(name = "-tb3d",usage = "图斑三调图层读取参数定义,json", required = true)
-  private LayerReaderConfig tb3dReaderConfig; // 三调图层
+  private String tb3dReaderConfig; // 三调图层
 
   @Option(name = "-tb2d",usage = "图斑二调图层读取参数定义,json", required = true)
-  private LayerReaderConfig xz2dReaderConfig; // 二调图层
+  private String xz2dReaderConfig; // 二调图层
 
   @Option(name = "-geomOutput",usage = "二三调流转空间结果输出参数定义,json", required = true)
-  private LayerWriterConfig geomWriterConfig; // 输出参数
+  private String geomWriterConfig; // 输出参数
 
   @Option(name = "-statOutput",usage = "二三调流转统计结果输出参数定义,json", required = true)
-  private LayerWriterConfig statsWriterConfig;
+  private String statsWriterConfig;
 
 }

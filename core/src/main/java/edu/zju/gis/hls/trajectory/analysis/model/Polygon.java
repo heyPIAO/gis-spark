@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.geotools.geometry.jts.JTS;
 
@@ -14,6 +15,7 @@ import java.util.List;
  **/
 @Getter
 @Setter
+@NoArgsConstructor
 public class Polygon extends Feature<org.locationtech.jts.geom.Polygon> {
 
   public Polygon(String fid, org.locationtech.jts.geom.Polygon geometry, LinkedHashMap<Field, Object> attributes) {

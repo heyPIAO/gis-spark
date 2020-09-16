@@ -9,14 +9,16 @@ import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexCon
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
 import edu.zju.gis.hls.trajectory.analysis.model.Point;
-import edu.zju.gis.hls.trajectory.analysis.model.Polygon;
+import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.PolygonLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.apache.spark.api.java.function.*;
 import org.apache.spark.sql.SparkSession;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
 import scala.Tuple2;
 import scala.Tuple3;
@@ -45,7 +48,7 @@ import java.util.*;
 @Slf4j
 public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements Serializable {
 
-    private static Integer DEFAULT_INDEX_LEVEL = 12;
+    private static Integer DEFAULT_INDEX_LEVEL = 14;
 
 
     public LandFlowAnalysis(SparkSessionType type, String[] args) {
@@ -54,25 +57,25 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
     @Override
     public void run() throws Exception {
-
-        LayerReader<PolygonLayer> tb3dLayerReader = LayerFactory.getReader(ss, this.arg.getTb3dReaderConfig());
-        PolygonLayer tb3dLayer = tb3dLayerReader.read();
-
-        PolygonLayer xz2dLayer = this.read2dLayer(ss, this.arg.getXz2dReaderConfig());
+        LayerReaderConfig tb3dReaderConfig=LayerFactory.getReaderConfig(this.arg.getTb3dReaderConfig());
+        LayerReader<MultiPolygonLayer> tb3dLayerReader = LayerFactory.getReader(ss, tb3dReaderConfig);
+        MultiPolygonLayer tb3dLayer = tb3dLayerReader.read();
+        LayerReaderConfig xz2dReaderConfig=LayerFactory.getReaderConfig(this.arg.getXz2dReaderConfig());
+        MultiPolygonLayer xz2dLayer = this.read2dLayer(ss, xz2dReaderConfig);
 
         DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
 
-//        PolygonLayer connected2d = (PolygonLayer) xz2dLayer.indexed(false); // key 为 TileID
-        PolygonLayer connected2d = si.index(xz2dLayer).getLayer(); // key 为 TileID
-//        PolygonLayer tb3dLayerPair = (PolygonLayer) tb3dLayer.indexed(false); // key 为 TileID
-        PolygonLayer tb3dLayerPair = si.index(tb3dLayer).getLayer(); // key 为 TileID
+//        MultiPolygonLayer connected2d = (MultiPolygonLayer) xz2dLayer.indexed(false); // key 为 TileID
+        MultiPolygonLayer connected2d = si.index(xz2dLayer).getLayer(); // key 为 TileID
+//        MultiPolygonLayer tb3dLayerPair = (MultiPolygonLayer) tb3dLayer.indexed(false); // key 为 TileID
+        MultiPolygonLayer tb3dLayerPair = si.index(tb3dLayer).getLayer(); // key 为 TileID
 
-        JavaPairRDD<String, Tuple2<Polygon, Polygon>> temp = tb3dLayerPair.cogroup(connected2d).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Iterable<Polygon>, Iterable<Polygon>>>, String, Tuple2<Polygon, Polygon>>() {
+        JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp = tb3dLayerPair.cogroup(connected2d).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>>, String, Tuple2<MultiPolygon, MultiPolygon>>() {
             @Override
-            public Iterator<Tuple2<String, Tuple2<Polygon, Polygon>>> call(Tuple2<String, Tuple2<Iterable<Polygon>, Iterable<Polygon>>> in) throws Exception {
-                List<Tuple2<String, Tuple2<Polygon, Polygon>>> result = new LinkedList<>();
-                for (Polygon tb3d: in._2._1) {
-                    for (Polygon tb2d: in._2._2) {
+            public Iterator<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> call(Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>> in) throws Exception {
+                List<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> result = new LinkedList<>();
+                for (MultiPolygon tb3d: in._2._1) {
+                    for (MultiPolygon tb2d: in._2._2) {
                         if (tb3d.getGeometry().intersects(tb2d.getGeometry())) {
                             result.add(new Tuple2<>(tb3d.getFid() + "##" + tb2d.getFid(), new Tuple2<>(tb3d, tb2d)));
                         } else {
@@ -85,34 +88,35 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             }
         }).filter(x->!x._1.equals("EMPTY")).distinct();
 
-        JavaPairRDD<String, Tuple2<Polygon, Polygon>> temp2=temp.reduceByKey(
-                new Function2<Tuple2<Polygon, Polygon>, Tuple2<Polygon, Polygon>, Tuple2<Polygon, Polygon>>() {
+        //去重
+        JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp2=temp.reduceByKey(
+                new Function2<Tuple2<MultiPolygon, MultiPolygon>, Tuple2<MultiPolygon, MultiPolygon>, Tuple2<MultiPolygon, MultiPolygon>>() {
                     @Override
-                    public Tuple2<Polygon, Polygon> call(Tuple2<Polygon, Polygon> polygonFeaturePolygonTuple2, Tuple2<Polygon, Polygon> polygonFeaturePolygonTuple22) throws Exception {
-                        return polygonFeaturePolygonTuple2;
+                    public Tuple2<MultiPolygon, MultiPolygon> call(Tuple2<MultiPolygon, MultiPolygon> polygonFeatureMultiPolygonTuple2, Tuple2<MultiPolygon, MultiPolygon> polygonFeatureMultiPolygonTuple22) throws Exception {
+                        return polygonFeatureMultiPolygonTuple2;
                     }
                 }
         );
 
-        JavaPairRDD<String, Tuple2<Polygon, Tuple3<Feature, Feature[], Feature[]>>> joined = temp2.mapToPair(new PairFunction<Tuple2<String, Tuple2<Polygon, Polygon>>, String, Tuple2<Polygon, Tuple3<Feature, Feature[], Feature[]>>>() {
+        JavaPairRDD<String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>> joined = temp2.mapToPair(new PairFunction<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>, String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>>() {
             @Override
-            public Tuple2<String, Tuple2<Polygon, Tuple3<Feature, Feature[], Feature[]>>> call(Tuple2<String, Tuple2<Polygon, Polygon>> in) throws Exception {
+            public Tuple2<String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>> call(Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>> in) throws Exception {
                 Feature[] lx2d = (Feature[]) in._2._2.getAttributesStr().get("lxdw");
                 Feature[] xz2d = (Feature[]) in._2._2.getAttributesStr().get("xzdw");
                 return new Tuple2<>(in._1, new Tuple2<>(in._2._1, new Tuple3<>(in._2._2, lx2d, xz2d)));
             }
         });
 
-        JavaPairRDD<String, Geometry> intersected = joined.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Polygon, Tuple3<Feature, Feature[], Feature[]>>>, String, Geometry>() {
+        JavaPairRDD<String, Geometry> intersected = joined.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>>, String, Geometry>() {
             @Override
-            public Iterator<Tuple2<String, Geometry>> call(Tuple2<String, Tuple2<Polygon, Tuple3<Feature, Feature[], Feature[]>>> t) throws Exception {
+            public Iterator<Tuple2<String, Geometry>> call(Tuple2<String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>> t) throws Exception {
 
                 List<Tuple2<String, Geometry>> result = new ArrayList<>();
 
                 result.add(new Tuple2<>("START", null));
 
-                Polygon tb3d = t._2._1;
-                Polygon tb2d = (Polygon) t._2._2._1();
+                MultiPolygon tb3d = t._2._1;
+                MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
                 tb3d=polygonFeatureEx(tb3d);
                 tb2d=polygonFeatureEx(tb2d);
 
@@ -134,7 +138,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                     Geometry ip = tb3d.getGeometry().intersection(tb2d.getGeometry());
                     int size = ip.getNumGeometries();
-                    a: for (int i=0; i<size; i++) {
+                    a: for (int i=0; i<size; i++) {//为什么要分开
                         Geometry g = ip.getGeometryN(i);
                         if (g.getDimension() < 2) continue;
                         double iarea = g.getArea();
@@ -419,25 +423,25 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
         intersected.cache();
 
-        MultiPolygonLayer intersectedLayer = new MultiPolygonLayer(intersected.map(new Function<Tuple2<String, Geometry>, Tuple2<String, MultiPolygon>>() {
-            @Override
-            public Tuple2<String, MultiPolygon> call(Tuple2<String, Geometry> in) throws Exception {
-                MultiPolygon p;
-                if (in._2.isSimple()) {
-                    GeometryFactory gf = new GeometryFactory();
-                    org.locationtech.jts.geom.Polygon[] ps = new org.locationtech.jts.geom.Polygon[]{(org.locationtech.jts.geom.Polygon) in._2};
-                    org.locationtech.jts.geom.MultiPolygon mp = gf.createMultiPolygon(ps);
-                    p = new MultiPolygon(in._1, mp);
-                } else {
-                    p = new MultiPolygon(in._1, (org.locationtech.jts.geom.MultiPolygon) in._2);
-                }
+        List<Tuple2<String, Geometry>> ri = intersected.collect();
+        log.info(String.valueOf(ri.size()));
 
-                return new Tuple2<>(in._1, p);
-            }
-        }).rdd());
-
-        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, this.arg.getGeomWriterConfig());
-        geomWriter.write(intersectedLayer);
+//        Layer intersectedLayer = new Layer(intersected.map(new Function<Tuple2<String, Geometry>, Tuple2<String, Feature>>() {
+//            @Override
+//            public Tuple2<String, Feature> call(Tuple2<String, Geometry> in) throws Exception {
+////                Polygon[] polygons1=new Polygon[1];
+////                polygons1[0]=(org.locationtech.jts.geom.Polygon) in._2;
+////                GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory( null );
+////                org.locationtech.jts.geom.MultiPolygon geometryNewall=geometryFactory.createMultiPolygon(polygons1);
+////                MultiPolygon p = new MultiPolygon(in._1, (org.locationtech.jts.geom.MultiPolygon) in._2);
+//                return new Tuple2<>(in._1, new Feature(in._2));
+//            }
+//        }).rdd());
+//
+//
+//        LayerWriterConfig geomWriterConfig=LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+//        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+//        geomWriter.write(intersectedLayer);
 
         // 写出空间信息
 //        intersected.foreachPartition(new VoidFunction<Iterator<Tuple2<String, Geometry>>>() {
@@ -475,14 +479,22 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
         JavaRDD<Tuple2<String, LinkedHashMap<Field, Object>>> statResult = flowAreaRDD.map(x->{
             LinkedHashMap<Field, Object> r = new LinkedHashMap<>();
-            Field f = new Field(x._1);
+            Field f = new Field("MJ");
             f.setType(java.lang.Double.class);
+            Field f2 = new Field("ZLDWXX");
             r.put(f, x._2);
+            r.put(f2, x._1);
             return new Tuple2<>(x._1, r);
         });
 
         StatLayer statLayer = new StatLayer(statResult);
-        LayerWriter statWriter = LayerFactory.getWriter(ss, this.arg.getStatsWriterConfig());
+        Field f = new Field("MJ");
+        f.setType(Double.class);
+        statLayer.getMetadata().addAttribute(f, null);
+        Field f2 = new Field("ZLDWXX");
+        statLayer.getMetadata().addAttribute(f2, null);
+        LayerWriterConfig statsWriterConfig= LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
+        LayerWriter statWriter = LayerFactory.getWriter(ss, statsWriterConfig);
         statWriter.write(statLayer);
 
 //        List<Tuple2<String, Double>> flowAreaResult = flowAreaRDD.collect();
@@ -497,18 +509,18 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 //        writer.close();
     }
 
-//    private PolygonLayer read3dLayer(SparkSession ss, LayerReaderConfig config) throws Exception {
-//        LayerReader<PolygonLayer> reader = LayerFactory.getReader(ss, config);
+//    private MultiPolygonLayer read3dLayer(SparkSession ss, LayerReaderConfig config) throws Exception {
+//        LayerReader<MultiPolygonLayer> reader = LayerFactory.getReader(ss, config);
 //        Properties prop = new Properties();
 //        prop.setProperty(ReaderConfig.FILE_PATH, file);
 //        reader.setProp(prop);
-//        PolygonLayer layer = reader.read();
+//        MultiPolygonLayer layer = reader.read();
 //        reader.close();
 //        return layer;
 //    }
 
-    private PolygonLayer read2dLayer(SparkSession ss, LayerReaderConfig config) throws Exception {
-        LayerReader<PolygonLayer> reader = LayerFactory.getReader(ss, config);
+    private MultiPolygonLayer read2dLayer(SparkSession ss, LayerReaderConfig config) throws Exception {
+        LayerReader<MultiPolygonLayer> reader = LayerFactory.getReader(ss, config);
 //        Properties prop = new Properties();
 //        prop.setProperty(ReaderConfig.FILE_PATH, file);
 //        prop.setProperty(ReaderConfig.SEPARATOR, "##");
@@ -532,10 +544,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 //        prop.setProperty(ReaderConfig.HEADER_INDEX, gson.toJson(headerIndex));
 //        reader.setProp(prop);
 
-        PolygonLayer pl = reader.read();
-        JavaRDD<Tuple2<String, Polygon>> tbFeatures = pl.map(new Function<Tuple2<String, Polygon>, Tuple2<String, Polygon>>() {
+        MultiPolygonLayer pl = reader.read();
+        JavaRDD<Tuple2<String, MultiPolygon>> tbFeatures = pl.map(new Function<Tuple2<String, MultiPolygon>, Tuple2<String, MultiPolygon>>() {
             @Override
-            public Tuple2<String, Polygon> call(Tuple2<String, Polygon> in) throws Exception {
+            public Tuple2<String, MultiPolygon> call(Tuple2<String, MultiPolygon> in) throws Exception {
 
                 Map<String, Object> attrs = in._2.getAttributesStr();
                 LinkedHashMap<Field, Object> resultAttrs = new LinkedHashMap<>();
@@ -601,17 +613,17 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             }
         });
 
-        JavaRDD<Tuple2<String, Polygon>> result = tbFeatures.groupBy(x->x._1).map(new Function<Tuple2<String, Iterable<Tuple2<String, Polygon>>>, Tuple2<String, Polygon>>() {
+        JavaRDD<Tuple2<String, MultiPolygon>> result = tbFeatures.groupBy(x->x._1).map(new Function<Tuple2<String, Iterable<Tuple2<String, MultiPolygon>>>, Tuple2<String, MultiPolygon>>() {
             @Override
-            public Tuple2<String, Polygon> call(Tuple2<String, Iterable<Tuple2<String, Polygon>>> ts) throws Exception {
+            public Tuple2<String, MultiPolygon> call(Tuple2<String, Iterable<Tuple2<String, MultiPolygon>>> ts) throws Exception {
                 String key = ts._1;
-                Polygon feature = null;
-                Iterator<Tuple2<String, Polygon>> tsi = ts._2.iterator();
+                MultiPolygon feature = null;
+                Iterator<Tuple2<String, MultiPolygon>> tsi = ts._2.iterator();
                 while (tsi.hasNext()) {
-                    Tuple2<String,Polygon> t = tsi.next();
+                    Tuple2<String,MultiPolygon> t = tsi.next();
                     if (feature == null) {
                         String id = t._2.getFid();
-                        org.locationtech.jts.geom.Polygon g = t._2.getGeometry();
+                        org.locationtech.jts.geom.MultiPolygon g = t._2.getGeometry();
                         Map<String, Object> attrs = t._2.getAttributesStr();
                         LinkedHashMap<Field, Object> attrsO = new LinkedHashMap<>();
                         for (String k: attrs.keySet()) {
@@ -630,7 +642,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                 attrsO.put(f, attrs.get(k));
                             }
                         }
-                        feature = new Polygon(id, g, attrsO);
+                        feature = new MultiPolygon(id, g, attrsO);
                     } else {
                         // 进入这里的，都是至少有一个被关联 lxdw 或 xzdw 的tb
                         Map<String, Object> attrs = t._2.getAttributesStr();
@@ -679,120 +691,132 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             }
         });
 
-        return new PolygonLayer(result.rdd());
+        return new MultiPolygonLayer(result.rdd());
     }
 
     //检查面自相交，防止有重复的点
-    private Polygon polygonFeatureEx(Polygon polygonFeature)
+    private MultiPolygon polygonFeatureEx(MultiPolygon polygonFeature)
     {
         Geometry geometryIn=polygonFeature.getGeometry();
-        LineString exter= ((org.locationtech.jts.geom.Polygon) geometryIn).getExteriorRing();
-        Coordinate[] coordinates= exter.getCoordinates();
-        List<Coordinate> coordinatesList=new ArrayList<>();
+        int geomNum = geometryIn.getNumGeometries();
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory( null );
-        List<Integer> cfint=new ArrayList<>();
-        LinearRing ring;
-        //面图斑最后一个点和第一个点相同
-        for(int i=0;i<coordinates.length-1;i++)
-        {
-            if(coordinatesList.contains(coordinates[i]))
-            {
+        Polygon[] polygons=new Polygon[geomNum];
+        for (int j=0; j<geomNum; j++) {
+            Polygon polygon = (Polygon) geometryIn.getGeometryN(j);
+            LineString exter= ((org.locationtech.jts.geom.Polygon) polygon).getExteriorRing();
+            Coordinate[] coordinates= exter.getCoordinates();
+            List<Coordinate> coordinatesList=new ArrayList<>();
 
-                //去除重复点
-                if(coordinates[i].getX()==coordinates[i-1].getX()&&coordinates[i].getY()==coordinates[i-1].getY())
+            List<Integer> cfint=new ArrayList<>();
+            LinearRing ring;
+            //面图斑最后一个点和第一个点相同
+            for(int i=0;i<coordinates.length-1;i++)
+            {
+                if(coordinatesList.contains(coordinates[i]))
                 {
-                    cfint.add(i);
-                }
-                else {
-                    //若后一点与该点重复
-                    if(coordinates[i].getX()==coordinates[i+1].getX()&&coordinates[i].getY()==coordinates[i+1].getY())
+
+                    //去除重复点
+                    if(coordinates[i].getX()==coordinates[i-1].getX()&&coordinates[i].getY()==coordinates[i-1].getY())
                     {
-                        coordinates[i]=calNewCorrdinate(coordinates[i],coordinates[i+2],coordinates[i-1]);
+                        cfint.add(i);
                     }
                     else {
-                        coordinates[i] = calNewCorrdinate(coordinates[i], coordinates[i + 1], coordinates[i - 1]);
+                        //若后一点与该点重复
+                        if(coordinates[i].getX()==coordinates[i+1].getX()&&coordinates[i].getY()==coordinates[i+1].getY())
+                        {
+                            coordinates[i]=calNewCorrdinate(coordinates[i],coordinates[i+2],coordinates[i-1]);
+                        }
+                        else {
+                            coordinates[i] = calNewCorrdinate(coordinates[i], coordinates[i + 1], coordinates[i - 1]);
+                        }
                     }
                 }
+                coordinatesList.add(coordinates[i]);
             }
-            coordinatesList.add(coordinates[i]);
-        }
+            if(cfint.size()>0){
+                Coordinate[] newCoordinates=new Coordinate[coordinates.length-cfint.size()];
+                int k=0;
+                for(int i=0;i<coordinates.length;i++){
 
-        if(cfint.size()>0){
-            Coordinate[] newCoordinates=new Coordinate[coordinates.length-cfint.size()];
-            int k=0;
-            for(int i=0;i<coordinates.length;i++){
-
-                if(!cfint.contains(i)) {
-                    newCoordinates[k]=coordinates[i];
-                    k++;
+                    if(!cfint.contains(i)) {
+                        newCoordinates[k]=coordinates[i];
+                        k++;
+                    }
                 }
+                ring = geometryFactory.createLinearRing(newCoordinates);
+            }else {
+                ring = geometryFactory.createLinearRing(coordinates);
             }
-            ring = geometryFactory.createLinearRing(newCoordinates);
-        }else {
-            ring = geometryFactory.createLinearRing(coordinates);
-        }
 
-        //如果有内部环
-        if(((org.locationtech.jts.geom.Polygon) geometryIn).getNumInteriorRing()>0)
-        {
-            LinearRing[] holes = new LinearRing[((org.locationtech.jts.geom.Polygon) geometryIn).getNumInteriorRing()];
 
-            for(int k = 0; k<((org.locationtech.jts.geom.Polygon) geometryIn).getNumInteriorRing(); k++)
+            //如果有内部环
+            if(((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing()>0)
             {
-                LineString inRing=((org.locationtech.jts.geom.Polygon) geometryIn).getInteriorRingN(k);
-                Coordinate[] inCoordinates= inRing.getCoordinates();
-                cfint=new ArrayList<>();
-                for(int i=0;i<inCoordinates.length-1;i++)
+                LinearRing[] holes = new LinearRing[((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing()];
+
+                for(int k = 0; k<((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing(); k++)
                 {
-                    if(coordinatesList.contains(inCoordinates[i]))
+
+                    LineString inRing=((org.locationtech.jts.geom.Polygon) polygon).getInteriorRingN(k);
+                    Coordinate[] inCoordinates= inRing.getCoordinates();
+                    cfint=new ArrayList<>();
+                    for(int i=0;i<inCoordinates.length-1;i++)
                     {
-                        //起始点另算
-                        if(i==0){
-                            inCoordinates[0]=calNewCorrdinate(inCoordinates[0],inCoordinates[1],inCoordinates[inCoordinates.length-2]);
-                            inCoordinates[inCoordinates.length-1]=calNewCorrdinate(inCoordinates[0],inCoordinates[1],inCoordinates[inCoordinates.length-2]);
-                        }else {
-                            //去除重复点
-                            if(inCoordinates[i].getX()==inCoordinates[i-1].getX()&&inCoordinates[i].getY()==inCoordinates[i-1].getY())
-                            {
-                                cfint.add(i);
+                        if(coordinatesList.contains(inCoordinates[i]))
+                        {
+                            //起始点另算
+                            if(i==0){
+                                inCoordinates[0]=calNewCorrdinate(inCoordinates[0],inCoordinates[1],inCoordinates[inCoordinates.length-2]);
+                                inCoordinates[inCoordinates.length-1]=calNewCorrdinate(inCoordinates[0],inCoordinates[1],inCoordinates[inCoordinates.length-2]);
                             }else {
-                                //若后一点与该点重复
-                                if (coordinates[i].getX() == coordinates[i + 1].getX() && coordinates[i].getY() == coordinates[i + 1].getY()) {
-                                    inCoordinates[i] = calNewCorrdinate(inCoordinates[i], inCoordinates[i + 2], inCoordinates[i - 1]);
-                                } else {
-                                    inCoordinates[i] = calNewCorrdinate(inCoordinates[i], inCoordinates[i + 1], inCoordinates[i - 1]);
+                                //去除重复点
+                                if(inCoordinates[i].getX()==inCoordinates[i-1].getX()&&inCoordinates[i].getY()==inCoordinates[i-1].getY())
+                                {
+                                    cfint.add(i);
+                                }else {
+                                    //若后一点与该点重复
+                                    if (coordinates[i].getX() == coordinates[i + 1].getX() && coordinates[i].getY() == coordinates[i + 1].getY()) {
+                                        inCoordinates[i] = calNewCorrdinate(inCoordinates[i], inCoordinates[i + 2], inCoordinates[i - 1]);
+                                    } else {
+                                        inCoordinates[i] = calNewCorrdinate(inCoordinates[i], inCoordinates[i + 1], inCoordinates[i - 1]);
+                                    }
                                 }
+
                             }
-
                         }
+                        coordinatesList.add(inCoordinates[i]);
                     }
-                    coordinatesList.add(inCoordinates[i]);
-                }
 
-                if(cfint.size()>0){
-                    Coordinate[] newCoordinates=new Coordinate[inCoordinates.length-cfint.size()];
-                    int kk=0;
-                    for(int i=0;i<inCoordinates.length;i++){
-                        if(!cfint.contains(i)) {
-                            newCoordinates[kk]=inCoordinates[i];
-                            kk++;
+                    if(cfint.size()>0){
+                        Coordinate[] newCoordinates=new Coordinate[inCoordinates.length-cfint.size()];
+                        int kk=0;
+                        for(int i=0;i<inCoordinates.length;i++){
+                            if(!cfint.contains(i)) {
+                                newCoordinates[kk]=inCoordinates[i];
+                                kk++;
+                            }
                         }
-                    }
-                    LinearRing inring = geometryFactory.createLinearRing(newCoordinates);
-                    holes[k]=inring;
+                        LinearRing inring = geometryFactory.createLinearRing(newCoordinates);
+                        holes[k]=inring;
 
-                }else {
-                    LinearRing inring = geometryFactory.createLinearRing(inCoordinates);
-                    holes[k] = inring;
+                    }else {
+                        LinearRing inring = geometryFactory.createLinearRing(inCoordinates);
+                        holes[k] = inring;
+                    }
                 }
+                org.locationtech.jts.geom.Polygon geometryNew=geometryFactory.createPolygon(ring,holes);
+                polygons[j]=geometryNew;
+
+            }else {
+                org.locationtech.jts.geom.Polygon geometryNew=geometryFactory.createPolygon(ring,null);
+                polygons[j]=geometryNew;
+
             }
-            org.locationtech.jts.geom.Polygon geometryNew=geometryFactory.createPolygon(ring,holes);
-            polygonFeature.setGeometry(geometryNew);
-        }else {
-            org.locationtech.jts.geom.Polygon geometryNew=geometryFactory.createPolygon(ring,null);
-            polygonFeature.setGeometry(geometryNew);
+
         }
 
+        org.locationtech.jts.geom.MultiPolygon geometryNewall=geometryFactory.createMultiPolygon(polygons);
+        polygonFeature.setGeometry(geometryNewall);
         return polygonFeature;
     }
 

@@ -4,17 +4,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import edu.zju.gis.hls.trajectory.analysis.util.ClassUtil;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
+import edu.zju.gis.hls.trajectory.analysis.util.GeometryUtil;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.IteratorUtils;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.WKTWriter2;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.util.AffineTransformation;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -39,7 +42,6 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIM
  **/
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Slf4j
 public class Feature <T extends Geometry> implements Serializable {
@@ -51,6 +53,12 @@ public class Feature <T extends Geometry> implements Serializable {
 
   public static Point empty() {
     return Feature.empty(Point.class);
+  }
+
+  public Feature() {
+    this.fid = UUID.randomUUID().toString();
+    this.geometry = (T) GeometryUtil.createEmptyGeometry(ClassUtil.getTClass(this.getClass(), 0));
+    this.attributes = new LinkedHashMap<>();
   }
 
   public Feature(String fid, T geometry) {
@@ -66,15 +74,15 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   /**
-   * TODO is this safe to just set geometry = null ?
    * @param f
    * @return
    */
   public static <F extends Feature> F empty(Class<F> f) {
     try {
-      Class gc = ClassUtil.getTClass(f, 0);
-      Constructor c = f.getConstructor(String.class, gc, LinkedHashMap.class);
-      return (F) c.newInstance(UUID.randomUUID().toString(), null, new LinkedHashMap<>());
+//      Class gc = ClassUtil.getTClass(f, 0);
+      Constructor c = f.getConstructor();
+      return (F)c.newInstance();
+//      return (F) c.newInstance(UUID.randomUUID().toString(), GeometryUtil.createEmptyGeometry(gc), new LinkedHashMap<>());
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
       throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
@@ -369,18 +377,21 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   public Object[] toObjectArray() {
-    List<Object> values = new LinkedList<>();
-    values.add(this.fid);
-    Set<Field> fields = this.getExistAttributes().keySet();
-    for (Field f: fields) {
-      values.add(this.getAttribute(f));
+    List<Field> fields = IteratorUtils.toList(this.getExistAttributes().keySet().iterator());
+    Object[] objs;
+    if (this.isEmpty()) {
+      objs = new Object[fields.size()+1];
+    } else {
+      objs = new Object[fields.size()+2];
+    }
+    objs[0] = this.fid;
+    for (int i=0; i<fields.size(); i++) {
+      objs[i+1] = this.getAttribute(fields.get(i));
     }
     if (!this.isEmpty()) {
-      values.add(this.getGeometryWkt());
+      objs[objs.length-1] = this.getGeometryWkt();
     }
-    Object[] result = new Object[values.size()];
-    values.toArray(result);
-    return result;
+    return objs;
   }
 
 }
