@@ -80,8 +80,6 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
     KeyIndexedLayer indexedLayer1 = si.index(gareaLayer1);
     KeyIndexedLayer indexedLayer2 = si.index(gareaLayer2);
 
-
-
     KeyIndexedLayer<MultiPolygonLayer> resultLayer = indexedLayer1.intersect(indexedLayer2, this.arg.getAttrReserved());
     //TODO 去重
     resultLayer.makeSureCached();
@@ -198,7 +196,6 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
             return new Tuple2<>(input._1,arrayList);
           }else if(!dlbm_GD_list.contains(hdlbm)){
             HashMap<String,Object> map1=new HashMap<>();
-
             map1.put("QDLBM",qdlbm);
             map1.put("HDLBM",hdlbm);
             map1.put("HZLDWDM",hzldwdm);
