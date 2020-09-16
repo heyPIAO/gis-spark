@@ -84,10 +84,10 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             public Double call(Tuple2<String, Feature> v1) throws Exception {
                 return v1._2.getGeometry().getArea(); // TODO 改成面积字段，如果没有，就用图斑平面面积
             }
-        }).reduce((x1, x2)->x1+x2);
+        }).reduce((x1, x2)->(x1+x2));
 
-        Double atareaMu = atarea / DEFAULT_MU;
-        Double atareaKm = atarea / DEFAULT_KM;
+        Double atareaMu = etarea / DEFAULT_MU;
+        Double atareaKm = etarea / DEFAULT_KM;
 
         // 根据用户指定字段获得控制面积 -- 平面面积
         List<Tuple2<String, Feature>> tareasO = extendLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
