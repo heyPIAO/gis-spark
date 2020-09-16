@@ -77,9 +77,9 @@ public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartition
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     UniformGridPartitioner that = (UniformGridPartitioner) o;
-    return z == that.z &&
-      Objects.equals(pc, that.pc) &&
-      Objects.equals(conf, that.conf);
+    boolean flag = (z == that.z);
+    flag = flag && (pc.getBaseMapEnv().equals(that.pc.getBaseMapEnv()));
+    return flag;
   }
 
 }

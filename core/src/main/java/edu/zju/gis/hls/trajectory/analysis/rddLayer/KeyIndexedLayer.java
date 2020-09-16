@@ -68,7 +68,7 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
   }
 
   public KeyIndexedLayer<L> intersect(KeyIndexedLayer layer2, Boolean attrReserved) {
-    if (this.getPartitioner().equals(layer2.getPartitioner())) {
+    if (!this.getPartitioner().equals(layer2.getPartitioner())) {
       throw new GISSparkException("two layer mush have the same partitioner with the same key");
     }
 
