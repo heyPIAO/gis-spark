@@ -20,6 +20,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.*;
@@ -77,14 +78,25 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
         Geometry approximateExtendGeom = extendLayer.getMetadata().getGeometry();
 
+        // Extend Layer 图斑总面积
+        Double etarea = extendLayer.map(new Function<Tuple2<String, Feature>, Double>() {
+            @Override
+            public Double call(Tuple2<String, Feature> v1) throws Exception {
+                return v1._2.getGeometry().getArea(); // TODO 改成面积字段，如果没有，就用图斑平面面积
+            }
+        }).reduce((x1, x2)->x1+x2);
+
+        Double atareaMu = atarea / DEFAULT_MU;
+        Double atareaKm = atarea / DEFAULT_KM;
+
         // 根据用户指定字段获得控制面积 -- 平面面积
-        Map<String, Feature> tareas = extendLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
+        List<Tuple2<String, Feature>> tareasO = extendLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
                 List<String> extendFieldStr = Arrays.stream(extentLayerReaderConfig.getAttributes()).map(x->x.getName()).collect(Collectors.toList());
                 Field kzmj = new Field("KZMJ");
                 kzmj.setType(Double.class);
-                input._2.addAttribute(kzmj, input._2.getGeometry().getArea());
+                input._2.addAttribute(kzmj, input._2.getGeometry().getArea()); // TODO 改成面积字段，如果没有，就用图斑平面面积
                 return new Tuple2<String, Feature>(StringUtils.join(extendFieldStr, "##"), input._2);
             }
         }).groupByKey().reduceByKey(new Function2<Feature, Feature, Feature> () {
@@ -109,7 +121,21 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 f.addAttribute(kmf, km2);
                 return new Tuple2<>(v1._1, f);
             }
-        }).collectAsMap();
+        }).collect();
+
+        List<Feature> tareaOO = tareasO.stream().map(x->{
+            Feature f = new Feature(x._2);
+            f.setFid(x._1);
+        }).collect(Collectors.toList());
+        AreaAdjustment.adjust(atareaMu, "KZMJ_MU", tareaOO, 2);
+        AreaAdjustment.adjust(atareaMu, "KZMJ_KM", tareaOO, 2);
+
+        Map<String, Feature> tareas = tareaOO.stream().map(new java.util.function.Function<Feature, Tuple2<String, Feature>>() {
+            @Override
+            public Tuple2<String, Feature> apply(Feature feature) {
+                return new Tuple2<>(feature.getFid(), feature);
+            }
+        });
 
         LayerReaderConfig targetLayerReaderConfig = LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
         SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
@@ -224,6 +250,13 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         Layer layer = intersectedLayer.union(kcLayer);
         intersectedLayer.unpersist();
 
+        layer.cache();
+
+        // 写出裁切以后面积调整过的图层
+        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+        geomWriter.write(layer);
+
         Layer resultLayer = layer.mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
@@ -238,13 +271,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 return new Tuple2<>(StringUtils.join(key, "##"), input._2);
             }
         });
-
-        resultLayer.cache();
-
-        // 写出裁切以后面积调整过的图层
-        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
-        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
-        geomWriter.write(resultLayer);
 
         JavaPairRDD<String, Iterator<Feature>> oareaRDD = resultLayer.reduceToLayer(new Function2<Feature, Feature, Feature>() {
             @Override
@@ -272,10 +298,12 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             @Override
             public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterator<Feature>> v1) throws Exception {
                 List<Feature> features = IteratorUtils.toList(v1._2);
-                Double tarea = (Double) tareas.get(v1._1).getAttribute("KZMJ_1");
-                return new Tuple2<>(v1._1, AreaAdjustment.adjust(tarea, "KZMJ_1", features, DEFAULT_SCALE).iterator());
+                Double tarea = (Double) tareas.get(v1._1).getAttribute("KZMJ");
+                return new Tuple2<>(v1._1, AreaAdjustment.adjust(tarea, "TBDLMJ_1", features, DEFAULT_SCALE).iterator());
             }
         });
+
+        oareaRDD.cache();
 
         JavaPairRDD<String, Feature> resultRDD = oareaRDD.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Iterator<Feature>>, String, Feature>() {
             @Override
@@ -285,8 +313,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         });
 
-        resultRDD.cache();
-
         Layer result = new Layer(resultRDD.rdd());
         String layername = result.getMetadata().getLayerName();
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
@@ -294,14 +320,25 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         resultWriter.write(result);
 
         // 转换到亩，控平差并输出
-        JavaPairRDD<String, Feature> resultRDDM = resultRDD.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
+        JavaPairRDD<String, Feature> resultRDDM = oareaRDD.map(new Function<Tuple2<String, Iterator<Feature>>, Tuple2<String, Iterator<Feature>>>() {
             @Override
-            public Tuple2<String, Feature> call(Tuple2<String, Feature> in) throws Exception {
-                Feature f = new Feature(in._2);
-                Double area = (Double) f.getAttribute("KZMJ_1");
-                Double m = area / DEFAULT_MU;
-                f.updateAttribute("KZMJ_1", m);
-                return new Tuple2<String, Feature>(in._1, f);
+            public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterator<Feature>> v1) throws Exception {
+                List<Feature> features = IteratorUtils.toList(v1._2);
+                List<Feature> outFeatures = new ArrayList<>();
+                for (Feature in: features) {
+                    Feature f = new Feature(in);
+                    Double area = (Double) f.getAttribute("TBDLMJ_1");
+                    Double m = area / DEFAULT_MU;
+                    f.updateAttribute("TBDLMJ_1", m);
+                    outFeatures.add(f);
+                }
+                return new Tuple2<String, Iterator<Feature>>(v1._1, outFeatures.iterator());
+            }
+        }).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Iterator<Feature>>, String, Feature>() {
+            @Override
+            public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Iterator<Feature>> input) throws Exception {
+                List<Feature> features = IteratorUtils.toList(input._2);
+                return features.stream().map(x->new Tuple2<>(x.getFid(), x)).collect(Collectors.toList()).iterator();
             }
         });
         Layer resultM = new Layer(resultRDDM.rdd());
@@ -309,17 +346,27 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         resultWriter.write(resultM);
 
         // 转换到平方千米，控平差并输出
-        JavaPairRDD<String, Feature> resultRDDKM = resultRDD.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
+        JavaPairRDD<String, Feature> resultRDDKM = oareaRDD.map(new Function<Tuple2<String, Iterator<Feature>>, Tuple2<String, Iterator<Feature>>>() {
             @Override
-            public Tuple2<String, Feature> call(Tuple2<String, Feature> in) throws Exception {
-                Feature f = new Feature(in._2);
-                Double area = (Double) f.getAttribute("KZMJ_1");
-                Double km2 = area / DEFAULT_KM;
-                f.updateAttribute("KZMJ_1", km2);
-                return new Tuple2<String, Feature>(in._1, f);
+            public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterator<Feature>> v1) throws Exception {
+                List<Feature> features = IteratorUtils.toList(v1._2);
+                List<Feature> outFeatures = new ArrayList<>();
+                for (Feature in: features) {
+                    Feature f = new Feature(in);
+                    Double area = (Double) f.getAttribute("TBDLMJ_1");
+                    Double m = area / DEFAULT_KM;
+                    f.updateAttribute("TBDLMJ_1", m);
+                    outFeatures.add(f);
+                }
+                return new Tuple2<String, Iterator<Feature>>(v1._1, outFeatures.iterator());
+            }
+        }).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Iterator<Feature>>, String, Feature>() {
+            @Override
+            public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Iterator<Feature>> input) throws Exception {
+                List<Feature> features = IteratorUtils.toList(input._2);
+                return features.stream().map(x->new Tuple2<>(x.getFid(), x)).collect(Collectors.toList()).iterator();
             }
         });
-
         Layer resultKM = new Layer(resultRDDKM.rdd());
         layer.setName(layername + "_km");
         resultWriter.write(resultKM);
