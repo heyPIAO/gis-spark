@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.LinkedHashMap;
@@ -12,6 +13,7 @@ import java.util.LinkedHashMap;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class Point extends Feature<org.locationtech.jts.geom.Point> {
 
   public Point(String fid, org.locationtech.jts.geom.Point geometry, LinkedHashMap<Field, Object> attributes) {

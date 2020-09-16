@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 public class StatLayer extends PointLayer {
 
   public StatLayer(JavaRDD<Tuple2<String, LinkedHashMap<Field, Object>>> rdd) {
+
     this(rdd.map(new Function<Tuple2<String, LinkedHashMap<Field, Object>>, Tuple2<String, Point>>() {
       @Override
       public Tuple2<String, Point> call(Tuple2<String, LinkedHashMap<Field, Object>> v1) throws Exception {

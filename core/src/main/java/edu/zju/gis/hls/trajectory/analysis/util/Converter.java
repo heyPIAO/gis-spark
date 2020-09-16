@@ -22,7 +22,7 @@ public class Converter implements Serializable {
     } else if (c.equals(Integer.class) || c.equals(int.class)) {
       return Integer.valueOf(v);
     } else if (c.equals(Double.class) || c.equals(double.class)) {
-      return Double.valueOf(v);
+      return Double.valueOf(v.isEmpty()?"0.0":v);
     } else if (c.equals(Float.class) || c.equals(float.class)) {
       return Float.valueOf(v);
     } else if (c.equals(Long.class) || c.equals(long.class)) {

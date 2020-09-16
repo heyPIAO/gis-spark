@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.locationtech.jts.geom.LineString;
 
@@ -13,6 +14,7 @@ import java.util.Map;
  **/
 @Getter
 @Setter
+@NoArgsConstructor
 public class Polyline extends Feature<LineString> {
 
   public Polyline(String fid, LineString geometry, LinkedHashMap<Field, Object> attributes) {

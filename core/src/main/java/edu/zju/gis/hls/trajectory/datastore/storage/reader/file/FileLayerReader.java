@@ -121,6 +121,10 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
         // 获取 attributes
         LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
 
+        if(fields.length<17) {
+          log.error("fields length is less than 17.");
+          return new Tuple2<> ("EMPTY", null);
+        }
         for (Field f: fs) {
           int index = f.getIndex();
           String cname = f.getType();
@@ -132,7 +136,7 @@ public class FileLayerReader <T extends Layer> extends LayerReader<T> {
         Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
         return new Tuple2<> (fid, feature);
       }
-    });
+    }).filter(x->!x._1.equals("EMPTY"));
 
     T layer = this.rddToLayer(features.rdd());
 

@@ -3,7 +3,9 @@ package edu.zju.gis.hls.trajectory.datastore.storage.writer.pg;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,14 +44,19 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
 
     @Override
     public Row transform(Feature feature) {
-        return new GenericRow(feature.toObjectArray());
+        Row row = new GenericRow(feature.toObjectArray());
+        return row;
     }
 
     @Override
     public void write(Layer layer) {
         JavaRDD<Row> rdd = ((JavaRDD<Tuple2<String, Feature>>) (layer.rdd().toJavaRDD())).map(x -> x._2).map(x -> transform(x));
-        Dataset<Row> df = this.ss.createDataFrame(rdd, this.getLayerStructType(layer));
+        StructType st = this.getLayerStructType(layer);
+        Dataset<Row> df = this.ss.createDataFrame(rdd, st);
         //.mode(config.getSaveMode()) 选择Overwrite会导致分表失效，因此固定为append模式。
+        df.cache();
+        List<Row> r = df.collectAsList();
+        df.printSchema();
         df.write()
                 .format("jdbc")
                 .option("url", config.getSinkPath())
@@ -71,7 +78,11 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
         Map<Field, Object> layerAttrs = layer.getMetadata().getExistAttributes();
 
         List<StructField> sfsl = new LinkedList<>();
-        sfsl.add(convertFieldToStructField(layer.getMetadata().getIdField()));
+        Field idField = layer.getMetadata().getIdField();
+        if (idField == null) {
+            idField = Term.FIELD_DEFAULT_ID;
+        }
+        sfsl.add(convertFieldToStructField(idField));
 
         Field[] attrs = new Field[layerAttrs.size()];
         layerAttrs.keySet().toArray(attrs);
@@ -83,7 +94,14 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
             sfsl.add(convertFieldToStructField(attrs[i]));
         }
 
-        sfsl.add(convertFieldToStructField(layer.getMetadata().getShapeField()));
+        if (!(layer instanceof StatLayer)) {
+            Field shapeField = layer.getMetadata().getShapeField();
+            if (shapeField == null) {
+                shapeField = Term.FIELD_DEFAULT_SHAPE;
+            }
+            sfsl.add(convertFieldToStructField(shapeField));
+        }
+
         StructField[] sfs = new StructField[sfsl.size()];
         sfsl.toArray(sfs);
         return new StructType(sfs);

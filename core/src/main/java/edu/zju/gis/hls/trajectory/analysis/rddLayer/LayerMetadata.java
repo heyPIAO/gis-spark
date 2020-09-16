@@ -40,12 +40,14 @@ public class LayerMetadata extends Feature<Polygon> {
   }
 
   public LayerMetadata() {
+    super();
     this.layerId = UUID.randomUUID().toString();
     this.layerName = this.layerId;
     this.crs = Term.DEFAULT_CRS;
   }
 
   public LayerMetadata(LayerMetadata metadata) {
+    super(metadata);
     this.layerId = metadata.layerId;
     this.layerName = metadata.layerName;
     this.crs = metadata.crs;
@@ -60,17 +62,17 @@ public class LayerMetadata extends Feature<Polygon> {
   }
 
   public Field getIdField() {
-    for (Field f: this.attributes.keySet()) {
+    for (Field f: this.getAttributes().keySet()) {
       if (f.getFieldType().equals(FieldType.ID_FIELD)) return f;
     }
-    throw new GISSparkException("Unvalid layer metadata: ID field not exist");
+    return null;
   }
 
   public Field getShapeField() {
-    for (Field f: this.attributes.keySet()) {
+    for (Field f: this.getAttributes().keySet()) {
       if (f.getFieldType().equals(FieldType.SHAPE_FIELD)) return f;
     }
-    throw new GISSparkException("Unvalid layer metadata: Shape field not exist");
+    return null;
   }
 
   public void setAttributes(Field[] attributes) {
