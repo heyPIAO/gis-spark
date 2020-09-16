@@ -19,12 +19,10 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfi
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.api.java.function.*;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
@@ -38,11 +36,14 @@ import java.util.stream.Collectors;
  * @author Hu
  * @date 2020/9/10
  * 土地利用现状分析模型
+ * 亩 = 平方米 / 666.6666667
+ * 平方千米 = 平方米 / 1000000.00
  **/
 @Slf4j
 public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
     private static Integer DEFAULT_INDEX_LEVEL = 12;
+    private static Integer DEFAULT_SCALE = 2;
 
     public LandUseAnalysis(SparkSessionType type, String[] args) {
         super(type, args);
@@ -56,7 +57,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
     private boolean checkExtendLayerFieldValid(Field f) {
         String name = f.getName();
         return !(name.equals("YTBMJ") || name.equals("DLBM") || name.equals("BSM") || name.equals("KCDLBM") || name.equals("ZLDWDM")
-                || name.equals("TBMJ") || name.equals("TBDLMJ") || name.equals("EMPTY"));
+                || name.equals("TBMJ") || name.equals("TBDLMJ") || name.equals("EMPTY")) || name.equals("KZMJ");
     }
 
     @Override
@@ -65,7 +66,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         for (Field f : extentLayerReaderConfig.getAttributes()) {
             if (!checkExtendLayerFieldValid(f))
                 throw new GISSparkException(String.format("Unvalid extend layer field %s, " +
-                        "field name cannot be in [YTBMJ, DLBM, BSM, KCDLBM, ZLDWDM, TBMJ, TBDLMJ, EMPTY]", f.toString()));
+                        "field name cannot be in [YTBMJ, DLBM, BSM, KCDLBM, ZLDWDM, TBMJ, TBDLMJ, KZMJ, EMPTY]", f.toString()));
         }
 
         LayerReader extendLayerReader = LayerFactory.getReader(this.ss, extentLayerReaderConfig);
@@ -76,12 +77,45 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
         Geometry approximateExtendGeom = extendLayer.getMetadata().getGeometry();
 
+        // 根据用户指定字段获得控制面积 -- 平面面积
+        Map<String, Feature> tareas = extendLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
+            @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
+                List<String> extendFieldStr = Arrays.stream(extentLayerReaderConfig.getAttributes()).map(x->x.getName()).collect(Collectors.toList());
+                Field kzmj = new Field("KZMJ");
+                kzmj.setType(Double.class);
+                input._2.addAttribute(kzmj, input._2.getGeometry().getArea());
+                return new Tuple2<String, Feature>(StringUtils.join(extendFieldStr, "##"), input._2);
+            }
+        }).groupByKey().reduceByKey(new Function2<Feature, Feature, Feature> () {
+            @Override
+            public Feature call(Feature f1, Feature f2) throws Exception {
+                Feature f = new Feature(f1);
+                f.updateAttribute("KZMJ", (Double)f1.getAttribute("KZMJ")+(Double)f2.getAttribute("KZMJ"));
+                return f;
+            }
+        }).mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>(){
+            @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> v1) throws Exception {
+                Double area = (Double) v1._2.getAttribute("KZMJ");
+                Double m = area / 666.6666667;
+                Double km2 = area / 1000000.00;
+                Field mf = new Field("KZMJ_M");
+                mf.setType(Double.class);
+                Field kmf = new Field("KZMJ_KM");
+                kmf.setType(Double.class);
+                Feature f = new Feature(v1._2);
+                f.addAttribute(mf, m);
+                f.addAttribute(kmf, km2);
+                return new Tuple2<>(v1._1, f);
+            }
+        }).collectAsMap();
+
         LayerReaderConfig targetLayerReaderConfig = LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
         SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
         LayerReader targetLayerReader = null;
         if (st.equals(SourceType.PG) || st.equals(SourceType.CitusPG)) {
             // 基于范围图斑构造空间查询语句
-            // todo
             String extentWKT = approximateExtendGeom.toText();
             String filterSql = String.format("st_intersects(st_geomFromWKT(%s),st_geomfromtext(\"WKT\",%d))", extentWKT, CRS.lookupEpsgCode(targetLayerReaderConfig.getCrs(), false));
             PgLayerReaderConfig pgLayerReaderConfig = (PgLayerReaderConfig) targetLayerReaderConfig;
@@ -144,7 +178,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         }).distinct();
 
-
         Layer kcLayer = ((Layer<String, Feature>) intersectedLayer).mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
@@ -197,7 +230,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         });
 
-        resultLayer = resultLayer.reduceToLayer(new Function2<Feature, Feature, Feature>() {
+        JavaPairRDD<String, Iterator<Feature>> oareaRDD = resultLayer.reduceToLayer(new Function2<Feature, Feature, Feature>() {
             @Override
             public Feature call(Feature input1, Feature input2) throws Exception {
                 Double tbdlmj1 = Double.valueOf(input1.getAttribute("TBDLMJ").toString());
@@ -210,31 +243,69 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                         attr.put(key, tbdlmj);
                     }
                 }
-//        f.setAttributes(attr);
                 return f;
             }
         }).mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
             @Override
-            public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
-                return new Tuple2<String, Feature>(input._2.getFid(), input._2);
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> v1) throws Exception {
+                List<String> extendFieldStr = Arrays.stream(extentLayerReaderConfig.getAttributes()).map(x->x.getName()).collect(Collectors.toList());
+                return new Tuple2<>(StringUtils.join(extendFieldStr, "##"), v1._2);
+            }
+        }).groupByKey().mapToPair(new PairFunction<Tuple2<String, Iterator<Feature>>, String, Iterator<Feature>> () {
+            @Override
+            public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterator<Feature>> v1) throws Exception {
+                List<Feature> features = IteratorUtils.toList(v1._2);
+                Double tarea = (Double) tareas.get(v1._1).getAttribute("KZMJ");
+                return new Tuple2<>(v1._1, AreaAdjustment.adjust(tarea, "KZMJ", features, DEFAULT_SCALE).iterator());
             }
         });
 
-//    Map<String, Feature> result = resultRDD.collectAsMap();
-//    File file = new File("G:\\DATA\\flow\\out\\result.txt");
-//    if (file.exists()) {
-//      file.delete();
-//    }
-//    FileWriter writer = new FileWriter(file);
-//    for(String key :result.keySet()){
-//      writer.write(key+"##"+result.get(key).getAttribute("TBDLMJ")+"\t\n");
-//    }
-//    writer.close();
-//    StatLayer statLayer = layer.aggregateByField(this.arg.getAggregateFieldName());
-//
+        JavaPairRDD<String, Feature> resultRDD = oareaRDD.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Iterator<Feature>>, String, Feature>() {
+            @Override
+            public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Iterator<Feature>> input) throws Exception {
+                List<Feature> features = IteratorUtils.toList(input._2);
+                return features.stream().map(x->new Tuple2<>(x.getFid(), x)).collect(Collectors.toList()).iterator();
+            }
+        });
+
+        resultRDD.cache();
+
+        Layer result = new Layer(resultRDD.rdd());
+        String layername = result.getMetadata().getLayerName();
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter resultWriter = LayerFactory.getWriter(this.ss, writerConfig);
-        resultWriter.write(resultLayer);
+        resultWriter.write(result);
+
+        // 转换到亩，控平差并输出
+        JavaPairRDD<String, Feature> resultRDDM = resultRDD.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
+            @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> in) throws Exception {
+                Feature f = new Feature(in._2);
+                Double area = (Double) f.getAttribute("KZMJ");
+                Double m = area / 666.6666667;
+                f.updateAttribute("KZMJ", m);
+                return new Tuple2<String, Feature>(in._1, f);
+            }
+        });
+        Layer resultM = new Layer(resultRDDM.rdd());
+        layer.setName(layername + "_mu");
+        resultWriter.write(resultM);
+
+        // 转换到平方千米，控平差并输出
+        JavaPairRDD<String, Feature> resultRDDKM = resultRDD.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
+            @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> in) throws Exception {
+                Feature f = new Feature(in._2);
+                Double area = (Double) f.getAttribute("KZMJ");
+                Double km2 = area / 1000000.00;
+                f.updateAttribute("KZMJ", km2);
+                return new Tuple2<String, Feature>(in._1, f);
+            }
+        });
+
+        Layer resultKM = new Layer(resultRDDKM.rdd());
+        layer.setName(layername + "_km");
+        resultWriter.write(resultKM);
     }
 
 

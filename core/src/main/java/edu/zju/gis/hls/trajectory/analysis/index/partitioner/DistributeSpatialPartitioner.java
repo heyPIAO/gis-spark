@@ -140,48 +140,4 @@ public abstract class DistributeSpatialPartitioner extends Partitioner
   @Override
   public abstract boolean equals(Object o);
 
-  /**
-   * 分区前的预处理函数
-   * Hip：这一步已经将 PairRDD 的 key 转为分区 gridID 的 key
-   * 处理一个 Geometry 可能会覆盖多个 Grid 的情况
-   * @return
-   */
-//  public static <K, V extends Feature, P extends DistributeSpatialPartitioner> FlatMapFunction getPreProcessFunction(P partitioner, boolean isClip) {
-//    return new FlatMapFunction<Tuple2<K, V>, Tuple2<String, V>>() {
-//      @Override
-//      public Iterator<Tuple2<String, V>> call(Tuple2<K, V> in) throws Exception {
-//        List<Tuple2<String, V>> result = new ArrayList<>();
-//        List<KeyRangeFeature> keyRangeFeatures = partitioner.getKeyRangeFeatures(in._2);
-//        for (KeyRangeFeature keyRangeFeature : keyRangeFeatures) {
-//          if (isClip) {
-//            Polygon p = keyRangeFeature.getGeometry();
-//            Geometry geom = in._2.getGeometry();
-//            Geometry finalGeom;
-//            if (p.contains(geom)) {
-//              finalGeom = geom;
-//            } else {
-//              try {
-//                finalGeom = EnhancedPrecisionOp.intersection(p, geom);
-//              } catch (TopologyException e) {
-//                // 对于自相交图形，计算 intersection 会产生拓扑错误
-//                // TODO 用 buffer 方法解决会导致一部分的图斑缺失，待支持MultiPolygon//MultiLineString的时候需要改成将图斑自动切分的方法
-//                // TODO https://stackoverflow.com/questions/31473553/is-there-a-way-to-convert-a-self-intersecting-polygon-to-a-multipolygon-in-jts
-//                p = (Polygon) p.buffer(0);
-//                geom = geom.buffer(0);
-//                finalGeom = EnhancedPrecisionOp.intersection(p, geom);
-//              }
-//            }
-//            if (!finalGeom.isEmpty()) {
-//              V f = (V) in._2.getSelfCopyObject();
-//              f.setGeometry(finalGeom);
-//              result.add(new Tuple2<>(keyRangeFeature.getFid(), f));
-//            }
-//          } else {
-//            result.add(new Tuple2<>(keyRangeFeature.getFid(), in._2));
-//          }
-//        }
-//        return result.iterator();
-//      }
-//    };
-//  }
 }
