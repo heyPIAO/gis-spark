@@ -99,7 +99,6 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         MSHelper msHelper = new MSHelper(this.msConfig);
         // TODO 将图层元数据信息存储到平台的 mysql 数据库中
         try {
-            LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
             LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
             ListStringSQLResultHandler handler = new ListStringSQLResultHandler();
             msHelper.runSQL(countSourceTable(this.arg.getTableName()), handler);
@@ -120,14 +119,8 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
                         , this.arg.getLayerYear()
                         , java.sql.Date.from(Instant.now())
                         , java.sql.Date.from(Instant.now())
-                        , metadata.getLayerCount());
-            } else {
-                log.info("update dataset info.");
-                msHelper.runSQL(updateDatasetInfo(this.arg.getTableName()),
-                        metadata.getLayerCount()
-                        , java.sql.Date.from(Instant.now()));
+                        , 0);
             }
-
             msHelper.close();
         } catch (Exception e) {
             log.error("Metadata store failed.");
@@ -268,11 +261,16 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
         PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
         PgHelper pgHelper = new PgHelper(this.pgConfig);
+        MSHelper msHelper = new MSHelper(this.msConfig);
         try {
             log.info(String.format("CREATE SPATIAL INDEX FOR %s USING GIST", writerConfig.getTablename()));
             pgHelper.runSQL(this.createSpatialIndexSql(readerConfig, writerConfig, CRS.parseWKT(this.arg.getTargetCrs())));
             log.info("Truncate Local Data: " + writerConfig.getTablename());
             pgHelper.runSQL(this.truncateLocalDataSql(writerConfig));
+            log.info("update dataset info.");
+            msHelper.runSQL(updateDatasetInfo(this.arg.getTableName()),
+                    this.metadata.getLayerCount()
+                    , java.sql.Date.from(Instant.now()));
         } catch (FactoryException e) {
             throw new GISSparkException(e.getMessage());
         } finally {

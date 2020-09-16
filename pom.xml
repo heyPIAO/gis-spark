@@ -146,7 +146,7 @@
                 <artifactId>gdal</artifactId>
                 <version>${gdal.version}</version>
                 <scope>system</scope>
-                <systemPath>D:\Work\DaLunWen\code\trajectory-spark\lib\gdal.jar</systemPath>
+                <systemPath>/Users/moral/IdeaProjects/trajectory-spark/lib/gdal.jar</systemPath>
             </dependency>
         </dependencies>
     </dependencyManagement>

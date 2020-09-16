@@ -46,14 +46,16 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
     Dataset<Row> dltbRf = dltbLayer.toDataset(this.ss);
     dltbRf.registerTempTable("dltb");
 
+//    Dataset<Row> re = this.ss.sql("select * from dltb where BSM = \"115679835\"");
+//    List<Row> _r = re.collectAsList();
     // TODO 根据字段关联
     this.ss.sql("CREATE TABLE if not exists merges as \n" +
       "(select d.bsm,d.zldwdm,d.tbbh, d.dlbm as tb_dlbm,d.tbmj as tb_dlmj,l.bsm as lx_id,l.dlbm as lx_dlbm,l.mj as lx_mj,\n" +
-      "x.bsm as xz_id,x.dlbm as xz_dlbm,x.cd as xz_cd,x.kd as xz_kd,d.wkt as tb_wkt,l.wkt as lx_wkt,\n" +
-      "x,wkt as xz_wkt,d.tkxs as tb_tkcs,x.kcbl as xz_kcbl\n" +
-      "from \"dltb\" as d \n" +
-      "LEFT JOIN \"lxdw\" as l on d.zldwdm=l.zldwdm and d.tbbh=l.zltbbh\n" +
-      "LEFT JOIN \"xzdw\" as x on \n" +
+      "x.bsm as xz_id,x.dlbm as xz_dlbm,x.cd as xz_cd,x.kd as xz_kd, d.wkt as tb_wkt, l.wkt as lx_wkt,\n" +
+      "x.wkt as xz_wkt,d.tkxs as tb_tkcs,x.kcbl as xz_kcbl\n" +
+      "from dltb as d \n" +
+      "LEFT JOIN lxdw as l on d.zldwdm=l.zldwdm and d.tbbh=l.zltbbh\n" +
+      "LEFT JOIN xzdw as x on \n" +
       "(d.zldwdm=x.kctbdwdm1 and d.tbbh=x.kctbbh1) or (d.zldwdm=x.kctbdwdm2 and d.tbbh=x.kctbbh2))");
 
     Dataset<Row> mergeResult = this.ss.table("merges");

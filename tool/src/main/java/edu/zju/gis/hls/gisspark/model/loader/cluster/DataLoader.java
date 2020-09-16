@@ -31,6 +31,8 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
         super(type, args);
     }
 
+    protected LayerMetadata metadata = null;
+
     @Override
     protected void run() throws Exception {
 
@@ -47,7 +49,8 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
         // 计算图层四至
         layer.makeSureCached();
         layer.analyze();
-        storeMetadata(layer.getMetadata());
+        metadata = layer.getMetadata();
+        storeMetadata(metadata);
 
         LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
         writer.write(layer);
