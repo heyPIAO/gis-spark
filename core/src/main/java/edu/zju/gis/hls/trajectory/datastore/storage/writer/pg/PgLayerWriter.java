@@ -54,9 +54,9 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
         StructType st = this.getLayerStructType(layer);
         Dataset<Row> df = this.ss.createDataFrame(rdd, st);
         //.mode(config.getSaveMode()) 选择Overwrite会导致分表失效，因此固定为append模式。
-        df.cache();
-        List<Row> r = df.collectAsList();
-        df.printSchema();
+//        df.cache();
+//        List<Row> r = df.collectAsList();
+//        df.printSchema();
         df.write()
                 .format("jdbc")
                 .option("url", config.getSinkPath())
