@@ -8,9 +8,9 @@ import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
@@ -20,20 +20,15 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfi
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.*;
-import org.elasticsearch.common.collect.Tuple;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
 import java.util.*;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static tec.uom.se.function.QuantityFunctions.sum;
 
@@ -84,67 +79,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
         Geometry approximateExtendGeom = extendLayer.getMetadata().getGeometry();
 
-        // Extend Layer 图斑总面积
-        JavaRDD<Double> areaRDD=extendLayer.map(new Function<Tuple2<String, Feature>, Double>() {
-            @Override
-            public Double call(Tuple2<String, Feature> v1) throws Exception {
-                return v1._2.getGeometry().getArea(); // TODO 改成面积字段，如果没有，就用图斑平面面积
-            }
-        });
-//        Double etarea=areaRDD.reduce((a, b) -> Double.sum(a, b));
-//
-//        Double atareaMu = etarea / DEFAULT_MU;
-//        Double atareaKm = etarea / DEFAULT_KM;
-
-        // 根据用户指定字段获得控制面积 -- 平面面积
-
-        List<Tuple2<String, Feature>> tareasO = extendLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
-            @Override
-            public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
-                List<String> extendFieldStr = Arrays.stream(extentLayerReaderConfig.getAttributes()).map(x->x.getName()).collect(Collectors.toList());
-                Field kzmj = new Field("KZMJ");
-                kzmj.setType(Double.class);
-                input._2.addAttribute(kzmj, input._2.getGeometry().getArea()); // TODO 改成面积字段，如果没有，就用图斑平面面积
-                return new Tuple2<String, Feature>(StringUtils.join(extendFieldStr, "##"), input._2);
-            }
-        }).reduceByKey(new Function2<Feature, Feature, Feature> () {
-            @Override
-            public Feature call(Feature f1, Feature f2) throws Exception {
-                Feature f = new Feature(f1);
-                f.updateAttribute("KZMJ", (Double)f1.getAttribute("KZMJ")+(Double)f2.getAttribute("KZMJ"));
-                return f;
-            }
-        }).mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>(){
-            @Override
-            public Tuple2<String, Feature> call(Tuple2<String, Feature> v1) throws Exception {
-                Feature feature=v1._2();
-                Double area = Double.valueOf(feature.getAttribute("KZMJ").toString());
-                Double m = area / DEFAULT_MU;
-                Double km2 = area / DEFAULT_KM;
-                Field mf = new Field("KZMJ_M");
-                mf.setType(Double.class);
-                Field kmf = new Field("KZMJ_KM");
-                kmf.setType(Double.class);
-                Feature f = new Feature(v1._2);
-                f.addAttribute(mf, m);
-                f.addAttribute(kmf, km2);
-                return new Tuple2<>(v1._1, f);
-            }
-        }).collect();
-
-        List<Feature> tareaOO = tareasO.stream().map(x->{
-            Feature f = new Feature(x._2);
-            f.setFid(x._1);
-            return f;
-        }).collect(Collectors.toList());
-//        AreaAdjustment.adjust(atareaMu, "KZMJ_M", tareaOO, 2);
-//        AreaAdjustment.adjust(atareaKm, "KZMJ_KM", tareaOO, 2);
-
-        Map<String, Feature> tareas = new HashMap<>();
-        for (Feature f: tareaOO) {
-            tareas.put(f.getFid(), f);
-        }
-
         LayerReaderConfig targetLayerReaderConfig = LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
         SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
         LayerReader targetLayerReader = null;
@@ -178,24 +112,49 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
         Layer intersectedLayer = filteredLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
             @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> o) throws Exception {
+                Feature of = new Feature(o._2);
+                of.setFid(String.format("%s.%s", o._2.getFid(), o._2.getAttribute(Term.FIELD_DEFAULT_ID.getName() + "_2").toString()));
+                return new Tuple2<>(of.getFid(), of);
+            }
+        }).reduceByKeyToLayer(new Function2<Feature, Feature, Feature>() {
+            @Override
+            public Feature call(Feature o, Feature o2) throws Exception {
+                return o;
+            }
+        }).mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
+            @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
                 Feature feature = input._2;
                 Geometry geometry = feature.getGeometry();
                 Feature fo = new Feature(feature); //深拷贝
                 Double tbmj = Double.valueOf(feature.getAttribute("TBMJ_1").toString());
+                Double kcxs = Double.valueOf(feature.getAttribute("KCXS_1").toString());
                 Double tbdlmj = Double.valueOf(feature.getAttribute("TBDLMJ_1").toString());
                 Double xtbmj = geometry.getArea();
                 Double ytbmj = Double.valueOf(feature.getAttribute("YTBMJ_1").toString());
+//                String bsm=feature.getAttribute("BSM_1").toString();
+//                String fid=feature.getAttribute("fid_2").toString();
+                String zldwdm=feature.getAttribute("ZLDWDM_1").toString().substring(0,6);
 
                 Double area = tbdlmj * xtbmj / ytbmj;
                 Double xarea = tbmj * xtbmj / ytbmj;
 
+                Field pmmjF = new Field("PMMJ");
+                pmmjF.setType(Double.class);
+
+                Field ypmmjF = new Field("YPMMJ");
+                ypmmjF.setType(Double.class);
+
                 fo.updateAttribute("TBDLMJ_1", area);
                 fo.updateAttribute("TBMJ_1", xarea);
+                fo.updateAttribute("ZLDWDM_1", zldwdm);
+                fo.addAttribute(pmmjF, xtbmj*(1-kcxs));
+                fo.addAttribute(ypmmjF, xtbmj);
 
                 return new Tuple2<>(input._1, fo);
             }
-        }).distinct();
+        });
 
         intersectedLayer.cache();
 
@@ -207,10 +166,13 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 String kcdlbm = feature.getAttribute("KCDLBM_1").toString();
                 Double tbmj = Double.valueOf(feature.getAttribute("TBMJ_1").toString());
                 Double tbdlmj = Double.valueOf(feature.getAttribute("TBDLMJ_1").toString());
+                Double ypmmj = Double.valueOf(feature.getAttribute("YPMMJ").toString());
+                Double pmmj = Double.valueOf(feature.getAttribute("PMMJ").toString());
                 if (!kcdlbm.equals(null) && kcdlbm.length() > 3) {
                     LinkedHashMap<Field, Object> fields = new LinkedHashMap<>();
                     of.updateAttribute("DLBM_1", kcdlbm);
                     of.updateAttribute("TBDLMJ_1", tbmj-tbdlmj);
+                    of.updateAttribute("PMMJ", ypmmj-pmmj);
 
                     return new Tuple2<>(input._1, of);
                 }
@@ -229,10 +191,10 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         layer.cache();
 
         // 写出裁切以后面积调整过的图层
-//        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
-//        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
-//        layer.inferFieldMetadata();
-//        geomWriter.write(layer);
+        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+        layer.inferFieldMetadata();
+        geomWriter.write(layer);
 
         Layer resultLayer = layer.mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
@@ -242,61 +204,94 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 key[0] = input._2.getAttribute("DLBM_1").toString();
                 key[1] = input._2.getAttribute("ZLDWDM_1").toString().substring(0,6);
                 for (int i = 2; i < key.length; i++) {
-                    key[i] = input._2.getAttribute(extendFields[i - 2]).toString();
+                    key[i] = input._2.getAttribute(extendFields[i - 2].getName() + "_2").toString();
                 }
-//                Feature f = new Feature(input._2);
                 return new Tuple2<>(StringUtils.join(key, "##"), input._2);
             }
         });
 
-        JavaPairRDD<String, Iterator<Feature>> oareaRDD = resultLayer.reduceToLayer(new Function2<Feature, Feature, Feature>() {
+        JavaPairRDD<String, Feature> oareaRDD = resultLayer.reduceByKeyToLayer(new Function2<Feature, Feature, Feature>() {
             @Override
             public Feature call(Feature input1, Feature input2) throws Exception {
                 Double tbdlmj1 = Double.valueOf(input1.getAttribute("TBDLMJ_1").toString());
                 Double tbdlmj2 = Double.valueOf(input2.getAttribute("TBDLMJ_1").toString());
                 Double tbdlmj = tbdlmj1 + tbdlmj2;
+
+                Double pmmj1 = Double.valueOf(input1.getAttribute("PMMJ").toString());
+                Double pmmj2 = Double.valueOf(input2.getAttribute("PMMJ").toString());
+                Double pmmj = pmmj1 + pmmj2;
                 Feature f = new Feature(input1);
                 f.updateAttribute("TBDLMJ_1", tbdlmj);
+                f.updateAttribute("PMMJ", pmmj);
                 return f;
             }
-        }).mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
+        });
+
+        oareaRDD.cache();
+
+        Feature totalF = oareaRDD.reduce(new Function2<Tuple2<String, Feature>, Tuple2<String, Feature>, Tuple2<String, Feature>>() {
             @Override
-            public Tuple2<String, Feature> call(Tuple2<String, Feature> v1) throws Exception {
-                List<String> extendFieldStr = Arrays.stream(extentLayerReaderConfig.getAttributes()).map(x->x.getName()).collect(Collectors.toList());
-                return new Tuple2<>(StringUtils.join(extendFieldStr, "##"), v1._2);
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> in1, Tuple2<String, Feature> in2) throws Exception {
+                Feature f1 = in1._2;
+                Feature f2 = in2._2;
+                Double tbdlmj1 = Double.valueOf(f1.getAttribute("TBDLMJ_1").toString());
+                Double tbdlmj2 = Double.valueOf(f2.getAttribute("TBDLMJ_1").toString());
+                Double tbdlmj = tbdlmj1 + tbdlmj2;
+
+                Double pmmj1 = Double.valueOf(f1.getAttribute("PMMJ").toString());
+                Double pmmj2 = Double.valueOf(f2.getAttribute("PMMJ").toString());
+                Double pmmj = pmmj1 + pmmj2;
+                Feature f = new Feature(f1);
+                f.updateAttribute("TBDLMJ_1", tbdlmj);
+                f.updateAttribute("PMMJ", pmmj);
+                return new Tuple2<>(in1._1(), f);
             }
-        }).groupByKey().mapToPair(new PairFunction<Tuple2<String, Iterable<Feature>>, String, Iterator<Feature>> () {
+        })._2;
+        Double totalArea = Double.valueOf(totalF.getAttribute("TBDLMJ_1").toString());
+        Double totalPmmj = Double.valueOf(totalF.getAttribute("PMMJ").toString());
+        Double totalAreaMu = totalArea/DEFAULT_MU;
+        Double totalAreaKm = totalArea/DEFAULT_KM;
+        Double totalPmmjMu = totalPmmj/DEFAULT_MU;
+        Double totalPmmjKm = totalPmmj/DEFAULT_KM;
+
+        JavaRDD<Feature> adjustRDD = oareaRDD.map(new Function<Tuple2<String, Feature>, Feature>() {
             @Override
-            public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterable<Feature>> v1) throws Exception {
-                List<Feature> features = IteratorUtils.toList(v1._2.iterator());
-                Double tareaM = (Double) tareas.get(v1._1).getAttribute("KZMJ_M");
-                Double tareaKm = (Double) tareas.get(v1._1).getAttribute("KZMJ_KM");
-                for (Feature feature:features) {
-                    Double a = (Double)feature.getAttribute("TBDLMJ_1");
-                    Double am = a/DEFAULT_MU;
-                    Double akm = a/DEFAULT_KM;
-                    Field mf = new Field("TBDLMJ_M");
-                    mf.setType(Double.class);
-                    feature.addAttribute(mf, am);
-                    Field kmf = new Field("TBDLMJ_KM");
-                    kmf.setType(Double.class);
-                    feature.addAttribute(kmf, akm);
-                }
-                features = AreaAdjustment.adjust(tareaM, "TBDLMJ_M", features, DEFAULT_SCALE);
-                features = AreaAdjustment.adjust(tareaKm, "TBDLMJ_KM", features, DEFAULT_SCALE);
-                return new Tuple2<>(v1._1, features.iterator());
+            public Feature call(Tuple2<String, Feature> in) throws Exception {
+                Feature f = new Feature(in._2);
+                Double tbdlmj = Double.valueOf(f.getAttribute("TBDLMJ_1").toString());
+                Double tbdlmjMu = tbdlmj/DEFAULT_MU;
+                Double tbdlmjKm = tbdlmj/DEFAULT_KM;
+                Double pmmj = Double.valueOf(f.getAttribute("PMMJ").toString());
+                Double pmmjMu = pmmj/DEFAULT_MU;
+                Double pmmjKm = pmmj/DEFAULT_KM;
+
+                Field mf = new Field("TBDLMJ_M");
+                mf.setType(Double.class);
+                f.addAttribute(mf, tbdlmjMu);
+                Field kmf = new Field("TBDLMJ_KM");
+                kmf.setType(Double.class);
+                f.addAttribute(kmf, tbdlmjKm);
+
+                Field pmf = new Field("PMMJ_M");
+                pmf.setType(Double.class);
+                f.addAttribute(pmf, pmmjMu);
+                Field kpmf = new Field("PMMJ_KM");
+                kpmf.setType(Double.class);
+                f.addAttribute(kpmf, pmmjKm);
+
+                return f;
             }
         });
 
-        JavaPairRDD<String, Feature> resultRDD = oareaRDD.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Iterator<Feature>>, String, Feature>() {
-            @Override
-            public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Iterator<Feature>> input) throws Exception {
-                List<Feature> features = IteratorUtils.toList(input._2);
-                return features.stream().map(x->new Tuple2<>(x.getFid(), x)).collect(Collectors.toList()).iterator();
-            }
-        });
+        List<Feature> adjustFeatures = adjustRDD.collect();
+        adjustFeatures = AreaAdjustment.adjust(totalAreaMu, "TBDLMJ_M", adjustFeatures, DEFAULT_SCALE);
+        adjustFeatures = AreaAdjustment.adjust(totalAreaKm, "TBDLMJ_KM", adjustFeatures, DEFAULT_SCALE);
+        adjustFeatures = AreaAdjustment.adjust(totalPmmjMu, "PMMJ_M", adjustFeatures, DEFAULT_SCALE);
+        adjustFeatures = AreaAdjustment.adjust(totalPmmjKm, "PMMJ_KM", adjustFeatures, DEFAULT_SCALE);
 
+        JavaPairRDD<String, Feature> resultRDD = this.jsc.parallelize(adjustFeatures).mapToPair(x->new Tuple2<>(x.getFid(), x));
         Layer result = new Layer(resultRDD.rdd());
+
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter resultWriter = LayerFactory.getWriter(this.ss, writerConfig);
 

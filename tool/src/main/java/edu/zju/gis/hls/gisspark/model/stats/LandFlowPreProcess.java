@@ -16,8 +16,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
-import java.util.List;
-
 /**
  * @author Hu
  * @date 2020/9/15

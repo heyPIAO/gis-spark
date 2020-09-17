@@ -54,21 +54,18 @@ public class AreaAdjustment {
     }
 
     long diff = tareal - total;
-    if (diff < 0) {
-      log.warn("Area adjustment differential is negative, abnormal, do nothing");
-      return features;
-    }
 
     int length = features.size();
     long plus = diff / length; // 取整，每个图斑需要被平差的量
     long mod = diff % length; // 求余
+    int flag = mod >= 0 ? 1:-1;
     // 排序，然后将余数加上，再将取整的数加上
     // 按被平差字段降序
     outFeatures.sort((o1, o2) -> -((int)((long)o1.getAttribute(fieldName)-(long)o2.getAttribute(fieldName))));
-    for (int i=0; i<mod; i++) {
+    for (int i=0; i<Math.abs(mod); i++) {
       Feature f = outFeatures.get(i);
       long origin = (long)f.getAttribute(fieldName);
-      f.updateAttribute(fieldName, origin+1);
+      f.updateAttribute(fieldName, origin+flag);
     }
     for (int i=0; i<length; i++) {
       Feature f = outFeatures.get(i);
