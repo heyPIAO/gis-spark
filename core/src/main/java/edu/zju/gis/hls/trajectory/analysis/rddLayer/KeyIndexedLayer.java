@@ -83,6 +83,7 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
         List<Tuple2<String, Feature>> result = new ArrayList<>();
         while (in1.hasNext()) {
           Feature f1 = in1.next();
+
           for(Feature f2: in2) {
             Feature r = f1.intersect(f2, attrReserved);
             if (!r.isEmpty()) {

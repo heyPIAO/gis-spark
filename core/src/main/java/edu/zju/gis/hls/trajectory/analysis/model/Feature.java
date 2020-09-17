@@ -155,13 +155,13 @@ public class Feature <T extends Geometry> implements Serializable {
   private Geometry validedGeom(Geometry g) {
     List<org.locationtech.jts.geom.Polygon> valided = null;
     if (this.getGeometry() instanceof org.locationtech.jts.geom.Polygon) {
-      valided = JTS.makeValid((org.locationtech.jts.geom.Polygon) this.getGeometry(), false);
+      valided.add(JTS.makeValid((org.locationtech.jts.geom.Polygon) this.getGeometry(), true).get(0));
     } else if (this.getGeometry() instanceof org.locationtech.jts.geom.MultiPolygon) {
       org.locationtech.jts.geom.MultiPolygon mps = (org.locationtech.jts.geom.MultiPolygon) this.getGeometry();
       int i = mps.getNumGeometries();
       valided = new ArrayList<>();
       for (int m = 0; m < i; m++) {
-        valided.addAll(JTS.makeValid((org.locationtech.jts.geom.Polygon) mps.getGeometryN(m), false));
+        valided.add((JTS.makeValid((org.locationtech.jts.geom.Polygon) mps.getGeometryN(m), true).get(0)));
       }
     }
     GeometryFactory gf = new GeometryFactory();
@@ -180,13 +180,11 @@ public class Feature <T extends Geometry> implements Serializable {
     if (f.getGeometry().isEmpty() || g2.isEmpty() || !this.getGeometry().intersects(g2)) return Feature.empty();
     Geometry g = null;
     try {
-//      g = this.getGeometry().intersection(g2);
-      g = EnhancedPrecisionOp.intersection(this.getGeometry(), g2);
+      g = this.getGeometry().intersection(g2);
     } catch (Exception e) {
-//      g = EnhancedPrecisionOp.intersection(this.getGeometry(), g2);
       Geometry g0 = validedGeom(this.getGeometry());
       Geometry g1 = validedGeom(g2);
-      g = EnhancedPrecisionOp.intersection(g0, g1);
+      g = g0.intersection(g1);
     }
 
     if (g == null || g.isEmpty()) {
@@ -194,11 +192,11 @@ public class Feature <T extends Geometry> implements Serializable {
     }
     Feature result = new Feature();
     result.setGeometry(g);
-    result.setFid(this.getFid() + "_" + f.getFid());
+    result.setFid(this.getFid());
+
     LinkedHashMap<Field, Object> attr = new LinkedHashMap<>();
 
-    Field id2 = Term.FIELD_DEFAULT_ID;
-    id2.setName(Term.FIELD_DEFAULT_ID.getName() + "_2");
+    Field id2 = new Field(Term.FIELD_DEFAULT_ID.getName() + "_2");
     attr.put(id2, f.getFid());
 
     if (attrReserved) {
