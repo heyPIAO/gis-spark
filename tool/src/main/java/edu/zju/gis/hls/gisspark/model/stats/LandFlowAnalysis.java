@@ -469,7 +469,6 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         LayerWriterConfig statsWriterConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter statWriter = LayerFactory.getWriter(ss, statsWriterConfig);
         statWriter.write(statLayer);
-
     }
 
     private MultiPolygonLayer read2dLayer(SparkSession ss, LayerReaderConfig config) throws Exception {
