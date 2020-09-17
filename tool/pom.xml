@@ -59,7 +59,8 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>edu.zju.gis.hls.gisspark.model.loader.cluster.PgDataLoader</mainClass>
+<!--                            <mainClass>edu.zju.gis.hls.gisspark.model.loader.cluster.PgDataLoader</mainClass>-->
+                            <mainClass>edu.zju.gis.hls.gisspark.model.stats.LandFlowPreProcess</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

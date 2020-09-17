@@ -18,7 +18,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
-import sun.jvm.hotspot.oops.DoubleField;
 
 import java.util.List;
 
@@ -94,6 +93,8 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
             }
         });
 
+
+
         xzdwLayer.cache();
         JavaPairRDD<String, Feature> xzdwLayer1 = xzdwLayer.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
@@ -167,9 +168,14 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
         });
 
         l1.cache();
-        List<Tuple2<String, Feature>> re = l1.collect();
+        Feature f = l1.first()._2;
 
-        log.info(String.valueOf(re.size()));
+//        l1.cache();
+//        List<Tuple2<String, Feature>> re = l1.collect();
+
+        l1.saveAsTextFile("/Users/moral/Desktop/result/");
+
+        log.info(String.valueOf(l1.count()));
         // TODO 写出
 
 //        Dataset<Row> lxdwRf = lxdwLayer.toDataset(this.ss);
