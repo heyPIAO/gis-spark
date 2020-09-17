@@ -119,6 +119,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 Geometry geometry = feature.getGeometry();
                 Feature fo = new Feature(feature); //深拷贝
                 Double tbmj = Double.valueOf(feature.getAttribute("TBMJ_1").toString());
+                Double kcxs = Double.valueOf(feature.getAttribute("KCXS_1").toString());
                 Double tbdlmj = Double.valueOf(feature.getAttribute("TBDLMJ_1").toString());
                 Double xtbmj = geometry.getArea();
                 Double ytbmj = Double.valueOf(feature.getAttribute("YTBMJ_1").toString());
@@ -132,10 +133,14 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 Field pmmjF = new Field("PMMJ");
                 pmmjF.setType(Double.class);
 
+                Field ypmmjF = new Field("YPMMJ");
+                ypmmjF.setType(Double.class);
+
                 fo.updateAttribute("TBDLMJ_1", area);
                 fo.updateAttribute("TBMJ_1", xarea);
                 fo.updateAttribute("ZLDWDM_1", zldwdm);
-                fo.addAttribute(pmmjF, xtbmj);
+                fo.addAttribute(pmmjF, xtbmj*(1-kcxs));
+                fo.addAttribute(ypmmjF, xtbmj);
 
                 return new Tuple2<>(input._1, fo);
             }
@@ -151,10 +156,13 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 String kcdlbm = feature.getAttribute("KCDLBM_1").toString();
                 Double tbmj = Double.valueOf(feature.getAttribute("TBMJ_1").toString());
                 Double tbdlmj = Double.valueOf(feature.getAttribute("TBDLMJ_1").toString());
+                Double ypmmj = Double.valueOf(feature.getAttribute("YPMMJ").toString());
+                Double pmmj = Double.valueOf(feature.getAttribute("PMMJ").toString());
                 if (!kcdlbm.equals(null) && kcdlbm.length() > 3) {
                     LinkedHashMap<Field, Object> fields = new LinkedHashMap<>();
                     of.updateAttribute("DLBM_1", kcdlbm);
                     of.updateAttribute("TBDLMJ_1", tbmj-tbdlmj);
+                    of.updateAttribute("PMMJ", ypmmj-pmmj);
 
                     return new Tuple2<>(input._1, of);
                 }

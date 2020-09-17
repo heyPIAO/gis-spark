@@ -18,7 +18,7 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
-import sun.jvm.hotspot.oops.DoubleField;
+//import sun.jvm.hotspot.oops.DoubleField;
 
 import java.util.List;
 
