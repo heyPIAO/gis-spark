@@ -56,7 +56,8 @@ public class Feature <T extends Geometry> implements Serializable {
 
   public Feature() {
     this.fid = UUID.randomUUID().toString();
-    this.geometry = (T) GeometryUtil.createEmptyGeometry(ClassUtil.getTClass(this.getClass(), 0));
+//    this.geometry = (T) GeometryUtil.createEmptyGeometry(ClassUtil.getTClass(this.getClass(), 0));
+    this.geometry = null;
     this.attributes = new LinkedHashMap<>();
   }
 

@@ -41,7 +41,7 @@ public class UniformGridIndex implements DistributeSpatialIndex, Serializable {
   @Override
   public <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer) {
     CoordinateReferenceSystem crs = layer.getMetadata().getCrs();
-    PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build();
+    PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setZLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build(true);
     UniformGridIndexLayer<L> result = new UniformGridIndexLayer<L>(pc, c);
     UniformGridPartitioner partitioner = new UniformGridPartitioner(pc, c, layer.getNumPartitions());
     L klayer = (L) layer.flatMapToLayer(partitioner).partitionByToLayer(partitioner);

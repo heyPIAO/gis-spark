@@ -63,6 +63,7 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
                 .option("password", config.getPassword())
                 .mode(config.getSaveMode().equals(SaveMode.Append) ? SaveMode.Append : SaveMode.ErrorIfExists)
                 .save();
+        df.unpersist();
     }
 
     /**
