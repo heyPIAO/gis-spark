@@ -74,7 +74,7 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
 
     // 原理上，相同的分区器的KeyIndexLayer，相同的key存储在同一台机子上，利用相同key做join可减少shuffle
     // 仅关联有相同 key 的元祖，不做 full outer join
-    JavaPairRDD<String, Tuple2<Iterable<Feature>, Iterable<Feature>>> cogroup = this.getLayer().cogroup(layer2.getLayer());
+    JavaPairRDD<String, Tuple2<Iterable<Feature>, Iterable<Feature>>> cogroup = this.getLayer().cogroup(layer2.getLayer().repartitionToLayer(this.getLayer().getNumPartitions()));
     JavaPairRDD<String, Feature> res = cogroup.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Iterable<Feature>, Iterable<Feature>>>, String, Feature>() {
       @Override
       public Iterator<Tuple2<String, Feature>> call(Tuple2<String, Tuple2<Iterable<Feature>, Iterable<Feature>>> input) throws Exception {
