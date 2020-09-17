@@ -8,6 +8,7 @@ import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
@@ -19,7 +20,6 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfi
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -29,8 +29,6 @@ import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static tec.uom.se.function.QuantityFunctions.sum;
 
@@ -114,6 +112,18 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
         Layer intersectedLayer = filteredLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
             @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> o) throws Exception {
+                Feature of = new Feature(o._2);
+                of.setFid(String.format("%s.%s", o._2.getFid(), o._2.getAttribute(Term.FIELD_DEFAULT_ID.getName() + "_2").toString()));
+                return new Tuple2<>(of.getFid(), of);
+            }
+        }).reduceByKeyToLayer(new Function2<Feature, Feature, Feature>() {
+            @Override
+            public Feature call(Feature o, Feature o2) throws Exception {
+                return o;
+            }
+        }).mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
+            @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
                 Feature feature = input._2;
                 Geometry geometry = feature.getGeometry();
@@ -144,7 +154,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
                 return new Tuple2<>(input._1, fo);
             }
-        }).distinct();
+        });
 
         intersectedLayer.cache();
 
@@ -181,10 +191,10 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         layer.cache();
 
         // 写出裁切以后面积调整过的图层
-//        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
-//        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
-//        layer.inferFieldMetadata();
-//        geomWriter.write(layer);
+        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+        layer.inferFieldMetadata();
+        geomWriter.write(layer);
 
         Layer resultLayer = layer.mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
@@ -200,7 +210,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         });
 
-        JavaPairRDD<String, Feature> oareaRDD = resultLayer.reduceToLayer(new Function2<Feature, Feature, Feature>() {
+        JavaPairRDD<String, Feature> oareaRDD = resultLayer.reduceByKeyToLayer(new Function2<Feature, Feature, Feature>() {
             @Override
             public Feature call(Feature input1, Feature input2) throws Exception {
                 Double tbdlmj1 = Double.valueOf(input1.getAttribute("TBDLMJ_1").toString());
