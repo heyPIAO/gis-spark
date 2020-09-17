@@ -57,10 +57,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
     @Override
     public void run() throws Exception {
-        LayerReaderConfig tb3dReaderConfig=LayerFactory.getReaderConfig(this.arg.getTb3dReaderConfig());
+        LayerReaderConfig tb3dReaderConfig = LayerFactory.getReaderConfig(this.arg.getTb3dReaderConfig());
         LayerReader<MultiPolygonLayer> tb3dLayerReader = LayerFactory.getReader(ss, tb3dReaderConfig);
         MultiPolygonLayer tb3dLayer = tb3dLayerReader.read();
-        LayerReaderConfig xz2dReaderConfig=LayerFactory.getReaderConfig(this.arg.getXz2dReaderConfig());
+        LayerReaderConfig xz2dReaderConfig = LayerFactory.getReaderConfig(this.arg.getXz2dReaderConfig());
         MultiPolygonLayer xz2dLayer = this.read2dLayer(ss, xz2dReaderConfig);
 
         DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
@@ -74,8 +74,8 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             @Override
             public Iterator<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> call(Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>> in) throws Exception {
                 List<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> result = new LinkedList<>();
-                for (MultiPolygon tb3d: in._2._1) {
-                    for (MultiPolygon tb2d: in._2._2) {
+                for (MultiPolygon tb3d : in._2._1) {
+                    for (MultiPolygon tb2d : in._2._2) {
                         if (tb3d.getGeometry().intersects(tb2d.getGeometry())) {
                             result.add(new Tuple2<>(tb3d.getFid() + "##" + tb2d.getFid(), new Tuple2<>(tb3d, tb2d)));
                         } else {
@@ -86,10 +86,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                 return result.iterator();
             }
-        }).filter(x->!x._1.equals("EMPTY")).distinct();
+        }).filter(x -> !x._1.equals("EMPTY")).distinct();
 
         //去重
-        JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp2=temp.reduceByKey(
+        JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp2 = temp.reduceByKey(
                 new Function2<Tuple2<MultiPolygon, MultiPolygon>, Tuple2<MultiPolygon, MultiPolygon>, Tuple2<MultiPolygon, MultiPolygon>>() {
                     @Override
                     public Tuple2<MultiPolygon, MultiPolygon> call(Tuple2<MultiPolygon, MultiPolygon> polygonFeatureMultiPolygonTuple2, Tuple2<MultiPolygon, MultiPolygon> polygonFeatureMultiPolygonTuple22) throws Exception {
@@ -113,15 +113,14 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                 List<Tuple2<String, Geometry>> result = new ArrayList<>();
 
-                result.add(new Tuple2<>("START", null));
+//                result.add(new Tuple2<>("START", null));
 
                 MultiPolygon tb3d = t._2._1;
                 MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
-                tb3d=polygonFeatureEx(tb3d);
-                tb2d=polygonFeatureEx(tb2d);
+                tb3d = polygonFeatureEx(tb3d);
+                tb2d = polygonFeatureEx(tb2d);
 
-                try
-                {
+                try {
                     if (!tb3d.getGeometry().intersects(tb2d.getGeometry())) {
                         return result.iterator();
                     }
@@ -129,7 +128,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     Polyline[] xz2d = (Polyline[]) t._2._2._3();
 
                     String fcc = String.valueOf(tb3d.getAttribute("DLBM"));
-                    String zldwdm = String.valueOf(tb3d.getAttribute("ZLDWDM")).substring(0,15);
+                    String zldwdm = String.valueOf(tb3d.getAttribute("ZLDWDM")).substring(0, 15);
 
                     //和 2调面状图斑 进行相交
                     String omzcc = String.valueOf(tb2d.getAttribute("dlbm"));
@@ -138,31 +137,32 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                     Geometry ip = tb3d.getGeometry().intersection(tb2d.getGeometry());
                     int size = ip.getNumGeometries();
-                    a: for (int i=0; i<size; i++) {//为什么要分开
+                    a:
+                    for (int i = 0; i < size; i++) {//为什么要分开
                         Geometry g = ip.getGeometryN(i);
                         if (g.getDimension() < 2) continue;
                         double iarea = g.getArea();
-                        double flowTbArea = tbArea * iarea/aarea;
+                        double flowTbArea = tbArea * iarea / aarea;
 
-                        double sdkcxs=Double.valueOf(String.valueOf(tb3d.getAttribute("KCXS")));
-                        double sdkcarea=flowTbArea*sdkcxs;
+                        double sdkcxs = Double.valueOf(String.valueOf(tb3d.getAttribute("KCXS")));
+                        double sdkcarea = flowTbArea * sdkcxs;
 
                         //耕地互变
 
-                        if(omzcc.substring(0,2).equals("01")&&(fcc.substring(0,2).equals("01"))&&
-                                (!omzcc.substring(omzcc.length()-1).equals(fcc.substring(fcc.length()-1)))){
-                            List<String> dlbms=new ArrayList<>();
-                            List<Double> areas=new ArrayList<>();
+                        if (omzcc.substring(0, 2).equals("01") && (fcc.substring(0, 2).equals("01")) &&
+                                (!omzcc.substring(omzcc.length() - 1).equals(fcc.substring(fcc.length() - 1)))) {
+                            List<String> dlbms = new ArrayList<>();
+                            List<Double> areas = new ArrayList<>();
 
                             //线状计算
                             if (xz2d != null) {
-                                for (Polyline lf: xz2d) {
+                                for (Polyline lf : xz2d) {
                                     if (!g.intersects(lf.getGeometry())) continue;
                                     String oxzcc = String.valueOf(lf.getAttribute("dlbm"));
                                     try {
                                         Geometry ig = lf.getGeometry().intersection(g);
-                                        double xzratio = ig.getLength()/lf.getGeometry().getLength();
-                                        double oxzarea = xzratio * Double.valueOf(String.valueOf(lf.getAttribute("cd"))) *Double.valueOf(String.valueOf(lf.getAttribute("kd")));
+                                        double xzratio = ig.getLength() / lf.getGeometry().getLength();
+                                        double oxzarea = xzratio * Double.valueOf(String.valueOf(lf.getAttribute("cd"))) * Double.valueOf(String.valueOf(lf.getAttribute("kd")));
                                         if (!oxzcc.equals(fcc)) {
                                             double okcbl = Double.valueOf(String.valueOf(lf.getAttribute("kcbl")));
                                             oxzarea = oxzarea * okcbl;
@@ -200,33 +200,32 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                 edkcarea = flowTbArea * tkxs * 0.01;
                             }
 
-                            if(edkcarea<=sdkcarea) {
+                            if (edkcarea <= sdkcarea) {
                                 //相当于非耕地到耕地
                                 flowTbArea = tbArea * iarea / aarea;
                                 double kcarea = sdkcarea - edkcarea;
 
-                                for(int j=0;j<dlbms.size();j++) {
-                                    String occ=dlbms.get(j);
-                                    double area=areas.get(j);
-                                    if(flowTbArea - area<0)
-                                    {
-                                        area=flowTbArea;
+                                for (int j = 0; j < dlbms.size(); j++) {
+                                    String occ = dlbms.get(j);
+                                    double area = areas.get(j);
+                                    if (flowTbArea - area < 0) {
+                                        area = flowTbArea;
                                     }
                                     if (kcarea > 0) {
 
                                         //occ ## fcc ## ozldwdm ## fzldwdm ## area
-                                        String kc = String.format("%s##1203##%s##%.9f", occ,zldwdm, area * sdkcxs);
-                                        Tuple2<String, Geometry> flow = new Tuple2<>(kc,null);
+                                        String kc = String.format("%s##1203##%s##%.9f", occ, zldwdm, area * sdkcxs);
+                                        Tuple2<String, Geometry> flow = new Tuple2<>(kc, null);
                                         result.add(flow);
 
-                                        String k = String.format("%s##%s##%s##%.9f", occ, fcc,zldwdm, area - area * sdkcxs);
+                                        String k = String.format("%s##%s##%s##%.9f", occ, fcc, zldwdm, area - area * sdkcxs);
                                         Tuple2<String, Geometry> flowk = new Tuple2<>(k, null);
                                         result.add(flowk);
 
 
                                         kcarea = kcarea - area * sdkcxs;
                                     } else {
-                                        String k = String.format("%s##%s##%s##%.9f", occ, fcc,zldwdm, area);
+                                        String k = String.format("%s##%s##%s##%.9f", occ, fcc, zldwdm, area);
                                         Tuple2<String, Geometry> flow = new Tuple2<>(k, null);
                                         result.add(flow);
                                     }
@@ -238,33 +237,32 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                                 //面状地物情况
                                 if (kcarea > 0) {
-                                    String kc = String.format("%s##1203##%s##%.9f", omzcc,zldwdm, kcarea);
+                                    String kc = String.format("%s##1203##%s##%.9f", omzcc, zldwdm, kcarea);
                                     Tuple2<String, Geometry> flow = new Tuple2<>(kc, null);
                                     result.add(flow);
 
-                                    String k = String.format("%s##%s##%s##%.9f", omzcc, fcc,zldwdm, flowTbArea - kcarea);
+                                    String k = String.format("%s##%s##%s##%.9f", omzcc, fcc, zldwdm, flowTbArea - kcarea);
                                     Tuple2<String, Geometry> flowk = new Tuple2<>(k, g);
                                     result.add(flowk);
                                 } else {
-                                    String k = String.format("%s##%s##%s##%.9f", omzcc, fcc,zldwdm, flowTbArea);
+                                    String k = String.format("%s##%s##%s##%.9f", omzcc, fcc, zldwdm, flowTbArea);
                                     Tuple2<String, Geometry> flow = new Tuple2<>(k, g);
                                     result.add(flow);
                                 }
 
 
-                            }else {
+                            } else {
                                 //相当于耕地到非耕地
                                 flowTbArea = tbArea * iarea / aarea;
                                 double kcarea = edkcarea - sdkcarea;
 
-                                for(int j=0;j<dlbms.size();j++) {
-                                    String occ=dlbms.get(j);
-                                    double area=areas.get(j);
-                                    if(flowTbArea - area<0)
-                                    {
-                                        area=flowTbArea;
+                                for (int j = 0; j < dlbms.size(); j++) {
+                                    String occ = dlbms.get(j);
+                                    double area = areas.get(j);
+                                    if (flowTbArea - area < 0) {
+                                        area = flowTbArea;
                                     }
-                                    String k = String.format("%s##%s##%s##%.9f", occ, fcc,zldwdm, area);
+                                    String k = String.format("%s##%s##%s##%.9f", occ, fcc, zldwdm, area);
                                     Tuple2<String, Geometry> flow = new Tuple2<>(k, null);
                                     result.add(flow);
 
@@ -275,11 +273,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                 }
 
                                 //面状地物
-                                if(flowTbArea - kcarea<0)
-                                {
-                                    kcarea=flowTbArea;
+                                if (flowTbArea - kcarea < 0) {
+                                    kcarea = flowTbArea;
                                 }
-                                String kc = String.format("123##%s##%s##%.9f", fcc,zldwdm, kcarea);
+                                String kc = String.format("123##%s##%s##%.9f", fcc, zldwdm, kcarea);
                                 Tuple2<String, Geometry> flowkc = new Tuple2<>(kc, g);
                                 result.add(flowkc);
 
@@ -289,12 +286,12 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                     continue a;
                                 }
 
-                                String k = String.format("%s##%s##%s##%.9f", omzcc, fcc,zldwdm, flowTbArea);
+                                String k = String.format("%s##%s##%s##%.9f", omzcc, fcc, zldwdm, flowTbArea);
                                 Tuple2<String, Geometry> flow = new Tuple2<>(k, g);
                                 result.add(flow);
                             }
 
-                        }else {
+                        } else {
                             //和线状图斑进行流转
                             if (xz2d != null) {
                                 for (Polyline lf : xz2d) {
@@ -307,22 +304,21 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                         if (!oxzcc.equals(fcc)) {
                                             double okcbl = Double.valueOf(String.valueOf(lf.getAttribute("kcbl")));
                                             oxzarea = oxzarea * okcbl;
-                                            if(flowTbArea - oxzarea<0)
-                                            {
-                                                oxzarea=flowTbArea;
+                                            if (flowTbArea - oxzarea < 0) {
+                                                oxzarea = flowTbArea;
                                             }
                                             if (sdkcarea > 0) {
-                                                String kc = String.format("%s##1203##%s##%.9f", oxzcc,zldwdm, oxzarea * sdkcxs);
+                                                String kc = String.format("%s##1203##%s##%.9f", oxzcc, zldwdm, oxzarea * sdkcxs);
                                                 Tuple2<String, Geometry> flow = new Tuple2<>(kc, ig);
                                                 result.add(flow);
 
-                                                String k = String.format("%s##%s##%s##%.9f", oxzcc, fcc,zldwdm, oxzarea - oxzarea * sdkcxs);
+                                                String k = String.format("%s##%s##%s##%.9f", oxzcc, fcc, zldwdm, oxzarea - oxzarea * sdkcxs);
                                                 Tuple2<String, Geometry> flowk = new Tuple2<>(k, ig);
                                                 result.add(flowk);
 
                                                 sdkcarea = sdkcarea - oxzarea * sdkcxs;
                                             } else {
-                                                String k = String.format("%s##%s##%s##%.9f", oxzcc, fcc,zldwdm, oxzarea);
+                                                String k = String.format("%s##%s##%s##%.9f", oxzcc, fcc, zldwdm, oxzarea);
                                                 Tuple2<String, Geometry> flow = new Tuple2<>(k, ig);
                                                 result.add(flow);
                                             }
@@ -345,23 +341,22 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                     if (!g.contains(pf.getGeometry())) continue;
                                     String olxcc = String.valueOf(pf.getAttribute("dlbm"));
                                     double olxarea = (double) pf.getAttribute("mj");
-                                    if(flowTbArea - olxarea<0)
-                                    {
-                                        olxarea=flowTbArea;
+                                    if (flowTbArea - olxarea < 0) {
+                                        olxarea = flowTbArea;
                                     }
                                     if (!olxcc.equals(fcc)) {
                                         if (sdkcarea > 0) {
-                                            String kc = String.format("%s##1203##%s##%.9f", olxcc,zldwdm, olxarea * sdkcxs);
+                                            String kc = String.format("%s##1203##%s##%.9f", olxcc, zldwdm, olxarea * sdkcxs);
                                             Tuple2<String, Geometry> flow = new Tuple2<>(kc, pf.getGeometry());
                                             result.add(flow);
 
-                                            String k = String.format("%s##%s##%s##%.9f", olxcc, fcc,zldwdm, olxarea - olxarea * sdkcxs);
+                                            String k = String.format("%s##%s##%s##%.9f", olxcc, fcc, zldwdm, olxarea - olxarea * sdkcxs);
                                             Tuple2<String, Geometry> flowk = new Tuple2<>(k, pf.getGeometry());
                                             result.add(flowk);
 
                                             sdkcarea = sdkcarea - olxarea * sdkcxs;
                                         } else {
-                                            String k = String.format("%s##%s##%s##%.9f", olxcc, fcc,zldwdm, olxarea);
+                                            String k = String.format("%s##%s##%s##%.9f", olxcc, fcc, zldwdm, olxarea);
                                             Tuple2<String, Geometry> flow = new Tuple2<>(k, pf.getGeometry());
                                             result.add(flow);
                                         }
@@ -384,25 +379,25 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                     } else {
                                         kcarea = flowTbArea * tkxs * 0.01;
                                     }
-                                    String kc = String.format("123##%s##%s##%.9f", fcc,zldwdm, kcarea);
+                                    String kc = String.format("123##%s##%s##%.9f", fcc, zldwdm, kcarea);
                                     Tuple2<String, Geometry> flowkc = new Tuple2<>(kc, g);
                                     result.add(flowkc);
 
-                                    String k = String.format("%s##%s##%s##%.9f", omzcc, fcc,zldwdm, flowTbArea - kcarea);
+                                    String k = String.format("%s##%s##%s##%.9f", omzcc, fcc, zldwdm, flowTbArea - kcarea);
                                     Tuple2<String, Geometry> flow = new Tuple2<>(k, g);
                                     result.add(flow);
 
                                 } else {
                                     if (sdkcarea > 0) {
-                                        String kc = String.format("%s##1203##%s##%.9f", omzcc,zldwdm, sdkcarea);
+                                        String kc = String.format("%s##1203##%s##%.9f", omzcc, zldwdm, sdkcarea);
                                         Tuple2<String, Geometry> flow = new Tuple2<>(kc, g);
                                         result.add(flow);
 
-                                        String k = String.format("%s##%s##%s##%.9f", omzcc, fcc,zldwdm, flowTbArea - sdkcarea);
+                                        String k = String.format("%s##%s##%s##%.9f", omzcc, fcc, zldwdm, flowTbArea - sdkcarea);
                                         Tuple2<String, Geometry> flowk = new Tuple2<>(k, g);
                                         result.add(flowk);
                                     } else {
-                                        String k = String.format("%s##%s##%s##%.9f", omzcc, fcc,zldwdm, flowTbArea);
+                                        String k = String.format("%s##%s##%s##%.9f", omzcc, fcc, zldwdm, flowTbArea);
                                         Tuple2<String, Geometry> flow = new Tuple2<>(k, g);
                                         result.add(flow);
                                     }
@@ -426,22 +421,30 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         List<Tuple2<String, Geometry>> ri = intersected.collect();
         log.info(String.valueOf(ri.size()));
 
-//        Layer intersectedLayer = new Layer(intersected.map(new Function<Tuple2<String, Geometry>, Tuple2<String, Feature>>() {
-//            @Override
-//            public Tuple2<String, Feature> call(Tuple2<String, Geometry> in) throws Exception {
-////                Polygon[] polygons1=new Polygon[1];
-////                polygons1[0]=(org.locationtech.jts.geom.Polygon) in._2;
-////                GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory( null );
-////                org.locationtech.jts.geom.MultiPolygon geometryNewall=geometryFactory.createMultiPolygon(polygons1);
-////                MultiPolygon p = new MultiPolygon(in._1, (org.locationtech.jts.geom.MultiPolygon) in._2);
-//                return new Tuple2<>(in._1, new Feature(in._2));
-//            }
-//        }).rdd());
-//
-//
-//        LayerWriterConfig geomWriterConfig=LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
-//        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
-//        geomWriter.write(intersectedLayer);
+        Layer intersectedLayer = new Layer(intersected.map(new Function<Tuple2<String, Geometry>, Tuple2<String, Feature>>() {
+            @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Geometry> in) throws Exception {
+//                Polygon[] polygons1=new Polygon[1];
+//                polygons1[0]=(org.locationtech.jts.geom.Polygon) in._2;
+//                GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory( null );
+//                org.locationtech.jts.geom.MultiPolygon geometryNewall=geometryFactory.createMultiPolygon(polygons1);
+//                MultiPolygon p = new MultiPolygon(in._1, (org.locationtech.jts.geom.MultiPolygon) in._2);
+                return new Tuple2<>(in._1, new Feature(in._2));
+            }
+        }).rdd());
+
+//        Field spatial_id = new Field("FID");
+//        spatial_id.setType(Double.class);
+//        intersectedLayer.getMetadata().addAttribute(spatial_id, null);
+//        Field spatial_geom = new Field("ZLDWXX");
+//        intersectedLayer.getMetadata().addAttribute(spatial_geom, null);
+
+        intersectedLayer.cache();
+        List<Tuple2<String, Feature>> ii = intersectedLayer.collect();
+
+        LayerWriterConfig geomWriterConfig=LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+        geomWriter.write(intersectedLayer);
 
         // 写出空间信息
 //        intersected.foreachPartition(new VoidFunction<Iterator<Tuple2<String, Geometry>>>() {
@@ -467,17 +470,17 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 //        });
 
         // 写出统计结果
-        JavaPairRDD<String, Double> flowAreaRDD = intersected.filter(x->!x._1.equals("START")).mapToPair(new PairFunction<Tuple2<String, Geometry>, String, Double>() {
+        JavaPairRDD<String, Double> flowAreaRDD = intersected.filter(x -> !x._1.equals("START")).mapToPair(new PairFunction<Tuple2<String, Geometry>, String, Double>() {
             @Override
             public Tuple2<String, Double> call(Tuple2<String, Geometry> in) throws Exception {
                 String[] fs = in._1.split("##");
-                String key = String.format("%s##%s##%s", fs[0], fs[1],fs[2]);
+                String key = String.format("%s##%s##%s", fs[0], fs[1], fs[2]);
                 Double v = Double.valueOf(fs[3]);
                 return new Tuple2<>(key, v);
             }
-        }).reduceByKey((x1, x2)->x1+x2);
+        }).reduceByKey((x1, x2) -> x1 + x2);
 
-        JavaRDD<Tuple2<String, LinkedHashMap<Field, Object>>> statResult = flowAreaRDD.map(x->{
+        JavaRDD<Tuple2<String, LinkedHashMap<Field, Object>>> statResult = flowAreaRDD.map(x -> {
             LinkedHashMap<Field, Object> r = new LinkedHashMap<>();
             Field f = new Field("MJ");
             f.setType(java.lang.Double.class);
@@ -493,7 +496,12 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         statLayer.getMetadata().addAttribute(f, null);
         Field f2 = new Field("ZLDWXX");
         statLayer.getMetadata().addAttribute(f2, null);
-        LayerWriterConfig statsWriterConfig= LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
+
+//        statResult.cache();
+//        List<Tuple2<String, LinkedHashMap<Field, Object>>> features = statResult.collect();
+
+
+        LayerWriterConfig statsWriterConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter statWriter = LayerFactory.getWriter(ss, statsWriterConfig);
         statWriter.write(statLayer);
 
@@ -589,7 +597,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                     Field f4 = new Field("kcbl");
                     f3.setType(java.lang.Double.class);
-                    attrsXz.put(f4,attrs.get("xz_kcbl"));
+                    attrsXz.put(f4, attrs.get("xz_kcbl"));
                     Polyline xzf = new Polyline(String.valueOf(attrs.get("xz_id")), xz, attrsXz);
 
                     Field f0 = new Field("xzdw");
@@ -606,27 +614,27 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                 Field f3 = new Field("tkxs");
                 f3.setType(java.lang.Double.class);
-                resultAttrs.put(f3,attrs.get("tb_tkxs"));
+                resultAttrs.put(f3, attrs.get("tb_tkxs"));
 
                 in._2.setAttributes(resultAttrs);
                 return in;
             }
         });
 
-        JavaRDD<Tuple2<String, MultiPolygon>> result = tbFeatures.groupBy(x->x._1).map(new Function<Tuple2<String, Iterable<Tuple2<String, MultiPolygon>>>, Tuple2<String, MultiPolygon>>() {
+        JavaRDD<Tuple2<String, MultiPolygon>> result = tbFeatures.groupBy(x -> x._1).map(new Function<Tuple2<String, Iterable<Tuple2<String, MultiPolygon>>>, Tuple2<String, MultiPolygon>>() {
             @Override
             public Tuple2<String, MultiPolygon> call(Tuple2<String, Iterable<Tuple2<String, MultiPolygon>>> ts) throws Exception {
                 String key = ts._1;
                 MultiPolygon feature = null;
                 Iterator<Tuple2<String, MultiPolygon>> tsi = ts._2.iterator();
                 while (tsi.hasNext()) {
-                    Tuple2<String,MultiPolygon> t = tsi.next();
+                    Tuple2<String, MultiPolygon> t = tsi.next();
                     if (feature == null) {
                         String id = t._2.getFid();
                         org.locationtech.jts.geom.MultiPolygon g = t._2.getGeometry();
                         Map<String, Object> attrs = t._2.getAttributesStr();
                         LinkedHashMap<Field, Object> attrsO = new LinkedHashMap<>();
-                        for (String k: attrs.keySet()) {
+                        for (String k : attrs.keySet()) {
                             if (k.equals("xzdw")) {
                                 Polyline xz = (Polyline) attrs.get(k);
                                 Field f = new Field(k);
@@ -646,15 +654,15 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     } else {
                         // 进入这里的，都是至少有一个被关联 lxdw 或 xzdw 的tb
                         Map<String, Object> attrs = t._2.getAttributesStr();
-                        for (String k: attrs.keySet()) {
+                        for (String k : attrs.keySet()) {
                             if (k.equals("xzdw")) {
                                 Polyline xz = (Polyline) attrs.get(k);
                                 if (feature.getAttributesStr().keySet().contains(k)) {
                                     Polyline[] opfs = (Polyline[]) feature.getAttributesStr().get(k);
-                                    for (Polyline opf: opfs) {
+                                    for (Polyline opf : opfs) {
                                         if (opf.getFid().equals(xz.getFid())) break;
                                     }
-                                    Polyline[] rs = new Polyline[opfs.length+1];
+                                    Polyline[] rs = new Polyline[opfs.length + 1];
                                     List<Polyline> rl = new ArrayList<>(Arrays.asList(opfs));
                                     rl.add(xz);
                                     Field f = new Field(k);
@@ -669,18 +677,18 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                 Point lx = (Point) attrs.get(k);
                                 if (feature.getAttributesStr().keySet().contains(k)) {
                                     Point[] opfs = (Point[]) feature.getAttributesStr().get(k);
-                                    for (Point opf: opfs) {
+                                    for (Point opf : opfs) {
                                         if (opf.getFid().equals(lx.getFid())) break;
                                     }
-                                    Point[] rs = new Point[opfs.length+1];
+                                    Point[] rs = new Point[opfs.length + 1];
                                     List<Point> rl = new ArrayList<>(Arrays.asList(opfs));
                                     rl.add(lx);
                                     Field f = new Field(k);
-                                    f .setType(Point[].class);
+                                    f.setType(Point[].class);
                                     feature.getAttributes().put(f, rl.toArray(rs));
                                 } else {
                                     Field f = new Field(k);
-                                    f .setType(Point[].class);
+                                    f.setType(Point[].class);
                                     feature.getAttributes().put(f, new Point[]{lx});
                                 }
                             }
@@ -695,85 +703,73 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
     }
 
     //检查面自相交，防止有重复的点
-    private MultiPolygon polygonFeatureEx(MultiPolygon polygonFeature)
-    {
-        Geometry geometryIn=polygonFeature.getGeometry();
+    private MultiPolygon polygonFeatureEx(MultiPolygon polygonFeature) {
+        Geometry geometryIn = polygonFeature.getGeometry();
         int geomNum = geometryIn.getNumGeometries();
-        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory( null );
-        Polygon[] polygons=new Polygon[geomNum];
-        for (int j=0; j<geomNum; j++) {
+        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory(null);
+        Polygon[] polygons = new Polygon[geomNum];
+        for (int j = 0; j < geomNum; j++) {
             Polygon polygon = (Polygon) geometryIn.getGeometryN(j);
-            LineString exter= ((org.locationtech.jts.geom.Polygon) polygon).getExteriorRing();
-            Coordinate[] coordinates= exter.getCoordinates();
-            List<Coordinate> coordinatesList=new ArrayList<>();
+            LineString exter = ((org.locationtech.jts.geom.Polygon) polygon).getExteriorRing();
+            Coordinate[] coordinates = exter.getCoordinates();
+            List<Coordinate> coordinatesList = new ArrayList<>();
 
-            List<Integer> cfint=new ArrayList<>();
+            List<Integer> cfint = new ArrayList<>();
             LinearRing ring;
             //面图斑最后一个点和第一个点相同
-            for(int i=0;i<coordinates.length-1;i++)
-            {
-                if(coordinatesList.contains(coordinates[i]))
-                {
+            for (int i = 0; i < coordinates.length - 1; i++) {
+                if (coordinatesList.contains(coordinates[i])) {
 
                     //去除重复点
-                    if(coordinates[i].getX()==coordinates[i-1].getX()&&coordinates[i].getY()==coordinates[i-1].getY())
-                    {
+                    if (coordinates[i].getX() == coordinates[i - 1].getX() && coordinates[i].getY() == coordinates[i - 1].getY()) {
                         cfint.add(i);
-                    }
-                    else {
+                    } else {
                         //若后一点与该点重复
-                        if(coordinates[i].getX()==coordinates[i+1].getX()&&coordinates[i].getY()==coordinates[i+1].getY())
-                        {
-                            coordinates[i]=calNewCorrdinate(coordinates[i],coordinates[i+2],coordinates[i-1]);
-                        }
-                        else {
+                        if (coordinates[i].getX() == coordinates[i + 1].getX() && coordinates[i].getY() == coordinates[i + 1].getY()) {
+                            coordinates[i] = calNewCorrdinate(coordinates[i], coordinates[i + 2], coordinates[i - 1]);
+                        } else {
                             coordinates[i] = calNewCorrdinate(coordinates[i], coordinates[i + 1], coordinates[i - 1]);
                         }
                     }
                 }
                 coordinatesList.add(coordinates[i]);
             }
-            if(cfint.size()>0){
-                Coordinate[] newCoordinates=new Coordinate[coordinates.length-cfint.size()];
-                int k=0;
-                for(int i=0;i<coordinates.length;i++){
+            if (cfint.size() > 0) {
+                Coordinate[] newCoordinates = new Coordinate[coordinates.length - cfint.size()];
+                int k = 0;
+                for (int i = 0; i < coordinates.length; i++) {
 
-                    if(!cfint.contains(i)) {
-                        newCoordinates[k]=coordinates[i];
+                    if (!cfint.contains(i)) {
+                        newCoordinates[k] = coordinates[i];
                         k++;
                     }
                 }
                 ring = geometryFactory.createLinearRing(newCoordinates);
-            }else {
+            } else {
                 ring = geometryFactory.createLinearRing(coordinates);
             }
 
 
             //如果有内部环
-            if(((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing()>0)
-            {
+            if (((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing() > 0) {
                 LinearRing[] holes = new LinearRing[((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing()];
 
-                for(int k = 0; k<((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing(); k++)
-                {
+                for (int k = 0; k < ((org.locationtech.jts.geom.Polygon) polygon).getNumInteriorRing(); k++) {
 
-                    LineString inRing=((org.locationtech.jts.geom.Polygon) polygon).getInteriorRingN(k);
-                    Coordinate[] inCoordinates= inRing.getCoordinates();
-                    cfint=new ArrayList<>();
-                    for(int i=0;i<inCoordinates.length-1;i++)
-                    {
-                        if(coordinatesList.contains(inCoordinates[i]))
-                        {
+                    LineString inRing = ((org.locationtech.jts.geom.Polygon) polygon).getInteriorRingN(k);
+                    Coordinate[] inCoordinates = inRing.getCoordinates();
+                    cfint = new ArrayList<>();
+                    for (int i = 0; i < inCoordinates.length - 1; i++) {
+                        if (coordinatesList.contains(inCoordinates[i])) {
                             //起始点另算
-                            if(i==0){
-                                inCoordinates[0]=calNewCorrdinate(inCoordinates[0],inCoordinates[1],inCoordinates[inCoordinates.length-2]);
-                                inCoordinates[inCoordinates.length-1]=calNewCorrdinate(inCoordinates[0],inCoordinates[1],inCoordinates[inCoordinates.length-2]);
-                            }else {
+                            if (i == 0) {
+                                inCoordinates[0] = calNewCorrdinate(inCoordinates[0], inCoordinates[1], inCoordinates[inCoordinates.length - 2]);
+                                inCoordinates[inCoordinates.length - 1] = calNewCorrdinate(inCoordinates[0], inCoordinates[1], inCoordinates[inCoordinates.length - 2]);
+                            } else {
                                 //去除重复点
-                                if(inCoordinates[i].getX()==inCoordinates[i-1].getX()&&inCoordinates[i].getY()==inCoordinates[i-1].getY())
-                                {
+                                if (inCoordinates[i].getX() == inCoordinates[i - 1].getX() && inCoordinates[i].getY() == inCoordinates[i - 1].getY()) {
                                     cfint.add(i);
-                                }else {
+                                } else {
                                     //若后一点与该点重复
                                     if (coordinates[i].getX() == coordinates[i + 1].getX() && coordinates[i].getY() == coordinates[i + 1].getY()) {
                                         inCoordinates[i] = calNewCorrdinate(inCoordinates[i], inCoordinates[i + 2], inCoordinates[i - 1]);
@@ -787,69 +783,61 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                         coordinatesList.add(inCoordinates[i]);
                     }
 
-                    if(cfint.size()>0){
-                        Coordinate[] newCoordinates=new Coordinate[inCoordinates.length-cfint.size()];
-                        int kk=0;
-                        for(int i=0;i<inCoordinates.length;i++){
-                            if(!cfint.contains(i)) {
-                                newCoordinates[kk]=inCoordinates[i];
+                    if (cfint.size() > 0) {
+                        Coordinate[] newCoordinates = new Coordinate[inCoordinates.length - cfint.size()];
+                        int kk = 0;
+                        for (int i = 0; i < inCoordinates.length; i++) {
+                            if (!cfint.contains(i)) {
+                                newCoordinates[kk] = inCoordinates[i];
                                 kk++;
                             }
                         }
                         LinearRing inring = geometryFactory.createLinearRing(newCoordinates);
-                        holes[k]=inring;
+                        holes[k] = inring;
 
-                    }else {
+                    } else {
                         LinearRing inring = geometryFactory.createLinearRing(inCoordinates);
                         holes[k] = inring;
                     }
                 }
-                org.locationtech.jts.geom.Polygon geometryNew=geometryFactory.createPolygon(ring,holes);
-                polygons[j]=geometryNew;
+                org.locationtech.jts.geom.Polygon geometryNew = geometryFactory.createPolygon(ring, holes);
+                polygons[j] = geometryNew;
 
-            }else {
-                org.locationtech.jts.geom.Polygon geometryNew=geometryFactory.createPolygon(ring,null);
-                polygons[j]=geometryNew;
+            } else {
+                org.locationtech.jts.geom.Polygon geometryNew = geometryFactory.createPolygon(ring, null);
+                polygons[j] = geometryNew;
 
             }
 
         }
 
-        org.locationtech.jts.geom.MultiPolygon geometryNewall=geometryFactory.createMultiPolygon(polygons);
+        org.locationtech.jts.geom.MultiPolygon geometryNewall = geometryFactory.createMultiPolygon(polygons);
         polygonFeature.setGeometry(geometryNewall);
         return polygonFeature;
     }
 
     //返回点的修正点
-    private Coordinate calNewCorrdinate(Coordinate coordinate, Coordinate coordinate1, Coordinate coordinate2){
-        double x1,x2,y1,y2;
+    private Coordinate calNewCorrdinate(Coordinate coordinate, Coordinate coordinate1, Coordinate coordinate2) {
+        double x1, x2, y1, y2;
         //不存在K的情况下
-        if(coordinate1.getX() == coordinate.getX())
-        {
+        if (coordinate1.getX() == coordinate.getX()) {
             x1 = coordinate.getX();
-            if(coordinate1.getY() > coordinate.getY()) {
-                y1 =coordinate.getY()+0.01;
+            if (coordinate1.getY() > coordinate.getY()) {
+                y1 = coordinate.getY() + 0.01;
+            } else {
+                y1 = coordinate.getY() - 0.01;
             }
-            else
-            {
-                y1 =coordinate.getY()-0.01;
-            }
-        }
-        else {
+        } else {
             double k1 = (coordinate1.getY() - coordinate.getY()) / (coordinate1.getX() - coordinate.getX());
             //当K很大时，直线趋近与垂直X轴，这时X增加0.01，y值将会非常大
-            if(Math.abs(k1)>100)
-            {
+            if (Math.abs(k1) > 100) {
                 x1 = coordinate.getX();
-                if(coordinate1.getY() > coordinate.getY()) {
-                    y1 =coordinate.getY()+0.01;
+                if (coordinate1.getY() > coordinate.getY()) {
+                    y1 = coordinate.getY() + 0.01;
+                } else {
+                    y1 = coordinate.getY() - 0.01;
                 }
-                else
-                {
-                    y1 =coordinate.getY()-0.01;
-                }
-            }
-            else {
+            } else {
                 if (coordinate1.getX() > coordinate.getX()) {
                     y1 = coordinate.getY() + 0.01 * k1;
                     x1 = coordinate.getX() + 0.01;
@@ -860,32 +848,24 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             }
         }
         //不存在K的情况下
-        if(coordinate2.getX() == coordinate.getX())
-        {
+        if (coordinate2.getX() == coordinate.getX()) {
             x2 = coordinate.getX();
-            if(coordinate2.getY() > coordinate.getY()) {
-                y2 =coordinate.getY()+0.01;
+            if (coordinate2.getY() > coordinate.getY()) {
+                y2 = coordinate.getY() + 0.01;
+            } else {
+                y2 = coordinate.getY() - 0.01;
             }
-            else
-            {
-                y2 =coordinate.getY()-0.01;
-            }
-        }
-        else {
+        } else {
             double k2 = (coordinate2.getY() - coordinate.getY()) / (coordinate2.getX() - coordinate.getX());
             //当K很大时，直线趋近与垂直X轴，这时X增加0.01，y值将会非常大
-            if(Math.abs(k2)>100)
-            {
+            if (Math.abs(k2) > 100) {
                 x2 = coordinate.getX();
-                if(coordinate2.getY() > coordinate.getY()) {
-                    y2 =coordinate.getY()+0.01;
+                if (coordinate2.getY() > coordinate.getY()) {
+                    y2 = coordinate.getY() + 0.01;
+                } else {
+                    y2 = coordinate.getY() - 0.01;
                 }
-                else
-                {
-                    y2 =coordinate.getY()-0.01;
-                }
-            }
-            else {
+            } else {
                 if (coordinate2.getX() > coordinate.getX()) {
                     y2 = coordinate.getY() + 0.01 * k2;
                     x2 = coordinate.getX() + 0.01;
@@ -896,8 +876,8 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             }
         }
 
-        coordinate.setX((x1+x2)/2);
-        coordinate.setY((y1+y2)/2);
+        coordinate.setX((x1 + x2) / 2);
+        coordinate.setY((y1 + y2) / 2);
 
         return coordinate;
     }

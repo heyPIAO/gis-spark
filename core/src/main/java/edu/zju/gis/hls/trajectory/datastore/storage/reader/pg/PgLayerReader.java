@@ -116,12 +116,12 @@ public class PgLayerReader<T extends Layer> extends LayerReader<T> {
 
                 // set up geometry
                 Field geof = readerConfig.getShapeField();
-                String wkbstr = row.getString(row.fieldIndex(geof.getName()));
+                String wktstr = row.getString(row.fieldIndex(geof.getName()));
 //        WKBReader wkbReader = new WKBReader();
 //        byte[] aux = WKBReader.hexToBytes(wkbstr);
 //        Geometry geometry = wkbReader.read(aux);
                 WKTReader wktReader = new WKTReader();
-                Geometry geometry = wktReader.read(wkbstr);
+                Geometry geometry = wktReader.read(wktstr);
 
                 // set up timestamp if exists
                 Long timestamp = null;

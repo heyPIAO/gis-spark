@@ -26,7 +26,7 @@
 <!--        <dependency>-->
 <!--            <groupId>org.apache.spark</groupId>-->
 <!--            <artifactId>spark-hive_${scala.version}</artifactId>-->
-<!--            <version>${scala.version}</version>-->
+<!--            <version>${spark.version}</version>-->
 <!--        </dependency>-->
 
         <dependency>

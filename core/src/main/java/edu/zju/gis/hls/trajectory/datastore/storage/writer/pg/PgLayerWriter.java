@@ -53,9 +53,7 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
         JavaRDD<Row> rdd = ((JavaRDD<Tuple2<String, Feature>>) (layer.rdd().toJavaRDD())).map(x -> x._2).map(x -> transform(x));
         StructType st = this.getLayerStructType(layer);
         Dataset<Row> df = this.ss.createDataFrame(rdd, st);
-        //.mode(config.getSaveMode()) 选择Overwrite会导致分表失效，因此固定为append模式。
         df.cache();
-        List<Row> r = df.collectAsList();
         df.printSchema();
         df.write()
                 .format("jdbc")
@@ -63,7 +61,7 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
                 .option("dbtable", String.format("%s.%s", config.getSchema(), config.getTablename()))
                 .option("user", config.getUsername())
                 .option("password", config.getPassword())
-                .mode(SaveMode.Append)
+                .mode(config.getSaveMode().equals(SaveMode.Append) ? SaveMode.Append : SaveMode.ErrorIfExists)
                 .save();
     }
 

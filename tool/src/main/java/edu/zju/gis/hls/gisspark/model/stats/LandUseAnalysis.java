@@ -23,13 +23,17 @@ import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.*;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import static tec.uom.se.function.QuantityFunctions.sum;
 
 /**
  * @author Hu
@@ -79,17 +83,25 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         Geometry approximateExtendGeom = extendLayer.getMetadata().getGeometry();
 
         // Extend Layer 图斑总面积
-        Double etarea = extendLayer.map(new Function<Tuple2<String, Feature>, Double>() {
+        JavaRDD<Double> areaRDD=extendLayer.map(new Function<Tuple2<String, Feature>, Double>() {
             @Override
             public Double call(Tuple2<String, Feature> v1) throws Exception {
                 return v1._2.getGeometry().getArea(); // TODO 改成面积字段，如果没有，就用图斑平面面积
             }
-        }).reduce((x1, x2)->x1+x2);
+        });
+        Double etarea=areaRDD.reduce((a, b) -> Double.sum(a, b));
+//        Double etarea = extendLayer.map(new Function<Tuple2<String, Feature>, Double>() {
+//            @Override
+//            public Double call(Tuple2<String, Feature> v1) throws Exception {
+//                return v1._2.getGeometry().getArea(); // TODO 改成面积字段，如果没有，就用图斑平面面积
+//            }
+//        }).reduce((a, b) -> Double.sum(a, b));
 
-        Double atareaMu = atarea / DEFAULT_MU;
-        Double atareaKm = atarea / DEFAULT_KM;
+        Double atareaMu = etarea / DEFAULT_MU;
+        Double atareaKm = etarea / DEFAULT_KM;
 
         // 根据用户指定字段获得控制面积 -- 平面面积
+
         List<Tuple2<String, Feature>> tareasO = extendLayer.mapToLayer(new Function<Tuple2<String, Feature>, Tuple2<String, Feature>>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
@@ -99,7 +111,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 input._2.addAttribute(kzmj, input._2.getGeometry().getArea()); // TODO 改成面积字段，如果没有，就用图斑平面面积
                 return new Tuple2<String, Feature>(StringUtils.join(extendFieldStr, "##"), input._2);
             }
-        }).groupByKey().reduceByKey(new Function2<Feature, Feature, Feature> () {
+        }).reduceByKey(new Function2<Feature, Feature, Feature> () {//去掉了一个groupbykey？？？？
             @Override
             public Feature call(Feature f1, Feature f2) throws Exception {
                 Feature f = new Feature(f1);
@@ -109,7 +121,8 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         }).mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>(){
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> v1) throws Exception {
-                Double area = (Double) v1._2.getAttribute("KZMJ");
+                Feature feature=v1._2();
+                Double area = Double.valueOf(feature.getAttribute("KZMJ").toString());
                 Double m = area / DEFAULT_MU;
                 Double km2 = area / DEFAULT_KM;
                 Field mf = new Field("KZMJ_M");
@@ -126,16 +139,16 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         List<Feature> tareaOO = tareasO.stream().map(x->{
             Feature f = new Feature(x._2);
             f.setFid(x._1);
+            return f;
         }).collect(Collectors.toList());
-        AreaAdjustment.adjust(atareaMu, "KZMJ_MU", tareaOO, 2);
-        AreaAdjustment.adjust(atareaMu, "KZMJ_KM", tareaOO, 2);
+        AreaAdjustment.adjust(atareaMu, "KZMJ_M", tareaOO, 2);
+        AreaAdjustment.adjust(atareaKm, "KZMJ_KM", tareaOO, 2);
 
-        Map<String, Feature> tareas = tareaOO.stream().map(new java.util.function.Function<Feature, Tuple2<String, Feature>>() {
-            @Override
-            public Tuple2<String, Feature> apply(Feature feature) {
-                return new Tuple2<>(feature.getFid(), feature);
-            }
-        });
+
+        Map<String, Feature> tareas = new HashMap<>();
+        for (Feature f: tareaOO) {
+            tareas.put(f.getFid(), f);
+        }
 
         LayerReaderConfig targetLayerReaderConfig = LayerFactory.getReaderConfig(this.arg.getTargetReaderConfig());
         SourceType st = SourceType.getSourceType(targetLayerReaderConfig.getSourcePath());
