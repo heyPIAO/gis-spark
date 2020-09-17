@@ -8,6 +8,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -38,115 +40,138 @@ import java.util.*;
  **/
 @ToString
 @Slf4j
-public class FileLayerReader <T extends Layer> extends LayerReader<T> {
+public class FileLayerReader<T extends Layer> extends LayerReader<T> {
 
-  @Getter
-  @Setter
-  private FileLayerReaderConfig readerConfig;
+    @Getter
+    @Setter
+    private FileLayerReaderConfig readerConfig;
 
-  public FileLayerReader(SparkSession ss, FileLayerReaderConfig readerConfig) {
-    super(ss, readerConfig.getLayerType());
-    this.readerConfig = readerConfig;
-  }
-
-
-  @Override
-  public T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-
-    if (this.readerConfig == null) {
-      throw new LayerReaderException("set layer reader config");
+    public FileLayerReader(SparkSession ss, FileLayerReaderConfig readerConfig) {
+        super(ss, readerConfig.getLayerType());
+        this.readerConfig = readerConfig;
     }
 
-    if (!this.readerConfig.check()) {
-      throw new LayerReaderException("reader config is not set correctly");
-    }
 
-    // set up reader configuration
-    String path = readerConfig.getSourcePath();
-    CoordinateReferenceSystem crs = readerConfig.getCrs();
+    @Override
+    public T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
-    // read data from source files
-    JavaRDD<String> data = null;
-    if (path.contains(";")){
-      String[] paths = path.split(";");
-      data = this.ss.read().textFile(paths).toJavaRDD().filter(x->x.trim().length()>0);
-    } else {
-      data = this.ss.read().textFile(path).toJavaRDD().filter(x->x.trim().length()>0);
-    }
+        if (this.readerConfig == null) {
+            throw new LayerReaderException("set layer reader config");
+        }
 
-    JavaRDD<Tuple2<String, Feature>> features = data.map(new Function<String, Tuple2<String, Feature>>() {
-      @Override
-      public Tuple2<String, Feature> call(String s) throws Exception {
+        if (!this.readerConfig.check()) {
+            throw new LayerReaderException("reader config is not set correctly");
+        }
 
-        String[] fields = s.split(readerConfig.getSeparator());
+        // set up reader configuration
+        String path = readerConfig.getSourcePath();
+        CoordinateReferenceSystem crs = readerConfig.getCrs();
 
-        Field[] fs = readerConfig.getAttributes();
-
-        // 获取 fid
-        String fid = null;
-        if (readerConfig.getIdField().getIndex() == Term.FIELD_NOT_EXIST) {
-          fid = UUID.randomUUID().toString();
+        List<String> paths;
+        if (path.contains(";")) {
+            paths = Arrays.asList(path.split(";"));
         } else {
-          fid = fields[readerConfig.getIdField().getIndex()];
+            paths = new ArrayList<>();
+            paths.add(path);
         }
 
-        // 获取 geometry
-        String wkt;
-        if (readerConfig.getShapeField().getIndex() == Term.FIELD_LAST) {
-          wkt = fields[fields.length - 1];
-        } else {
-          wkt = fields[readerConfig.getShapeField().getIndex()];
+        //判断路径是否为文件夹，支持二级目录下所有文件路径的获取
+        List<String> paths2File = new ArrayList<>();
+        for (String subPath : paths) {
+            File subFile = new File(subPath.replace(SourceType.FILE.getPrefix(), ""));
+            if (subFile.exists()) {
+                if (subFile.isFile()) {
+                    paths2File.add(subFile.getAbsolutePath());
+                } else {
+                    File[] subSubFiles = subFile.listFiles();
+                    for (File subSubFile : subSubFiles) {
+                        if (subSubFile.isFile())
+                            paths2File.add(subSubFile.getAbsolutePath());
+                    }
+                }
+            }
         }
 
-        WKTReader wktReader = new WKTReader();
-        Geometry geometry = wktReader.read(wkt);
 
-        // 如果有 timestamp，获取 timestamp
-        Long timestamp = null;
-        if (readerConfig.getTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
-          timestamp = Long.valueOf(fields[readerConfig.getTimeField().getIndex()].trim());
-        }
+        // read data from source files
+        JavaRDD<String> data = null;
+        String[] ps = new String[paths2File.size()];
+        paths2File.toArray(ps);
+        data = this.ss.read().textFile(ps).toJavaRDD().filter(x -> x.trim().length() > 0);
 
-        // 如果有 startTime，endTime，获取
-        Long startTime = null;
-        if (readerConfig.getStartTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
-          startTime = Long.valueOf(fields[readerConfig.getStartTimeField().getIndex()].trim());
-        }
+        JavaRDD<Tuple2<String, Feature>> features = data.map(new Function<String, Tuple2<String, Feature>>() {
+            @Override
+            public Tuple2<String, Feature> call(String s) throws Exception {
 
-        Long endTime = null;
-        if (readerConfig.getEndTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
-          endTime = Long.valueOf(fields[readerConfig.getEndTimeField().getIndex()].trim());
-        }
+                String[] fields = s.split(readerConfig.getSeparator());
 
-        // 获取 attributes
-        LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
+                Field[] fs = readerConfig.getAttributes();
 
-        for (Field f: fs) {
-          int index = f.getIndex();
-          String cname = f.getType();
-          Class c = Class.forName(cname);
-          attributes.put(f, Converter.convert(fields[index], c));
-        }
+                // 获取 fid
+                String fid = null;
+                if (readerConfig.getIdField().getIndex() == Term.FIELD_NOT_EXIST) {
+                    fid = UUID.randomUUID().toString();
+                } else {
+                    fid = fields[readerConfig.getIdField().getIndex()];
+                }
 
-        // build feature
-        Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
-        return new Tuple2<> (fid, feature);
-      }
-    }).filter(x->!x._1.equals("EMPTY"));
+                // 获取 geometry
+                String wkt;
+                if (readerConfig.getShapeField().getIndex() == Term.FIELD_LAST) {
+                    wkt = fields[fields.length - 1];
+                } else {
+                    wkt = fields[readerConfig.getShapeField().getIndex()];
+                }
 
-    T layer = this.rddToLayer(features.rdd());
+                WKTReader wktReader = new WKTReader();
+                Geometry geometry = wktReader.read(wkt);
 
-    LayerMetadata lm = new LayerMetadata();
-    lm.setLayerId(readerConfig.getLayerId());
-    lm.setCrs(crs);
-    lm.setLayerName(readerConfig.getLayerName());
+                // 如果有 timestamp，获取 timestamp
+                Long timestamp = null;
+                if (readerConfig.getTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
+                    timestamp = Long.valueOf(fields[readerConfig.getTimeField().getIndex()].trim());
+                }
 
-    // TODO ?? WHY ??
-    // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
-    lm.setAttributes(readerConfig.getAllAttributes());
+                // 如果有 startTime，endTime，获取
+                Long startTime = null;
+                if (readerConfig.getStartTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
+                    startTime = Long.valueOf(fields[readerConfig.getStartTimeField().getIndex()].trim());
+                }
 
-    layer.setMetadata(lm);
-    return layer;
-  }
+                Long endTime = null;
+                if (readerConfig.getEndTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
+                    endTime = Long.valueOf(fields[readerConfig.getEndTimeField().getIndex()].trim());
+                }
+
+                // 获取 attributes
+                LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
+
+                for (Field f : fs) {
+                    int index = f.getIndex();
+                    String cname = f.getType();
+                    Class c = Class.forName(cname);
+                    attributes.put(f, Converter.convert(fields[index], c));
+                }
+
+                // build feature
+                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+                return new Tuple2<>(fid, feature);
+            }
+        }).filter(x -> !x._1.equals("EMPTY"));
+
+        T layer = this.rddToLayer(features.rdd());
+
+        LayerMetadata lm = new LayerMetadata();
+        lm.setLayerId(readerConfig.getLayerId());
+        lm.setCrs(crs);
+        lm.setLayerName(readerConfig.getLayerName());
+
+        // TODO ?? WHY ??
+        // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
+        lm.setAttributes(readerConfig.getAllAttributes());
+
+        layer.setMetadata(lm);
+        return layer;
+    }
 
 }

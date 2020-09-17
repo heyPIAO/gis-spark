@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.StructType;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKTReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -47,181 +48,186 @@ import java.util.*;
  **/
 @ToString
 @Slf4j
-public class PgLayerReader <T extends Layer> extends LayerReader<T> {
+public class PgLayerReader<T extends Layer> extends LayerReader<T> {
 
-  @Getter
-  @Setter
-  protected PgLayerReaderConfig readerConfig;
+    @Getter
+    @Setter
+    protected PgLayerReaderConfig readerConfig;
 
-  public PgLayerReader(SparkSession ss, LayerType layerType) {
-    super(ss, layerType);
-  }
-
-  public PgLayerReader(SparkSession ss, PgLayerReaderConfig config) {
-    super(ss, config.getLayerType());
-    this.readerConfig = config;
-  }
-
-  @Override
-  public T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-
-    // TODO 封装 read procedure，去掉以下重复的图层读取参数设置
-    checkReaderConfig();
-
-    Dataset<Row> df = readFromSource();
-
-    log.info("check field meta info");
-    checkFields(df.schema());
-    log.info("field meda info check successful");
-
-    log.info("select targeted fields");
-    Field[] fields = this.readerConfig.getAllAttributes();
-    List<String> names = new ArrayList<>();
-    for (Field field: fields) {
-      if (field.isExist()) {
-        names.add(field.getName());
-      }
+    public PgLayerReader(SparkSession ss, LayerType layerType) {
+        super(ss, layerType);
     }
 
-    log.info("select column names: " + String.join(", ", names));
-    if (names.size() == 1) {
-      df = df.select(names.get(0));
-    } else {
-      String first = names.get(0);
-      names.remove(0);
-      String[] tnames = new String[names.size()];
-      names.toArray(tnames);
-      df = df.select(first, tnames);
+    public PgLayerReader(SparkSession ss, PgLayerReaderConfig config) {
+        super(ss, config.getLayerType());
+        this.readerConfig = config;
     }
 
-    log.info("data schema: \n" + df.schema().treeString());
+    @Override
+    public T read() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
-    log.info(String.format("Transform Typed DataFrame to GISSpark %s Layer", this.readerConfig.getLayerType().name()));
-    JavaRDD<Row> row = df.toJavaRDD();
-    JavaPairRDD<String, Feature> features = row.mapToPair(new PairFunction<Row, String, Feature>() {
-      @Override
-      public Tuple2<String, Feature> call(Row row) throws Exception {
+        // TODO 封装 read procedure，去掉以下重复的图层读取参数设置
+        checkReaderConfig();
 
-        // set up feature id
-        Field idf = readerConfig.getIdField();
-        String fid;
-        if (idf.isExist()) {
-          fid = String.valueOf(row.get(row.fieldIndex(idf.getName())));
+        Dataset<Row> df = readFromSource();
+
+        log.info("check field meta info");
+        checkFields(df.schema());
+        log.info("field meda info check successful");
+
+        log.info("select targeted fields");
+        Field[] fields = this.readerConfig.getAllAttributes();
+        List<String> names = new ArrayList<>();
+        for (Field field : fields) {
+            if (field.isExist()) {
+                names.add(field.getName());
+            }
+        }
+        names.add(this.readerConfig.getIdField().getName());
+        names.add(this.readerConfig.getShapeField().getName());
+
+        log.info("select column names: " + String.join(", ", names));
+        if (names.size() == 1) {
+            df = df.select(names.get(0));
         } else {
-          fid = UUID.randomUUID().toString();
+            String first = names.get(0);
+            names.remove(0);
+            String[] tnames = new String[names.size()];
+            names.toArray(tnames);
+            df = df.select(first, tnames);
         }
 
-        // set up geometry
-        Field geof = readerConfig.getShapeField();
-        String wkbstr = row.getString(row.fieldIndex(geof.getName()));
-        WKBReader wkbReader = new WKBReader();
-        byte[] aux = WKBReader.hexToBytes(wkbstr);
-        Geometry geometry = wkbReader.read(aux);
+        log.info("data schema: \n" + df.schema().treeString());
 
-        // set up timestamp if exists
-        Long timestamp = null;
-        Field tf = readerConfig.getTimeField();
-        if (tf.getIndex() != Term.FIELD_NOT_EXIST) {
-          timestamp = Long.valueOf(row.getString(row.fieldIndex(tf.getName())));
-        }
+        log.info(String.format("Transform Typed DataFrame to GISSpark %s Layer", this.readerConfig.getLayerType().name()));
+        JavaRDD<Row> row = df.toJavaRDD();
+        JavaPairRDD<String, Feature> features = row.mapToPair(new PairFunction<Row, String, Feature>() {
+            @Override
+            public Tuple2<String, Feature> call(Row row) throws Exception {
 
-        // set up starttime if exists
-        Long startTime = null;
-        Field stf = readerConfig.getStartTimeField();
-        if (stf.isExist()) {
-          startTime = Long.valueOf(row.getString(row.fieldIndex(stf.getName())));
-        }
+                // set up feature id
+                Field idf = readerConfig.getIdField();
+                String fid;
+                if (idf.isExist()) {
+                    fid = String.valueOf(row.get(row.fieldIndex(idf.getName())));
+                } else {
+                    fid = UUID.randomUUID().toString();
+                }
 
-        // set up endtime if exists
-        Long endTime = null;
-        Field etf = readerConfig.getEndTimeField();
-        if (etf.isExist()) {
-          endTime = Long.valueOf(String.valueOf(row.get(row.fieldIndex(etf.getName()))));
-        }
+                // set up geometry
+                Field geof = readerConfig.getShapeField();
+                String wktstr = row.getString(row.fieldIndex(geof.getName()));
+//        WKBReader wkbReader = new WKBReader();
+//        byte[] aux = WKBReader.hexToBytes(wkbstr);
+//        Geometry geometry = wkbReader.read(aux);
+                WKTReader wktReader = new WKTReader();
+                Geometry geometry = wktReader.read(wktstr);
 
-        // set feature attributes
-        LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
-        Field[] fs = readerConfig.getAttributes();
-        for (Field f: fs) {
-          String name = f.getName();
-          String cname = f.getType();
-          Class c = Class.forName(cname);
-          attributes.put(f, Converter.convert(String.valueOf(row.get(row.fieldIndex(name))), c));
-        }
+                // set up timestamp if exists
+                Long timestamp = null;
+                Field tf = readerConfig.getTimeField();
+                if (tf.getIndex() != Term.FIELD_NOT_EXIST) {
+                    timestamp = Long.valueOf(row.getString(row.fieldIndex(tf.getName())));
+                }
 
-        Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
-        return new Tuple2<>(feature.getFid(), feature);
-      }
-    });
+                // set up starttime if exists
+                Long startTime = null;
+                Field stf = readerConfig.getStartTimeField();
+                if (stf.isExist()) {
+                    startTime = Long.valueOf(row.getString(row.fieldIndex(stf.getName())));
+                }
 
-    T layer = this.rddToLayer(features.rdd());
-    LayerMetadata lm = new LayerMetadata();
-    lm.setLayerId(readerConfig.getLayerId());
-    lm.setCrs(readerConfig.getCrs());
-    lm.setLayerName(readerConfig.getLayerName());
+                // set up endtime if exists
+                Long endTime = null;
+                Field etf = readerConfig.getEndTimeField();
+                if (etf.isExist()) {
+                    endTime = Long.valueOf(String.valueOf(row.get(row.fieldIndex(etf.getName()))));
+                }
 
-    // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
-    lm.setAttributes(readerConfig.getAllAttributes());
+                // set feature attributes
+                LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
+                Field[] fs = readerConfig.getAttributes();
+                for (Field f : fs) {
+                    String name = f.getName();
+                    String cname = f.getType();
+                    Class c = Class.forName(cname);
+                    attributes.put(f, Converter.convert(String.valueOf(row.get(row.fieldIndex(name))), c));
+                }
 
-    layer.setMetadata(lm);
-    return layer;
-  }
+                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+                return new Tuple2<>(feature.getFid(), feature);
+            }
+        });
 
-  protected Dataset<Row> readFromSource() {
-    String dbtableSql = String.format("(%s) as %s_t", this.getReaderConfig().getFilterSql(), this.readerConfig.getDbtable());
-    return this.ss.read().format("jdbc")
-      .option("url", this.readerConfig.getSourcePath())
-      .option("dbtable",  dbtableSql)
-      .option("user", this.readerConfig.getUsername())
-      .option("password", this.readerConfig.getPassword())
-      .option("continueBatchOnError",true)
-      .option("pushDownPredicate", true) // 默认请求下推
-      .load();
-  }
+        T layer = this.rddToLayer(features.rdd());
+        LayerMetadata lm = new LayerMetadata();
+        lm.setLayerId(readerConfig.getLayerId());
+        lm.setCrs(readerConfig.getCrs());
+        lm.setLayerName(readerConfig.getLayerName());
 
-  protected void checkReaderConfig() {
-    if (this.readerConfig == null) {
-      throw new LayerReaderException("set layer reader config");
+        // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
+        lm.setAttributes(readerConfig.getAllAttributes());
+
+        layer.setMetadata(lm);
+        return layer;
     }
 
-    if (!this.readerConfig.check()) {
-      throw new LayerReaderException("reader config is not set correctly");
+    protected Dataset<Row> readFromSource() {
+        String dbtableSql = String.format("(%s) as %s_t", this.getReaderConfig().getFilterSql(), this.readerConfig.getDbtable());
+        return this.ss.read().format("jdbc")
+                .option("url", this.readerConfig.getSourcePath())
+                .option("dbtable", dbtableSql)
+                .option("user", this.readerConfig.getUsername())
+                .option("password", this.readerConfig.getPassword())
+                .option("continueBatchOnError", true)
+                .option("pushDownPredicate", true) // 默认请求下推
+                .load();
     }
-  }
 
-  /**
-   * 查看 dataframe 的 structtype 与 用户指定的 field 是否一致
-   * @param st
-   */
-  protected void checkFields(StructType st) throws LayerReaderException {
-    Field[] fs = this.readerConfig.getAllAttributes();
-    StructField[] sfs = st.fields();
-    boolean[] flags = new boolean[fs.length];
-    for (int i=0; i<fs.length; i++) {
-      Field f = fs[i];
-      if (!f.isExist()) {
-        flags[i] = true;
-        continue;
-      }
-      flags[i] = false;
-      for (StructField sf: sfs) {
-        if (sf.name().equals(f.getName()) && Field.equalFieldClass(sf.dataType(), f.getType())) {
-          flags[i] = true;
-          break;
+    protected void checkReaderConfig() {
+        if (this.readerConfig == null) {
+            throw new LayerReaderException("set layer reader config");
         }
-      }
+
+        if (!this.readerConfig.check()) {
+            throw new LayerReaderException("reader config is not set correctly");
+        }
     }
 
-    for (int m=0; m<flags.length; m++) {
-      if (!flags[m]) {
-        throw new LayerReaderException(String.format("Field %s not exists in table %s ", fs[m].toString(), this.readerConfig.getDbtable()));
-      }
-    }
-  }
+    /**
+     * 查看 dataframe 的 structtype 与 用户指定的 field 是否一致
+     *
+     * @param st
+     */
+    protected void checkFields(StructType st) throws LayerReaderException {
+        Field[] fs = this.readerConfig.getAllAttributes();
+        StructField[] sfs = st.fields();
+        boolean[] flags = new boolean[fs.length];
+        for (int i = 0; i < fs.length; i++) {
+            Field f = fs[i];
+            if (!f.isExist()) {
+                flags[i] = true;
+                continue;
+            }
+            flags[i] = false;
+            for (StructField sf : sfs) {
+                if (sf.name().equals(f.getName()) && Field.equalFieldClass(sf.dataType(), f.getType())) {
+                    flags[i] = true;
+                    break;
+                }
+            }
+        }
 
-  @Override
-  public void close() throws IOException {
-    log.info(String.format("PgLayerReader close: %s", readerConfig.toString()));
-  }
+        for (int m = 0; m < flags.length; m++) {
+            if (!flags[m]) {
+                throw new LayerReaderException(String.format("Field %s not exists in table %s ", fs[m].toString(), this.readerConfig.getDbtable()));
+            }
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        log.info(String.format("PgLayerReader close: %s", readerConfig.toString()));
+    }
 
 }
