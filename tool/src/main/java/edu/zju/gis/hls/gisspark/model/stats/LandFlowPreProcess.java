@@ -11,14 +11,10 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.Optional;
-import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
-import sun.jvm.hotspot.oops.DoubleField;
 
 import java.util.List;
 
@@ -71,6 +67,7 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
         });
 
         JavaPairRDD<String, Tuple2<Feature, Optional<Feature>>> tl1 = dltbLayer2.leftOuterJoin(lxdwLayer2);
+
         JavaPairRDD<String, Feature> l1 = tl1.mapToPair(new PairFunction<Tuple2<String, Tuple2<Feature, Optional<Feature>>>, String, Feature>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Tuple2<Feature, Optional<Feature>>> in) throws Exception {
@@ -94,7 +91,7 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
             }
         });
 
-        xzdwLayer.cache();
+        xzdwLayer.makeSureCached(StorageLevel.MEMORY_AND_DISK());
         JavaPairRDD<String, Feature> xzdwLayer1 = xzdwLayer.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> o) throws Exception {
@@ -166,42 +163,9 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
             }
         });
 
-        l1.cache();
-        List<Tuple2<String, Feature>> re = l1.collect();
+        l1.saveAsTextFile("C:\\Users\\Hu\\Desktop\\23测试\\result");
 
-        log.info(String.valueOf(re.size()));
         // TODO 写出
-
-//        Dataset<Row> lxdwRf = lxdwLayer.toDataset(this.ss);
-//        lxdwRf.registerTempTable("lxdw");
-//        Dataset<Row> xzdwRf = xzdwLayer.toDataset(this.ss);
-//        xzdwRf.registerTempTable("xzdw");
-//        Dataset<Row> dltbRf = dltbLayer.toDataset(this.ss);
-//        dltbRf.registerTempTable("dltb");
-//    LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getWriterConfig());
-//    LayerWriter writer = LayerFactory.getWriter(this.ss, writerConfig);
-//    writer.write(dltbLayer);
-
-//        this.ss.sql("DROP TABLE IF EXISTS merges");
-//        String createMergesTable =
-//                "CREATE TABLE merges as " +
-//                        "(select d.bsm,d.zldwdm,d.tbbh, d.dlbm as tb_dlbm,d.tbmj as tb_dlmj,l.bsm as lx_id,l.dlbm as lx_dlbm,l.mj as lx_mj," +
-//                        "x.bsm as xz_id,x.dlbm as xz_dlbm,x.cd as xz_cd,x.kd as xz_kd, d.wkt as tb_wkt, l.wkt as lx_wkt," +
-//                        "x.wkt as xz_wkt,d.tkxs as tb_tkcs,x.kcbl as xz_kcbl " +
-//                        "from dltb as d " +
-//                        "LEFT JOIN lxdw as l on d.zldwdm=l.zldwdm and d.tbbh=l.zltbbh " +
-//                        "LEFT JOIN xzdw as x on " +
-//                        "(d.zldwdm=x.kctbdwdm1 and d.tbbh=x.kctbbh1) or (d.zldwdm=x.kctbdwdm2 and d.tbbh=x.kctbbh2))";
-//        String createMergesTable =
-//                "CREATE TABLE merges as (select bsm from dltb)";
-//        Dataset<Row> re = this.ss.sql(createMergesTable);
-//        log.info(re.schema().treeString());
-//
-//
-//
-//        Dataset<Row> mergeResult = this.ss.table("merges");
-//        List<Row> r = mergeResult.collectAsList();
-//        log.info(String.valueOf(r.size()));
     }
 
 
