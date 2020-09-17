@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.WKTWriter2;
@@ -19,6 +20,7 @@ import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.util.AffineTransformation;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
@@ -150,17 +152,55 @@ public class Feature <T extends Geometry> implements Serializable {
     }
   }
 
+  private Geometry validedGeom(Geometry g) {
+    List<org.locationtech.jts.geom.Polygon> valided = null;
+    if (this.getGeometry() instanceof org.locationtech.jts.geom.Polygon) {
+      valided = JTS.makeValid((org.locationtech.jts.geom.Polygon) this.getGeometry(), false);
+    } else if (this.getGeometry() instanceof org.locationtech.jts.geom.MultiPolygon) {
+      org.locationtech.jts.geom.MultiPolygon mps = (org.locationtech.jts.geom.MultiPolygon) this.getGeometry();
+      int i = mps.getNumGeometries();
+      valided = new ArrayList<>();
+      for (int m = 0; m < i; m++) {
+        valided.addAll(JTS.makeValid((org.locationtech.jts.geom.Polygon) mps.getGeometryN(m), false));
+      }
+    }
+    GeometryFactory gf = new GeometryFactory();
+    if (valided != null && valided.size() > 0) {
+      org.locationtech.jts.geom.Polygon[] polygons = new org.locationtech.jts.geom.Polygon[valided.size()];
+      for (int i=0; i<valided.size(); i++) {
+        polygons[i] = valided.get(i);
+      }
+      return gf.createMultiPolygon(polygons);
+    }
+    throw new GISSparkException("Unvalid Geometry: " + g.toString());
+  }
+
   public Feature intersect(Feature f, Boolean attrReserved) {
     Geometry g2 = f.geometry;
     if (f.getGeometry().isEmpty() || g2.isEmpty() || !this.getGeometry().intersects(g2)) return Feature.empty();
-    Geometry g = this.getGeometry().intersection(g2);
-    if (g.isEmpty()) {
+    Geometry g = null;
+    try {
+//      g = this.getGeometry().intersection(g2);
+      g = EnhancedPrecisionOp.intersection(this.getGeometry(), g2);
+    } catch (Exception e) {
+//      g = EnhancedPrecisionOp.intersection(this.getGeometry(), g2);
+      Geometry g0 = validedGeom(this.getGeometry());
+      Geometry g1 = validedGeom(g2);
+      g = EnhancedPrecisionOp.intersection(g0, g1);
+    }
+
+    if (g == null || g.isEmpty()) {
       return Feature.empty();
     }
     Feature result = new Feature();
     result.setGeometry(g);
     result.setFid(this.getFid() + "_" + f.getFid());
     LinkedHashMap<Field, Object> attr = new LinkedHashMap<>();
+
+    Field id2 = Term.FIELD_DEFAULT_ID;
+    id2.setName(Term.FIELD_DEFAULT_ID.getName() + "_2");
+    attr.put(id2, f.getFid());
+
     if (attrReserved) {
       for (Field i: this.getAttributes().keySet()) {
         Field io = new Field(i);

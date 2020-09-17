@@ -264,6 +264,7 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
 
     // TODO 默认的 distinct 效率太低了，先偷懒重写一下
     public List<String> distinctKeys() {
+        this.makeSureCached();
         // 分区内部先去重
         JavaRDD<String> keys = this.keys().map(x -> (String) x).mapPartitions(new FlatMapFunction<Iterator<String>, String>() {
             @Override

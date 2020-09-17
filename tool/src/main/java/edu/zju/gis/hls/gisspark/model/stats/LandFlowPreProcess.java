@@ -93,8 +93,6 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
             }
         });
 
-
-
         xzdwLayer.cache();
         JavaPairRDD<String, Feature> xzdwLayer1 = xzdwLayer.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
