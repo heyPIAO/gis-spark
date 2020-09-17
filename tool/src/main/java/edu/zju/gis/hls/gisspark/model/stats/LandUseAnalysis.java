@@ -10,6 +10,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
@@ -25,6 +26,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.*;
+import org.elasticsearch.common.collect.Tuple;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
@@ -263,11 +265,10 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 List<String> extendFieldStr = Arrays.stream(extentLayerReaderConfig.getAttributes()).map(x->x.getName()).collect(Collectors.toList());
                 return new Tuple2<>(StringUtils.join(extendFieldStr, "##"), v1._2);
             }
-        }).groupByKey().mapToPair(new PairFunction<Tuple2<String, Iterable<Feature>>, String, Iterator<Feature>> () {/////groupbykey
+        }).groupByKey().mapToPair(new PairFunction<Tuple2<String, Iterable<Feature>>, String, Iterator<Feature>> () {
             @Override
             public Tuple2<String, Iterator<Feature>> call(Tuple2<String, Iterable<Feature>> v1) throws Exception {
                 List<Feature> features = IteratorUtils.toList(v1._2.iterator());
-                Double tarea = (Double) tareas.get(v1._1).getAttribute("KZMJ");
                 Double tareaM = (Double) tareas.get(v1._1).getAttribute("KZMJ_M");
                 Double tareaKm = (Double) tareas.get(v1._1).getAttribute("KZMJ_KM");
                 for (Feature feature:features) {
@@ -278,7 +279,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                     mf.setType(Double.class);
                     feature.addAttribute(mf, am);
                     Field kmf = new Field("TBDLMJ_KM");
-                    mf.setType(Double.class);
+                    kmf.setType(Double.class);
                     feature.addAttribute(kmf, akm);
                 }
                 features = AreaAdjustment.adjust(tareaM, "TBDLMJ_M", features, DEFAULT_SCALE);
@@ -294,10 +295,6 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 return features.stream().map(x->new Tuple2<>(x.getFid(), x)).collect(Collectors.toList()).iterator();
             }
         });
-
-        resultRDD.cache();
-        Map<String,Feature> result_list=resultRDD.collectAsMap();
-        log.info(""+result_list.size());
 
         Layer result = new Layer(resultRDD.rdd());
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
