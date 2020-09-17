@@ -98,8 +98,8 @@ public class Term implements Serializable {
     return new PyramidConfig.PyramidConfigBuilder()
       .setBaseMapEnv(-20026376.39, 20026376.39, -20048966.10, 20048966.10)
       .setCrs(CRS.parseWKT(WKT_3857))
-      .setzLevelRange(UNIFORMGRID_DEFAULT_LEVEL-1, UNIFORMGRID_DEFAULT_LEVEL)
-      .build();
+      .setZLevelRange(UNIFORMGRID_DEFAULT_LEVEL-1, UNIFORMGRID_DEFAULT_LEVEL)
+      .build(true);
   }
 
 }

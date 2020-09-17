@@ -1,5 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.operate;
 
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import lombok.AllArgsConstructor;
 import org.apache.spark.sql.SparkSession;
 
@@ -10,4 +12,8 @@ import org.apache.spark.sql.SparkSession;
 @AllArgsConstructor
 public abstract class OperatorImpl implements Operator {
   private SparkSession ss;
+
+  public <T extends KeyIndexedLayer> Layer operate(T layer) {
+    return this.operate(layer.toLayer());
+  }
 }
