@@ -74,6 +74,10 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
                 scala.reflect.ClassTag$.MODULE$.apply(f));
     }
 
+    public Layer(JavaSparkContext jsc, List<Tuple2<K,V>> features) {
+        this(jsc.parallelize(features).mapToPair(x->new Tuple2<>(x._1, x._2)).rdd());
+    }
+
     public Layer(RDD<Tuple2<K, V>> rdd) {
         super(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(Feature.class));
         this.metadata = new LayerMetadata();

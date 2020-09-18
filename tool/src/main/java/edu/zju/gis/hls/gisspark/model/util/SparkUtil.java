@@ -38,7 +38,7 @@ public class SparkUtil {
         return SparkSession
                 .builder()
                 .appName(appName)
-                .master("local[4]")
+                .master("local[8]")
                 .config(overrideConf(conf))
 //                .enableHiveSupport()
                 .getOrCreate();

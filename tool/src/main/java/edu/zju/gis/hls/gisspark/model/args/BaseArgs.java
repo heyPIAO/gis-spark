@@ -27,7 +27,7 @@ public abstract class BaseArgs implements Serializable {
       return mArgs;
     } catch (NoSuchMethodException | CmdLineException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
       log.error(e.getLocalizedMessage());
-      throw new ModelFailedException("init arguments failed: " + StringUtils.join(Arrays.asList(args), ";"));
+      throw new ModelFailedException("init arguments failed: " + StringUtils.join(Arrays.asList(args), "\n"));
     }
   }
 
