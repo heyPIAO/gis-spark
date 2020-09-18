@@ -9,9 +9,8 @@ import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexCon
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
 import edu.zju.gis.hls.trajectory.analysis.model.Point;
-import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
@@ -26,6 +25,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.*;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.Polygon;
@@ -33,8 +33,6 @@ import org.locationtech.jts.io.WKTReader;
 import scala.Tuple2;
 import scala.Tuple3;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.Serializable;
 import java.util.*;
 
@@ -48,8 +46,7 @@ import java.util.*;
 @Slf4j
 public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements Serializable {
 
-    private static Integer DEFAULT_INDEX_LEVEL = 14;
-
+    private static Integer DEFAULT_INDEX_LEVEL = 12;
 
     public LandFlowAnalysis(SparkSessionType type, String[] args) {
         super(type, args);
@@ -65,28 +62,30 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
         DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
 
-//        MultiPolygonLayer connected2d = (MultiPolygonLayer) xz2dLayer.indexed(false); // key 为 TileID
-        MultiPolygonLayer connected2d = si.index(xz2dLayer).getLayer(); // key 为 TileID
-//        MultiPolygonLayer tb3dLayerPair = (MultiPolygonLayer) tb3dLayer.indexed(false); // key 为 TileID
-        MultiPolygonLayer tb3dLayerPair = si.index(tb3dLayer).getLayer(); // key 为 TileID
+        KeyIndexedLayer<MultiPolygonLayer> l1 = si.index(xz2dLayer, false);
+        KeyIndexedLayer<MultiPolygonLayer> l2 = si.index(tb3dLayer, false);
 
-        JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp = tb3dLayerPair.cogroup(connected2d).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>>, String, Tuple2<MultiPolygon, MultiPolygon>>() {
+        MultiPolygonLayer connected2d = l1.getLayer(); // key 为 TileID
+        MultiPolygonLayer tb3dLayerPair = l2.getLayer(); // key 为 TileID
+
+        JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp = tb3dLayerPair.cogroup(connected2d.repartitionToLayer(tb3dLayerPair.getNumPartitions())).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>>, String, Tuple2<MultiPolygon, MultiPolygon>>() {
             @Override
             public Iterator<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> call(Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>> in) throws Exception {
-                List<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> result = new LinkedList<>();
+                List<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> result = new ArrayList<>();
                 for (MultiPolygon tb3d : in._2._1) {
                     for (MultiPolygon tb2d : in._2._2) {
                         if (tb3d.getGeometry().intersects(tb2d.getGeometry())) {
                             result.add(new Tuple2<>(tb3d.getFid() + "##" + tb2d.getFid(), new Tuple2<>(tb3d, tb2d)));
-                        } else {
-                            result.add(new Tuple2<>("EMPTY", null));
                         }
                     }
                 }
 
                 return result.iterator();
             }
-        }).filter(x -> !x._1.equals("EMPTY")).distinct();
+        });
+
+        temp.persist(StorageLevel.MEMORY_AND_DISK());
+        log.info("Temp Size：" + temp.count());
 
         //去重
         JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp2 = temp.reduceByKey(
@@ -97,6 +96,9 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     }
                 }
         );
+
+        temp2.persist(StorageLevel.MEMORY_AND_DISK());
+        log.info("Temp2 Size：" + temp2.count());
 
         JavaPairRDD<String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>> joined = temp2.mapToPair(new PairFunction<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>, String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>>() {
             @Override
@@ -112,8 +114,6 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             public Iterator<Tuple2<String, Geometry>> call(Tuple2<String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>> t) throws Exception {
 
                 List<Tuple2<String, Geometry>> result = new ArrayList<>();
-
-//                result.add(new Tuple2<>("START", null));
 
                 MultiPolygon tb3d = t._2._1;
                 MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
@@ -418,17 +418,9 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
         intersected.cache();
 
-        List<Tuple2<String, Geometry>> ri = intersected.collect();
-        log.info(String.valueOf(ri.size()));
-
         Layer intersectedLayer = new Layer(intersected.map(new Function<Tuple2<String, Geometry>, Tuple2<String, Feature>>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Geometry> in) throws Exception {
-//                Polygon[] polygons1=new Polygon[1];
-//                polygons1[0]=(org.locationtech.jts.geom.Polygon) in._2;
-//                GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory( null );
-//                org.locationtech.jts.geom.MultiPolygon geometryNewall=geometryFactory.createMultiPolygon(polygons1);
-//                MultiPolygon p = new MultiPolygon(in._1, (org.locationtech.jts.geom.MultiPolygon) in._2);
                 return new Tuple2<>(in._1, new Feature(in._2));
             }
         }).rdd());
@@ -439,35 +431,12 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 //        Field spatial_geom = new Field("ZLDWXX");
 //        intersectedLayer.getMetadata().addAttribute(spatial_geom, null);
 
-        intersectedLayer.cache();
-        List<Tuple2<String, Feature>> ii = intersectedLayer.collect();
+//        intersectedLayer.cache();
+//        List<Tuple2<String, Feature>> ii = intersectedLayer.collect();
 
         LayerWriterConfig geomWriterConfig=LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
         LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
         geomWriter.write(intersectedLayer);
-
-        // 写出空间信息
-//        intersected.foreachPartition(new VoidFunction<Iterator<Tuple2<String, Geometry>>>() {
-//            @Override
-//            public void call(Iterator<Tuple2<String, Geometry>> ts) throws Exception {
-//                String featureOutDir = arg.getGeomWriterConfig().getSinkPath();
-//                String filename = featureOutDir + UUID.randomUUID().toString();
-//                File file = new File(filename);
-//                FileWriter writer = new FileWriter(file);
-//                while (ts.hasNext()) {
-//                    Tuple2<String, Geometry> t = ts.next();
-//                    if (t._1.equals("START")) continue;
-//                    String wkt="";
-//                    if(t._2!=null) {
-//                        wkt = t._2.toText();
-//                    }
-//                    writer.write(t._1 + ";" + wkt);
-//                    writer.write("\n");
-//                }
-//                writer.flush();
-//                writer.close();
-//            }
-//        });
 
         // 写出统计结果
         JavaPairRDD<String, Double> flowAreaRDD = intersected.filter(x -> !x._1.equals("START")).mapToPair(new PairFunction<Tuple2<String, Geometry>, String, Double>() {
@@ -497,60 +466,13 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         Field f2 = new Field("ZLDWXX");
         statLayer.getMetadata().addAttribute(f2, null);
 
-//        statResult.cache();
-//        List<Tuple2<String, LinkedHashMap<Field, Object>>> features = statResult.collect();
-
-
         LayerWriterConfig statsWriterConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter statWriter = LayerFactory.getWriter(ss, statsWriterConfig);
         statWriter.write(statLayer);
-
-//        List<Tuple2<String, Double>> flowAreaResult = flowAreaRDD.collect();
-//        String filePath = this.arg.getStatsWriterConfig().getSinkPath() + "JD.csv";
-//        File file = new File(filePath);
-//        if (file.exists()) file.delete();
-//        FileWriter writer = new FileWriter(file);
-//        for (Tuple2<String, Double> r: flowAreaResult) {
-//            writer.write(String.format("%s\t%s\t%s\t%.9f\n", r._1.split("##")[0], r._1.split("##")[1],r._1.split("##")[2], r._2));
-//        }
-//        writer.flush();
-//        writer.close();
     }
-
-//    private MultiPolygonLayer read3dLayer(SparkSession ss, LayerReaderConfig config) throws Exception {
-//        LayerReader<MultiPolygonLayer> reader = LayerFactory.getReader(ss, config);
-//        Properties prop = new Properties();
-//        prop.setProperty(ReaderConfig.FILE_PATH, file);
-//        reader.setProp(prop);
-//        MultiPolygonLayer layer = reader.read();
-//        reader.close();
-//        return layer;
-//    }
 
     private MultiPolygonLayer read2dLayer(SparkSession ss, LayerReaderConfig config) throws Exception {
         LayerReader<MultiPolygonLayer> reader = LayerFactory.getReader(ss, config);
-//        Properties prop = new Properties();
-//        prop.setProperty(ReaderConfig.FILE_PATH, file);
-//        prop.setProperty(ReaderConfig.SEPARATOR, "##");
-//        prop.setProperty(ReaderConfig.KEY_INDEX, "0");
-//        prop.setProperty(ReaderConfig.SHAPE_INDEX, "12");
-//        Map<String, String> headerIndex = new HashMap<>();
-//        headerIndex.put("tb_dlbm", "3");
-//        headerIndex.put("tb_tbmj", "4");
-//        headerIndex.put("lx_id", "5");
-//        headerIndex.put("lx_dlbm", "6");
-//        headerIndex.put("lx_mj", "7");
-//        headerIndex.put("xz_id", "8");
-//        headerIndex.put("xz_dlbm", "9");
-//        headerIndex.put("xz_cd", "10");
-//        headerIndex.put("xz_kd", "11");
-//        headerIndex.put("lx_wkt", "13");
-//        headerIndex.put("xz_wkt", "14");
-//        headerIndex.put("tb_tkxs","15");
-//        headerIndex.put("xz_kcbl","16");
-//        Gson gson = new Gson();
-//        prop.setProperty(ReaderConfig.HEADER_INDEX, gson.toJson(headerIndex));
-//        reader.setProp(prop);
 
         MultiPolygonLayer pl = reader.read();
         JavaRDD<Tuple2<String, MultiPolygon>> tbFeatures = pl.map(new Function<Tuple2<String, MultiPolygon>, Tuple2<String, MultiPolygon>>() {
