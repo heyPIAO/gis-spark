@@ -11,4 +11,5 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 public interface DistributeSpatialIndex extends SpatialIndex {
   <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer);
   <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer, boolean withKeyRanges);
+  <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer, boolean withKeyRanges, int numPartitions);
 }

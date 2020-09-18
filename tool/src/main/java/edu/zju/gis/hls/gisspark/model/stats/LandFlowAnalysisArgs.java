@@ -1,8 +1,6 @@
 package edu.zju.gis.hls.gisspark.model.stats;
 
 import edu.zju.gis.hls.gisspark.model.args.BaseArgs;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.Getter;
 import lombok.Setter;
 import org.kohsuke.args4j.Option;
