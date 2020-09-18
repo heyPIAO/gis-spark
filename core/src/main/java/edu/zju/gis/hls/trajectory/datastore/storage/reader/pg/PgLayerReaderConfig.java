@@ -38,17 +38,23 @@ public class PgLayerReaderConfig extends LayerReaderConfig {
 
   // TODO 改成用正则取出来
   public String getUrl() {
-    return this.sourcePath.split(":")[2].replace("//", "");
+    String[] vs = this.sourcePath.split(":");
+    String v = vs[vs.length-2];
+    return v.replace("//", "");
   }
 
   // TODO 改成用正则取出来
   public int getPort() {
-    return Integer.valueOf(this.sourcePath.split(":")[3].split("/")[0]);
+    String[] vs = this.sourcePath.split(":");
+    String v = vs[vs.length-1];
+    return Integer.valueOf(v.split("/")[0]);
   }
 
   // TODO 改成用正则取出来
   public String getDatabase() {
-    return this.sourcePath.split(":")[3].split("/")[1];
+    String[] vs = this.sourcePath.split(":");
+    String v = vs[vs.length-1];
+    return v.split("/")[1];
   }
 
   public String getFilterSql(String tablename) {

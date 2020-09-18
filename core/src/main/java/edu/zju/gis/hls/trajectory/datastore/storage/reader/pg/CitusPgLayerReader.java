@@ -73,12 +73,12 @@ public class CitusPgLayerReader<T extends Layer> extends PgLayerReader<T> {
 
   private PgHelper getPgHelper() {
     PgConfig config = new PgConfig();
-    config.setUrl(config.getUrl());
-    config.setPort(config.getPort());
-    config.setDatabase(config.getDatabase());
-    config.setUsername(config.getUsername());
-    config.setPassword(config.getPassword());
-    config.setSchema(config.getSchema());
+    config.setUrl(this.readerConfig.getUrl());
+    config.setPort(this.readerConfig.getPort());
+    config.setDatabase(this.readerConfig.getDatabase());
+    config.setUsername(this.readerConfig.getUsername());
+    config.setPassword(this.readerConfig.getPassword());
+    config.setSchema(this.readerConfig.getSchema());
     return new PgHelper(config);
   }
 

@@ -12,7 +12,6 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Hu
