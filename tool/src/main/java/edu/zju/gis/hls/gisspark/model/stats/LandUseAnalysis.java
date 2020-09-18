@@ -301,7 +301,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
 
     public static void main(String[] args) throws Exception {
-        LandUseAnalysis analysis = new LandUseAnalysis(SparkSessionType.LOCAL, args);
+        LandUseAnalysis analysis = new LandUseAnalysis(SparkSessionType.SHELL, args);
         analysis.exec();
     }
 

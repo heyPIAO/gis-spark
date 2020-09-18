@@ -70,11 +70,16 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
         });
 
         JavaPairRDD<String, Tuple2<Feature, Optional<Feature>>> tl1 = dltbLayer2.leftOuterJoin(lxdwLayer2);
+
         JavaPairRDD<String, Feature> l1 = tl1.mapToPair(new PairFunction<Tuple2<String, Tuple2<Feature, Optional<Feature>>>, String, Feature>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Tuple2<Feature, Optional<Feature>>> in) throws Exception {
                 Feature f = new Feature(in._2._1);
-                if (!in._2._2.isPresent()) return new Tuple2<>(in._1, in._2._1);
+                String[] keys = new String[2];
+                keys[0] = f.getAttribute("ZLDWDM").toString();
+                keys[1] = f.getAttribute("TBBH").toString();
+                if (!in._2._2.isPresent())
+                    return new Tuple2<>(StringUtils.join(keys, "##"), in._2._1);
                 Feature lx = in._2._2.get();
                 Field bsmF = new Field("lx_id");
                 Field dlbmF = new Field("lx_dlbm");
@@ -85,15 +90,10 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 f.addAttribute(dlbmF, lx.getAttribute("DLBM"));
                 f.addAttribute(mjF, lx.getAttribute("MJ"));
                 f.addAttribute(wktF, lx.getAttribute("WKT"));
-
-                String[] keys = new String[2];
-                keys[0] = f.getAttribute("ZLDWDM").toString();
-                keys[1] = f.getAttribute("TBBH").toString();
                 return new Tuple2<>(StringUtils.join(keys, "##"), f);
             }
         });
 
-        xzdwLayer.cache();
         JavaPairRDD<String, Feature> xzdwLayer1 = xzdwLayer.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Feature> o) throws Exception {
@@ -121,7 +121,6 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 Feature f = new Feature(in._2._1);
                 if (!in._2._2.isPresent()) return new Tuple2<>(in._1, in._2._1);
                 Feature xz = in._2._2.get();
-                //处理现状单位代码的字段
                 Field bsmF = new Field("xz_id");
                 Field dlbmF = new Field("xz_dlbm");
                 Field cdF = new Field("xz_cd");
@@ -143,9 +142,11 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Tuple2<Feature, Optional<Feature>>> in) throws Exception {
                 Feature f = new Feature(in._2._1);
-                if (!in._2._2.isPresent()) return new Tuple2<>(in._1, in._2._1);
+                if (!in._2._2.isPresent())
+                    return new Tuple2<>(in._1, in._2._1);
+                if (in._2._1.getAttribute("xz_id") != null)
+                    return new Tuple2<>(in._1, in._2._1);
                 Feature xz = in._2._2.get();
-                //处理现状单位代码的字段
                 Field bsmF = new Field("xz_id");
                 Field dlbmF = new Field("xz_dlbm");
                 Field cdF = new Field("xz_cd");
@@ -165,17 +166,14 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
             }
         });
 
-        l1.cache();
-        Feature f = l1.first()._2;
-
 //        l1.cache();
-//        List<Tuple2<String, Feature>> re = l1.collect();
+//        Feature f = l1.first()._2;
 
         l1.saveAsTextFile("/Users/moral/Desktop/result/");
 
         log.info(String.valueOf(l1.count()));
-        // TODO 写出
 
+        // TODO 写出
 //        Dataset<Row> lxdwRf = lxdwLayer.toDataset(this.ss);
 //        lxdwRf.registerTempTable("lxdw");
 //        Dataset<Row> xzdwRf = xzdwLayer.toDataset(this.ss);
