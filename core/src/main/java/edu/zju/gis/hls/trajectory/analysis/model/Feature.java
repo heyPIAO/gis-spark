@@ -153,15 +153,28 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   private Geometry validedGeom(Geometry g) {
+    if(g.isValid()){
+      return g;
+    }
     List<org.locationtech.jts.geom.Polygon> valided = null;
     if (this.getGeometry() instanceof org.locationtech.jts.geom.Polygon) {
-      valided.add(JTS.makeValid((org.locationtech.jts.geom.Polygon) this.getGeometry(), true).get(0));
+      List<org.locationtech.jts.geom.Polygon> polygons=JTS.makeValid((org.locationtech.jts.geom.Polygon) this.getGeometry(), true);
+      org.locationtech.jts.geom.Polygon polygon =polygons.get(0);
+      for(int j=1;j<polygons.size();j++) {
+        polygon = (org.locationtech.jts.geom.Polygon)(polygon.difference(polygons.get(j)));
+      }
+      valided.add(polygon);
     } else if (this.getGeometry() instanceof org.locationtech.jts.geom.MultiPolygon) {
       org.locationtech.jts.geom.MultiPolygon mps = (org.locationtech.jts.geom.MultiPolygon) this.getGeometry();
       int i = mps.getNumGeometries();
       valided = new ArrayList<>();
       for (int m = 0; m < i; m++) {
-        valided.add((JTS.makeValid((org.locationtech.jts.geom.Polygon) mps.getGeometryN(m), true).get(0)));
+        List<org.locationtech.jts.geom.Polygon> polygons=JTS.makeValid((org.locationtech.jts.geom.Polygon) mps.getGeometryN(m), true);
+        org.locationtech.jts.geom.Polygon polygon =polygons.get(0);
+        for(int j=1;j<polygons.size();j++) {
+          polygon = (org.locationtech.jts.geom.Polygon)(polygon.difference(polygons.get(j)));
+        }
+        valided.add(polygon);
       }
     }
     GeometryFactory gf = new GeometryFactory();
@@ -175,7 +188,7 @@ public class Feature <T extends Geometry> implements Serializable {
     throw new GISSparkException("Unvalid Geometry: " + g.toString());
   }
 
-  public Feature intersect(Feature f, Boolean attrReserved) {
+  public Feature intersection(Feature f, Boolean attrReserved) {
     Geometry g2 = f.geometry;
     if (f.getGeometry().isEmpty() || g2.isEmpty() || !this.getGeometry().intersects(g2)) return Feature.empty();
     Geometry g = null;
