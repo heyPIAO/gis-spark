@@ -11,6 +11,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
@@ -28,6 +29,7 @@ import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 import static tec.uom.se.function.QuantityFunctions.sum;
@@ -45,7 +47,7 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
     private static Integer DEFAULT_INDEX_LEVEL = 12;
     private static Integer DEFAULT_SCALE = 2;
     private static Double DEFAULT_MU = 666.6666667;
-    private static Double DEFAULT_KM = 1000000.00;
+    private static Double DEFAULT_KM = 10000.00;//0921改为公顷
 
     public LandUseAnalysis(SparkSessionType type, String[] args) {
         super(type, args);
@@ -191,10 +193,10 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         layer.cache();
 
         // 写出裁切以后面积调整过的图层
-        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
-        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
-        layer.inferFieldMetadata();
-        geomWriter.write(layer);
+//        LayerWriterConfig geomWriterConfig = LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+//        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+//        layer.inferFieldMetadata();
+//        geomWriter.write(layer);
 
         Layer resultLayer = layer.mapToLayer(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
             @Override
@@ -290,12 +292,118 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
         adjustFeatures = AreaAdjustment.adjust(totalPmmjKm, "PMMJ_KM", adjustFeatures, DEFAULT_SCALE);
 
         JavaPairRDD<String, Feature> resultRDD = this.jsc.parallelize(adjustFeatures).mapToPair(x->new Tuple2<>(x.getFid(), x));
-        Layer result = new Layer(resultRDD.rdd());
+
+        JavaPairRDD<String,Feature> reRDD=resultRDD.mapToPair(new PairFunction<Tuple2<String, Feature>, String, Feature>() {
+            @Override
+            public Tuple2<String, Feature> call(Tuple2<String, Feature> input) throws Exception {
+                Feature feature=input._2;
+                LinkedHashMap<Field,Object> fields=feature.getAttributes();
+                LinkedHashMap<Field,Object> fieldsNew=new LinkedHashMap<>();
+                Iterator<Field> iterator = fields.keySet().iterator();
+                while (iterator.hasNext()) {
+                    Field field = iterator.next();
+
+                    Object value=fields.get(field);
+                    if(field.getName().equals("TBDLMJ_1")){
+                        Field fo=new Field("TQMJ");
+                        fo.setType(Double.class);
+                        fieldsNew.put(fo,value);
+            }else if(field.getName().equals("ZLDWDM_1")){
+
+                        Field fo=new Field("ZLDWDM");
+                        fo.setType(String.class);
+                        fieldsNew.put(fo,value);
+            }else if(field.getName().equals("DLBM_1")){
+
+                        Field fo=new Field("DLBM");
+                        fo.setType(String.class);
+                        fieldsNew.put(fo,value);
+            }else if(field.getName().equals("TBDLMJ_M")){
+
+                        Field fo=new Field("TQMJMU");
+                        fo.setType(Double.class);
+                        fieldsNew.put(fo,value);
+            }else if(field.getName().equals("TBDLMJ_KM")){
+
+                        Field fo=new Field("TQMJGQ");
+                        fo.setType(Double.class);
+                        fieldsNew.put(fo,value);
+            }else if(field.getName().equals("PMMJ_M")){
+
+                        Field fo=new Field("PMMJMU");
+                        fo.setType(Double.class);
+                        fieldsNew.put(fo,value);
+            }
+            else if(field.getName().equals("PMMJ_KM")){
+                        Field fo=new Field("PMMJGQ");
+                        fo.setType(Double.class);
+                        fieldsNew.put(fo,value);
+
+            }
+
+        }
+                feature.setAttributes(fieldsNew);
+                return new Tuple2<>(input._1,feature);
+            }
+        });
+
+
+        Layer result = new Layer(reRDD.rdd());
 
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter resultWriter = LayerFactory.getWriter(this.ss, writerConfig);
-
+//        List<String> fieldNames=new ArrayList<>();
+//        fieldNames.add("TBDLMJ_1");
+//        fieldNames.add("ZLDWDM_1");
+//        fieldNames.add("DLBM_1");
+//        fieldNames.add("TBDLMJ_M");
+//        fieldNames.add("TBDLMJ_KM");
+//        fieldNames.add("PMMJ");
+//        fieldNames.add("PMMJ_M");
+//        fieldNames.add("PMMJ_KM");
+//        Field[] extendFields = extentLayerReaderConfig.getAttributes();
+//        for (int i=0;i<extendFields.length;i++){
+//            fieldNames.add(extendFields[i].getName() + "_2");
+//        }
         result.inferFieldMetadata();
+//        LayerMetadata layerMetadata=result.getMetadata();
+//        LinkedHashMap<Field,Object> re=new LinkedHashMap();
+//
+//        Iterator<Field> fields = layerMetadata.getAttributes().keySet().iterator();
+//        while (fields.hasNext()) {
+//            Field field=fields.next();
+//
+//            Object value=layerMetadata.getAttribute(field);
+//
+//            if(field.getName()=="TBDLMJ_1"){
+//                field.setName("TQMJ");
+//                field.setType(Double.class);
+//            }else if(field.getName()=="ZLDWDM_1"){
+//                field.setName("ZLDWDM");
+//                field.setType(String.class);
+//            }else if(field.getName()=="DLBM_1"){
+//                field.setName("DLBM");
+//                field.setType(String.class);
+//            }else if(field.getName()=="TBDLMJ_M"){
+//                field.setName("TQMJMU");
+//                field.setType(Double.class);
+//            }else if(field.getName()=="TBDLMJ_KM"){
+//                field.setName("TQMJGQ");
+//                field.setType(Double.class);
+//            }else if(field.getName()=="PMMJ_M"){
+//                field.setName("PMMJMU");
+//                field.setType(Double.class);
+//            }
+//            else if(field.getName()=="PMMJ_KM"){
+//                field.setName("PMMJKM");
+//                field.setType(Double.class);
+//
+//            }
+//            re.put(field,value);
+//        }
+//
+//        layerMetadata.setAttributes(re);
+//        result.setMetadata(layerMetadata);
         resultWriter.write(result);
     }
 

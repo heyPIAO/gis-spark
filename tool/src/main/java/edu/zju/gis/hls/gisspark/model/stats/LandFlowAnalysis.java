@@ -127,8 +127,8 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                     //和 2调面状图斑 进行相交
                     String omzcc = String.valueOf(tb2d.getAttribute("dlbm"));
-                    double tbArea = Double.valueOf(String.valueOf(tb2d.getAttribute("tbmj")));
-                    double aarea = tb2d.getGeometry().getArea();
+                    double tbArea = Double.valueOf(String.valueOf(tb3d.getAttribute("tbmj")));//0921取三调面积
+                    double aarea = tb3d.getGeometry().getArea();//0921取三调面积
 
                     Geometry ip = tb3d.getGeometry().intersection(tb2d.getGeometry());
                     int size = ip.getNumGeometries();
