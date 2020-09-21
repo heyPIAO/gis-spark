@@ -300,6 +300,9 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                 LinkedHashMap<Field,Object> fields=feature.getAttributes();
                 LinkedHashMap<Field,Object> fieldsNew=new LinkedHashMap<>();
                 Iterator<Field> iterator = fields.keySet().iterator();
+                        Field[] extendFields = extentLayerReaderConfig.getAttributes();
+
+
                 while (iterator.hasNext()) {
                     Field field = iterator.next();
 
@@ -340,6 +343,13 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
                         fieldsNew.put(fo,value);
 
             }
+                    for (int i=0;i<extendFields.length;i++){
+                        if(field.getName().equals(extendFields[i].getName() + "_2")){
+                            Field fo=new Field(extendFields[i].getName());
+                            fo.setType(Integer.class);
+                            fieldsNew.put(fo,value);
+                        }
+                    }
 
         }
                 feature.setAttributes(fieldsNew);
