@@ -123,7 +123,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     MultiPolyline[] xz2d = (MultiPolyline[]) t._2._2._3();
 
                     String fcc = String.valueOf(tb3d.getAttribute("DLBM"));
-                    String zldwdm = String.valueOf(tb3d.getAttribute("ZLDWDM")).substring(0, 15);
+                    String zldwdm = String.valueOf(tb3d.getAttribute("ZLDWDM")).substring(0, 6);//县级
 
                     //和 2调面状图斑 进行相交
                     String omzcc = String.valueOf(tb2d.getAttribute("DLBM"));
@@ -438,20 +438,35 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
         JavaRDD<Tuple2<String, LinkedHashMap<Field, Object>>> statResult = flowAreaRDD.map(x -> {
             LinkedHashMap<Field, Object> r = new LinkedHashMap<>();
-            Field f = new Field("MJ");
+            Field f = new Field("mj");
             f.setType(java.lang.Double.class);
-            Field f2 = new Field("ZLDWXX");
+            String[] fs = x._1.split("##");
+            Field f2 = new Field("qdlbm");
+            f2.setType(java.lang.String.class);
+            Field f3 = new Field("hdlbm");
+            f3.setType(java.lang.String.class);
+            Field f4 = new Field("zldwdm");
+            f4.setType(java.lang.String.class);
             r.put(f, x._2);
-            r.put(f2, x._1);
+            r.put(f2, fs[0]);
+            r.put(f3, fs[1]);
+            r.put(f4, fs[2]);
             return new Tuple2<>(x._1, r);
         });
 
         StatLayer statLayer = new StatLayer(statResult);
-        Field f = new Field("MJ");
+        Field f = new Field("mj");
         f.setType(Double.class);
         statLayer.getMetadata().addAttribute(f, null);
-        Field f2 = new Field("ZLDWXX");
+        Field f2 = new Field("qdlbm");
+        f2.setType(String.class);
         statLayer.getMetadata().addAttribute(f2, null);
+        Field f3 = new Field("hdlbm");
+        f3.setType(String.class);
+        statLayer.getMetadata().addAttribute(f3, null);
+        Field f4 = new Field("zldwdm");
+        f4.setType(String.class);
+        statLayer.getMetadata().addAttribute(f4, null);
 
         LayerWriterConfig statsWriterConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter statWriter = LayerFactory.getWriter(ss, statsWriterConfig);
@@ -471,10 +486,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                 LinkedHashMap<Field, Object> resultAttrs = new LinkedHashMap<>();
                 WKTReader reader = new WKTReader();
 
-                if (String.valueOf(attrs.get("lx_id")).trim().length() > 0&&!String.valueOf(attrs.get("lx_id")).equals("NO_DATA")) {
+                if (String.valueOf(attrs.get("lx_id")).trim().length() > 0&&!String.valueOf(attrs.get("lx_id")).trim().equals("NO_DATA")) {
                     // 处理 lxdw feature
                     String lxWkt = String.valueOf(attrs.get("lx_wkt"));
-                    if(!lxWkt.equals("NO_DATA")) {
+
                         org.locationtech.jts.geom.Point lx = (org.locationtech.jts.geom.Point) reader.read(lxWkt);
                         LinkedHashMap<Field, Object> attrsLx = new LinkedHashMap<>();
                         Field f1 = new Field("dlbm");
@@ -486,14 +501,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                         Field f0 = new Field("lxdw");
                         f0.setType(Point.class);
                         resultAttrs.put(f0, lxf);
-                    }
-//                    else
-//                    {
-//                        resultAttrs.put();
-//                    }
+
                 }
 
-                if (String.valueOf(attrs.get("xz_id")).trim().length() > 0&&!String.valueOf(attrs.get("xz_id")).equals("NO_DATA")) {
+                if (String.valueOf(attrs.get("xz_id")).trim().length() > 0&&!String.valueOf(attrs.get("xz_id")).trim().equals("NO_DATA")) {
                     // 处理 xzdw feature
                     String xzWkt = String.valueOf(attrs.get("xz_wkt"));
                     MultiLineString xz = (MultiLineString) reader.read(xzWkt);
