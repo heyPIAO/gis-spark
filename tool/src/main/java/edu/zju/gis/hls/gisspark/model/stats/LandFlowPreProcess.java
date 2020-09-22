@@ -5,6 +5,7 @@ import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
@@ -75,18 +76,27 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 String[] keys = new String[2];
                 keys[0] = f.getAttribute("ZLDWDM").toString();
                 keys[1] = f.getAttribute("TBBH").toString();
-                if (!in._2._2.isPresent())
-                    return new Tuple2<>(StringUtils.join(keys, "##"), in._2._1);
-                Feature lx = in._2._2.get();
                 Field bsmF = new Field("lx_id");
                 Field dlbmF = new Field("lx_dlbm");
                 Field mjF = new Field("lx_mj");
-//                mjF.setType(Double.class);
                 Field wktF = new Field("lx_wkt");
-                f.addAttribute(bsmF, lx.getAttribute("BSM"));
-                f.addAttribute(dlbmF, lx.getAttribute("DLBM"));
-                f.addAttribute(mjF, lx.getAttribute("MJ"));
-                f.addAttribute(wktF, lx.getAttribute("WKT"));
+                mjF.setType(Float.class);
+                if (!in._2._2.isPresent()) {/**/
+                    f.addAttribute(bsmF, "NO_DATA");
+                    f.addAttribute(dlbmF, "NO_DATA");
+                    f.addAttribute(mjF, 0.0f);
+                    f.addAttribute(wktF, "NO_DATA");
+                } else {
+                    Feature lx = in._2._2.get();
+                    f.addAttribute(bsmF, lx.getAttribute("BSM"));
+                    f.addAttribute(dlbmF, lx.getAttribute("DLBM"));
+                    f.addAttribute(mjF, lx.getAttribute("MJ"));
+                    f.addAttribute(wktF, lx.getGeometryWkt());
+                }
+                if (f.getAttributes().size() != 10) {
+                    int size = f.getAttributes().size();
+                    log.error("DLTB JOIN LXDW Size Error, error size :" + size);
+                }
                 return new Tuple2<>(StringUtils.join(keys, "##"), f);
             }
         });
@@ -97,6 +107,10 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 String[] kf = new String[2];
                 kf[0] = o._2.getAttribute("KCTBDWDM1").toString();
                 kf[1] = o._2.getAttribute("KCTBBH1").toString();
+                if (o._2.getAttributes().size() != 9) {
+                    int size = o._2.getAttributes().size();
+                    log.error("XZDW Field Size Error, error size :" + size);
+                }
                 return new Tuple2<>(StringUtils.join(kf, "##"), o._2);
             }
         });
@@ -107,106 +121,71 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 String[] kf = new String[2];
                 kf[0] = o._2.getAttribute("KCTBDWDM2").toString();
                 kf[1] = o._2.getAttribute("KCTBBH2").toString();
+                if (o._2.getAttributes().size() != 9) {
+                    int size = o._2.getAttributes().size();
+                    log.error("XZDW Field Size Error, error size :" + size);
+                }
                 return new Tuple2<>(StringUtils.join(kf, "##"), o._2);
             }
         });
 
-        JavaPairRDD<String, Tuple2<Feature, Optional<Feature>>> dltb_xzdw_1 = l1.leftOuterJoin(xzdwLayer1);
+        JavaPairRDD<String, Feature> unionLayer = xzdwLayer1.union(xzdwLayer2);
 
-        JavaPairRDD<String, Feature> l2 = dltb_xzdw_1.mapToPair(new PairFunction<Tuple2<String, Tuple2<Feature, Optional<Feature>>>, String, Feature>() {
+        JavaPairRDD<String, Tuple2<Feature, Optional<Feature>>> dltb_xzdw = l1.leftOuterJoin(unionLayer);
+
+        JavaPairRDD<String, Feature> l2 = dltb_xzdw.mapToPair(new PairFunction<Tuple2<String, Tuple2<Feature, Optional<Feature>>>, String, Feature>() {
             @Override
             public Tuple2<String, Feature> call(Tuple2<String, Tuple2<Feature, Optional<Feature>>> in) throws Exception {
                 Feature f = new Feature(in._2._1);
-                if (!in._2._2.isPresent()) return new Tuple2<>(in._1, in._2._1);
-                Feature xz = in._2._2.get();
                 Field bsmF = new Field("xz_id");
                 Field dlbmF = new Field("xz_dlbm");
                 Field cdF = new Field("xz_cd");
-//                cdF.setType(Double.class);
                 Field kdF = new Field("xz_kd");
-//                kdF.setType(Double.class);
-                Field wktF = new Field("xz_wkt");
                 Field kcblF = new Field("xz_kcbl");
-//                kcblF.setType(Double.class);
-                f.addAttribute(bsmF, xz.getAttribute("BSM"));
-                f.addAttribute(dlbmF, xz.getAttribute("DLBM"));
-                f.addAttribute(cdF, xz.getAttribute("CD"));
-                f.addAttribute(kdF, xz.getAttribute("KD"));
-                f.addAttribute(wktF, xz.getAttribute("WKT"));
-                f.addAttribute(kcblF, xz.getAttribute("KCBL"));
-
-                Feature lx = in._2._1;
-                Field lx_id = new Field("lx_id");
-                Field lx_dlbm = new Field("lx_dlbm");
-                Field lx_mj = new Field("lx_mj");
-//                lx_mj.setType(Double.class);
-                Field lx_wkt = new Field("lx_wkt");
-                f.addAttribute(lx_id, lx.getAttribute("BSM"));
-                f.addAttribute(lx_dlbm, lx.getAttribute("DLBM"));
-                f.addAttribute(lx_mj, lx.getAttribute("MJ"));
-                f.addAttribute(lx_wkt, lx.getAttribute("WKT"));
-
+                Field wktF = new Field("xz_wkt");
+                kdF.setType(Float.class);
+                cdF.setType(Float.class);
+                kcblF.setType(Float.class);
+                if (in._2._2.isPresent()) {
+                    Feature xz = in._2._2.get();
+                    f.addAttribute(bsmF, xz.getAttribute("BSM"));
+                    f.addAttribute(dlbmF, xz.getAttribute("DLBM"));
+                    f.addAttribute(cdF, xz.getAttribute("CD"));
+                    f.addAttribute(kdF, xz.getAttribute("KD"));
+                    f.addAttribute(kcblF, xz.getAttribute("KCBL"));
+                    f.addAttribute(wktF, xz.getGeometryWkt());
+                } else {
+                    f.addAttribute(bsmF, "NO_DATA");
+                    f.addAttribute(dlbmF, "NO_DATA");
+                    f.addAttribute(cdF, 0.0f);
+                    f.addAttribute(kdF, 0.0f);
+                    f.addAttribute(kcblF, 0.0f);
+                    f.addAttribute(wktF, "NO_DATA");
+                }
                 Field tb_wkt = new Field("tb_wkt");
                 f.addAttribute(tb_wkt, in._2._1.getGeometryWkt());
 
+                if (f.getAttributes().size() != 17) {
+                    int size = f.getAttributes().size();
+                    log.error("DLTB JOIN XZDW Field Size Error, error size :" + size);
+                }
                 return new Tuple2<>(in._1, f);
             }
         });
 
-        JavaPairRDD<String, Tuple2<Feature, Optional<Feature>>> dltb_xzdw_2 = l2.leftOuterJoin(xzdwLayer2);
+        l2.cache();
+        l2.first();
+        long l2_length = l2.count();
 
-        JavaPairRDD<String, Feature> l3 = dltb_xzdw_2.mapToPair(new PairFunction<Tuple2<String, Tuple2<Feature, Optional<Feature>>>, String, Feature>() {
-            @Override
-            public Tuple2<String, Feature> call(Tuple2<String, Tuple2<Feature, Optional<Feature>>> in) throws Exception {
-                Feature f = new Feature(in._2._1);
-                if (!in._2._2.isPresent())
-                    return new Tuple2<>(in._1, in._2._1);
-                if (in._2._1.getAttribute("xz_id") != null) {
-                    return new Tuple2<>("EMPTY", null);
-                }
-                Feature xz = in._2._2.get();
-                Field bsmF = new Field("xz_id");
-                Field dlbmF = new Field("xz_dlbm");
-                Field cdF = new Field("xz_cd");
-//                cdF.setType(Double.class);
-                Field kdF = new Field("xz_kd");
-//                kdF.setType(Double.class);
-                Field wktF = new Field("xz_wkt");
-                Field kcblF = new Field("xz_kcbl");
-//                kcblF.setType(Double.class);
-                f.addAttribute(bsmF, xz.getAttribute("BSM"));
-                f.addAttribute(dlbmF, xz.getAttribute("DLBM"));
-                f.addAttribute(cdF, xz.getAttribute("CD"));
-                f.addAttribute(kdF, xz.getAttribute("KD"));
-                f.addAttribute(wktF, xz.getAttribute("WKT"));
-                f.addAttribute(kcblF, xz.getAttribute("KCBL"));
-
-                Feature lx = in._2._1;
-                Field lx_id = new Field("lx_id");
-                Field lx_dlbm = new Field("lx_dlbm");
-                Field lx_mj = new Field("lx_mj");
-//                lx_mj.setType(Double.class);
-                Field lx_wkt = new Field("lx_wkt");
-                f.addAttribute(lx_id, lx.getAttribute("BSM"));
-                f.addAttribute(lx_dlbm, lx.getAttribute("DLBM"));
-                f.addAttribute(lx_mj, lx.getAttribute("MJ"));
-                f.addAttribute(lx_wkt, lx.getAttribute("WKT"));
-
-                Field tb_wkt = new Field("tb_wkt");
-                f.addAttribute(tb_wkt, in._2._1.getGeometryWkt());
-
-                return new Tuple2<>(in._1, f);
-            }
-        }).filter(x -> !x._1.equals("EMPTY"));
-
-        JavaPairRDD<String, Feature> unionLayer = l2.union(l3);
-
-        Layer result = new Layer(unionLayer.rdd());
+        Layer result = new Layer(l2.rdd());
 
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getWriterConfig());
         LayerWriter resultWriter = LayerFactory.getWriter(this.ss, writerConfig);
 
         result.inferFieldMetadata();
+
+        LayerMetadata md = result.getMetadata();
+
         resultWriter.write(result);
 
     }
