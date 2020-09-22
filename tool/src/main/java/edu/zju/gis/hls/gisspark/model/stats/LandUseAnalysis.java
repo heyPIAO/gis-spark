@@ -308,37 +308,37 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
 
                     Object value=fields.get(field);
                     if(field.getName().equals("TBDLMJ_1")){
-                        Field fo=new Field("TQMJ");
+                        Field fo=new Field("tqmj");
                         fo.setType(Double.class);
                         fieldsNew.put(fo,value);
             }else if(field.getName().equals("ZLDWDM_1")){
 
-                        Field fo=new Field("ZLDWDM");
+                        Field fo=new Field("zldwdm");
                         fo.setType(String.class);
                         fieldsNew.put(fo,value);
             }else if(field.getName().equals("DLBM_1")){
 
-                        Field fo=new Field("DLBM");
+                        Field fo=new Field("dlbm");
                         fo.setType(String.class);
                         fieldsNew.put(fo,value);
             }else if(field.getName().equals("TBDLMJ_M")){
 
-                        Field fo=new Field("TQMJMU");
+                        Field fo=new Field("tqmjmu");
                         fo.setType(Double.class);
                         fieldsNew.put(fo,value);
             }else if(field.getName().equals("TBDLMJ_KM")){
 
-                        Field fo=new Field("TQMJGQ");
+                        Field fo=new Field("tqmjkm");
                         fo.setType(Double.class);
                         fieldsNew.put(fo,value);
             }else if(field.getName().equals("PMMJ_M")){
 
-                        Field fo=new Field("PMMJMU");
+                        Field fo=new Field("pmmjmu");
                         fo.setType(Double.class);
                         fieldsNew.put(fo,value);
             }
             else if(field.getName().equals("PMMJ_KM")){
-                        Field fo=new Field("PMMJGQ");
+                        Field fo=new Field("pmmjkm");
                         fo.setType(Double.class);
                         fieldsNew.put(fo,value);
 

@@ -120,14 +120,14 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                         return result.iterator();
                     }
                     Point[] lx2d = (Point[]) t._2._2._2();
-                    Polyline[] xz2d = (Polyline[]) t._2._2._3();
+                    MultiPolyline[] xz2d = (MultiPolyline[]) t._2._2._3();
 
                     String fcc = String.valueOf(tb3d.getAttribute("DLBM"));
                     String zldwdm = String.valueOf(tb3d.getAttribute("ZLDWDM")).substring(0, 15);
 
                     //和 2调面状图斑 进行相交
-                    String omzcc = String.valueOf(tb2d.getAttribute("dlbm"));
-                    double tbArea = Double.valueOf(String.valueOf(tb3d.getAttribute("tbmj")));//0921取三调面积
+                    String omzcc = String.valueOf(tb2d.getAttribute("DLBM"));
+                    double tbArea = Double.valueOf(String.valueOf(tb3d.getAttribute("TBMJ")));//0921取三调面积
                     double aarea = tb3d.getGeometry().getArea();//0921取三调面积
 
                     Geometry ip = tb3d.getGeometry().intersection(tb2d.getGeometry());
@@ -151,7 +151,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                             //线状计算
                             if (xz2d != null) {
-                                for (Polyline lf : xz2d) {
+                                for (MultiPolyline lf : xz2d) {
                                     if (!g.intersects(lf.getGeometry())) continue;
                                     String oxzcc = String.valueOf(lf.getAttribute("dlbm"));
                                     try {
@@ -289,7 +289,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                         } else {
                             //和线状图斑进行流转
                             if (xz2d != null) {
-                                for (Polyline lf : xz2d) {
+                                for (MultiPolyline lf : xz2d) {
                                     if (!g.intersects(lf.getGeometry())) continue;
                                     String oxzcc = String.valueOf(lf.getAttribute("dlbm"));
                                     try {
@@ -471,27 +471,32 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                 LinkedHashMap<Field, Object> resultAttrs = new LinkedHashMap<>();
                 WKTReader reader = new WKTReader();
 
-                if (String.valueOf(attrs.get("lx_id")).trim().length() > 0) {
+                if (String.valueOf(attrs.get("lx_id")).trim().length() > 0&&!String.valueOf(attrs.get("lx_id")).equals("NO_DATA")) {
                     // 处理 lxdw feature
                     String lxWkt = String.valueOf(attrs.get("lx_wkt"));
-                    org.locationtech.jts.geom.Point lx = (org.locationtech.jts.geom.Point) reader.read(lxWkt);
-                    LinkedHashMap<Field, Object> attrsLx = new LinkedHashMap<>();
-                    Field f1 = new Field("dlbm");
-                    attrsLx.put(f1, attrs.get("lx_dlbm"));
-                    Field f2 = new Field("mj");
-                    f2.setType(java.lang.Double.class.getName());
-                    attrsLx.put(f2, Double.valueOf(String.valueOf(attrs.get("lx_mj"))));
-                    Point lxf = new Point(String.valueOf(attrs.get("lx_id")), lx, attrsLx);
-
-                    Field f0 = new Field("lxdw");
-                    f0.setType(Point.class);
-                    resultAttrs.put(f0, lxf);
+                    if(!lxWkt.equals("NO_DATA")) {
+                        org.locationtech.jts.geom.Point lx = (org.locationtech.jts.geom.Point) reader.read(lxWkt);
+                        LinkedHashMap<Field, Object> attrsLx = new LinkedHashMap<>();
+                        Field f1 = new Field("dlbm");
+                        attrsLx.put(f1, attrs.get("lx_dlbm"));
+                        Field f2 = new Field("mj");
+                        f2.setType(java.lang.Double.class.getName());
+                        attrsLx.put(f2, Double.valueOf(String.valueOf(attrs.get("lx_mj"))));
+                        Point lxf = new Point(String.valueOf(attrs.get("lx_id")), lx, attrsLx);
+                        Field f0 = new Field("lxdw");
+                        f0.setType(Point.class);
+                        resultAttrs.put(f0, lxf);
+                    }
+//                    else
+//                    {
+//                        resultAttrs.put();
+//                    }
                 }
 
-                if (String.valueOf(attrs.get("xz_id")).trim().length() > 0) {
+                if (String.valueOf(attrs.get("xz_id")).trim().length() > 0&&!String.valueOf(attrs.get("xz_id")).equals("NO_DATA")) {
                     // 处理 xzdw feature
                     String xzWkt = String.valueOf(attrs.get("xz_wkt"));
-                    LineString xz = (LineString) reader.read(xzWkt);
+                    MultiLineString xz = (MultiLineString) reader.read(xzWkt);
                     //LineString xz = (LineString) reader.read(xzWkt).getGeometryN(0);
                     LinkedHashMap<Field, Object> attrsXz = new LinkedHashMap<>();
                     Field f1 = new Field("dlbm");
@@ -508,23 +513,23 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     Field f4 = new Field("kcbl");
                     f3.setType(java.lang.Double.class);
                     attrsXz.put(f4, attrs.get("xz_kcbl"));
-                    Polyline xzf = new Polyline(String.valueOf(attrs.get("xz_id")), xz, attrsXz);
+                    MultiPolyline xzf = new MultiPolyline(String.valueOf(attrs.get("xz_id")), xz, attrsXz);
 
                     Field f0 = new Field("xzdw");
-                    f0.setType(Polyline.class);
+                    f0.setType(MultiPolyline.class);
                     resultAttrs.put(f0, xzf);
                 }
 
                 Field f1 = new Field("dlbm");
-                resultAttrs.put(f1, attrs.get("tb_dlbm"));
+                resultAttrs.put(f1, attrs.get("DLBM"));
 
                 Field f2 = new Field("tbmj");
                 f2.setType(java.lang.Double.class);
-                resultAttrs.put(f2, attrs.get("tb_tbmj"));
+                resultAttrs.put(f2, attrs.get("TBMJ"));
 
                 Field f3 = new Field("tkxs");
                 f3.setType(java.lang.Double.class);
-                resultAttrs.put(f3, attrs.get("tb_tkxs"));
+                resultAttrs.put(f3, attrs.get("TKXS"));
 
                 in._2.setAttributes(resultAttrs);
                 return in;
@@ -546,10 +551,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                         LinkedHashMap<Field, Object> attrsO = new LinkedHashMap<>();
                         for (String k : attrs.keySet()) {
                             if (k.equals("xzdw")) {
-                                Polyline xz = (Polyline) attrs.get(k);
+                                MultiPolyline xz = (MultiPolyline) attrs.get(k);
                                 Field f = new Field(k);
-                                f.setType(Polyline[].class);
-                                attrsO.put(f, new Polyline[]{xz});
+                                f.setType(MultiPolyline[].class);
+                                attrsO.put(f, new MultiPolyline[]{xz});
                             } else if (k.equals("lxdw")) {
                                 Point pf = (Point) attrs.get(k);
                                 Field f = new Field(k);
@@ -566,22 +571,22 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                         Map<String, Object> attrs = t._2.getAttributesStr();
                         for (String k : attrs.keySet()) {
                             if (k.equals("xzdw")) {
-                                Polyline xz = (Polyline) attrs.get(k);
+                                MultiPolyline xz = (MultiPolyline) attrs.get(k);
                                 if (feature.getAttributesStr().keySet().contains(k)) {
-                                    Polyline[] opfs = (Polyline[]) feature.getAttributesStr().get(k);
-                                    for (Polyline opf : opfs) {
+                                    MultiPolyline[] opfs = (MultiPolyline[]) feature.getAttributesStr().get(k);
+                                    for (MultiPolyline opf : opfs) {
                                         if (opf.getFid().equals(xz.getFid())) break;
                                     }
-                                    Polyline[] rs = new Polyline[opfs.length + 1];
-                                    List<Polyline> rl = new ArrayList<>(Arrays.asList(opfs));
+                                    MultiPolyline[] rs = new MultiPolyline[opfs.length + 1];
+                                    List<MultiPolyline> rl = new ArrayList<>(Arrays.asList(opfs));
                                     rl.add(xz);
                                     Field f = new Field(k);
-                                    f.setType(Polyline[].class);
+                                    f.setType(MultiPolyline[].class);
                                     feature.getAttributes().put(f, rl.toArray(rs));
                                 } else {
                                     Field f = new Field(k);
-                                    f.setType(Polyline[].class);
-                                    feature.getAttributes().put(f, new Polyline[]{xz});
+                                    f.setType(MultiPolyline[].class);
+                                    feature.getAttributes().put(f, new MultiPolyline[]{xz});
                                 }
                             } else if (k.equals("lxdw")) {
                                 Point lx = (Point) attrs.get(k);
