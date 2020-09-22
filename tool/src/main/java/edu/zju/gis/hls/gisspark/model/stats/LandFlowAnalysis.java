@@ -126,7 +126,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     String zldwdm = String.valueOf(tb3d.getAttribute("ZLDWDM")).substring(0, 6);//县级
 
                     //和 2调面状图斑 进行相交
-                    String omzcc = String.valueOf(tb2d.getAttribute("DLBM"));
+                    String omzcc = String.valueOf(tb2d.getAttribute("dlbm"));
                     double tbArea = Double.valueOf(String.valueOf(tb3d.getAttribute("TBMJ")));//0921取三调面积
                     double aarea = tb3d.getGeometry().getArea();//0921取三调面积
 
@@ -271,7 +271,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                 if (flowTbArea - kcarea < 0) {
                                     kcarea = flowTbArea;
                                 }
-                                String kc = String.format("123##%s##%s##%.9f", fcc, zldwdm, kcarea);
+                                String kc = String.format("1203##%s##%s##%.9f", fcc, zldwdm, kcarea);
                                 Tuple2<String, Geometry> flowkc = new Tuple2<>(kc, g);
                                 result.add(flowkc);
 
@@ -356,6 +356,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                             result.add(flow);
                                         }
                                     }
+
                                     flowTbArea = flowTbArea - olxarea;
                                     if (flowTbArea < 0) {
                                         continue a;
@@ -374,7 +375,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                     } else {
                                         kcarea = flowTbArea * tkxs * 0.01;
                                     }
-                                    String kc = String.format("123##%s##%s##%.9f", fcc, zldwdm, kcarea);
+                                    String kc = String.format("1203##%s##%s##%.9f", fcc, zldwdm, kcarea);
                                     Tuple2<String, Geometry> flowkc = new Tuple2<>(kc, g);
                                     result.add(flowkc);
 
@@ -420,10 +421,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             }
         }).rdd());
 
-        LayerWriterConfig geomWriterConfig=LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
-        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
-        intersectedLayer.inferFieldMetadata();
-        geomWriter.write(intersectedLayer);
+//        LayerWriterConfig geomWriterConfig=LayerFactory.getWriterConfig(this.arg.getGeomWriterConfig());
+//        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
+//        intersectedLayer.inferFieldMetadata();
+//        geomWriter.write(intersectedLayer);
 
         // 写出统计结果
         JavaPairRDD<String, Double> flowAreaRDD = intersected.mapToPair(new PairFunction<Tuple2<String, Geometry>, String, Double>() {
@@ -504,7 +505,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                 }
 
-                if (String.valueOf(attrs.get("xz_id")).trim().length() > 0&&!String.valueOf(attrs.get("xz_id")).trim().equals("NO_DATA")) {
+                if (String.valueOf(attrs.get("xz_id")).trim().length() > 0 && !String.valueOf(attrs.get("xz_id")).trim().equals("NO_DATA")) {
                     // 处理 xzdw feature
                     String xzWkt = String.valueOf(attrs.get("xz_wkt"));
                     MultiLineString xz = (MultiLineString) reader.read(xzWkt);
@@ -540,7 +541,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                 Field f3 = new Field("tkxs");
                 f3.setType(java.lang.Double.class);
-                resultAttrs.put(f3, attrs.get("TKXS"));
+                resultAttrs.put(f3, attrs.get("TKXS"));//无zldwdm
 
                 in._2.setAttributes(resultAttrs);
                 return in;
@@ -587,13 +588,14 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                     MultiPolyline[] opfs = (MultiPolyline[]) feature.getAttributesStr().get(k);
                                     for (MultiPolyline opf : opfs) {
                                         if (opf.getFid().equals(xz.getFid())) break;
-                                    }
+
                                     MultiPolyline[] rs = new MultiPolyline[opfs.length + 1];
                                     List<MultiPolyline> rl = new ArrayList<>(Arrays.asList(opfs));
                                     rl.add(xz);
                                     Field f = new Field(k);
                                     f.setType(MultiPolyline[].class);
                                     feature.getAttributes().put(f, rl.toArray(rs));
+                                    }
                                 } else {
                                     Field f = new Field(k);
                                     f.setType(MultiPolyline[].class);
@@ -605,13 +607,14 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                     Point[] opfs = (Point[]) feature.getAttributesStr().get(k);
                                     for (Point opf : opfs) {
                                         if (opf.getFid().equals(lx.getFid())) break;
-                                    }
+
                                     Point[] rs = new Point[opfs.length + 1];
                                     List<Point> rl = new ArrayList<>(Arrays.asList(opfs));
                                     rl.add(lx);
                                     Field f = new Field(k);
                                     f.setType(Point[].class);
                                     feature.getAttributes().put(f, rl.toArray(rs));
+                                    }
                                 } else {
                                     Field f = new Field(k);
                                     f.setType(Point[].class);
