@@ -468,6 +468,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         f4.setType(String.class);
         statLayer.getMetadata().addAttribute(f4, null);
 
+
         LayerWriterConfig statsWriterConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
         LayerWriter statWriter = LayerFactory.getWriter(ss, statsWriterConfig);
         statLayer.inferFieldMetadata();
