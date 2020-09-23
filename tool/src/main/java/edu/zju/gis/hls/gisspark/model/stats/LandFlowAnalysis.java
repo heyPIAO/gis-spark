@@ -70,20 +70,34 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         MultiPolygonLayer connected2d = l1.getLayer(); // key 为 TileID
         MultiPolygonLayer tb3dLayerPair = l2.getLayer(); // key 为 TileID
 
+
+
+
+
         JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp = tb3dLayerPair.cogroup(connected2d).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>>, String, Tuple2<MultiPolygon, MultiPolygon>>() {
             @Override
             public Iterator<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> call(Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>> in) throws Exception {
                 List<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> result = new ArrayList<>();
                 for (MultiPolygon tb3d : in._2._1) {
+                    String a = "aa";
                     for (MultiPolygon tb2d : in._2._2) {
+                        String b = "bb";
                         if (tb3d.getGeometry().intersects(tb2d.getGeometry())) {
-                            result.add(new Tuple2<>(tb3d.getFid() + "##" + tb2d.getFid(), new Tuple2<>(tb3d, tb2d)));
+                            //result.add(new Tuple2<>(tb3d.getFid()+ "##" + tb2d.getFid(), new Tuple2<>(tb3d, tb2d)));
+
+                            Field field3d = tb3d.getField("BSM");
+                            Field field2d = tb2d.getField("bsm");
+
+                            result.add(new Tuple2<>(tb3d.getAttributes().get(field3d)+ "##" + tb2d.getAttributes().get(field2d), new Tuple2<>(tb3d, tb2d)));
                         }
                     }
                 }
                 return result.iterator();
             }
         });
+
+
+
 
         //去重
         JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp2 = temp.reduceByKey(
@@ -94,6 +108,8 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     }
                 }
         );
+
+
 
         JavaPairRDD<String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>> joined = temp2.mapToPair(new PairFunction<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>, String, Tuple2<MultiPolygon, Tuple3<Feature, Feature[], Feature[]>>>() {
             @Override
@@ -271,7 +287,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                 if (flowTbArea - kcarea < 0) {
                                     kcarea = flowTbArea;
                                 }
-                                String kc = String.format("1203##%s##%s##%.9f", fcc, zldwdm, kcarea);
+                                String kc = String.format("123##%s##%s##%.9f", fcc, zldwdm, kcarea);
                                 Tuple2<String, Geometry> flowkc = new Tuple2<>(kc, g);
                                 result.add(flowkc);
 
@@ -375,7 +391,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                     } else {
                                         kcarea = flowTbArea * tkxs * 0.01;
                                     }
-                                    String kc = String.format("1203##%s##%s##%.9f", fcc, zldwdm, kcarea);
+                                    String kc = String.format("123##%s##%s##%.9f", fcc, zldwdm, kcarea);
                                     Tuple2<String, Geometry> flowkc = new Tuple2<>(kc, g);
                                     result.add(flowkc);
 
@@ -485,6 +501,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             public Tuple2<String, MultiPolygon> call(Tuple2<String, MultiPolygon> in) throws Exception {
 
                 Map<String, Object> attrs = in._2.getAttributesStr();
+                MultiPolygon multiPolygon=new MultiPolygon(in._2);
                 LinkedHashMap<Field, Object> resultAttrs = new LinkedHashMap<>();
                 WKTReader reader = new WKTReader();
 
@@ -536,6 +553,9 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                 Field f1 = new Field("dlbm");
                 resultAttrs.put(f1, attrs.get("DLBM"));
 
+                Field f4 = new Field("bsm");
+                resultAttrs.put(f4, attrs.get("BSM"));
+
                 Field f2 = new Field("tbmj");
                 f2.setType(java.lang.Double.class);
                 resultAttrs.put(f2, attrs.get("TBMJ"));
@@ -545,7 +565,8 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                 resultAttrs.put(f3, attrs.get("TKXS"));//无zldwdm
 
                 in._2.setAttributes(resultAttrs);
-                return in;
+                multiPolygon.setAttributes(resultAttrs);
+                return new Tuple2<>(in._1,multiPolygon);
             }
         });
 
