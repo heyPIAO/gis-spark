@@ -147,10 +147,10 @@ public class FileLayerReader<T extends Layer> extends LayerReader<T> {
                 LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
 
                 // TODO 数据测试
-                if(fields.length < 17) {
-                    log.error("fields length is less than 17 for geometry, abort");
-                    return new Tuple2<>("EMPTY", Feature.empty());
-                }
+//                if(fields.length < 17) {
+//                    log.error("fields length is less than 17 for geometry, abort");
+//                    return new Tuple2<>("EMPTY", Feature.empty());
+//                }
 
                 for (Field f : fs) {
                     int index = f.getIndex();

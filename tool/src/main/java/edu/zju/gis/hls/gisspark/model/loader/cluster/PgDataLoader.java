@@ -77,14 +77,16 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
             default:
                 throw new GISSparkException("SaveModel Undefined");
         }
-        ListStringSQLResultHandler handler = new ListStringSQLResultHandler();
-        pgHelper.runSQL(this.ifTableHasDistributedSql(readerConfig, writerConfig), handler);
-        if (handler.getResult().size() == 0) {
-            log.info("DISTRIBUTE TARGET TABLE: ");
-            pgHelper.runSQL(this.distributeTableSql(readerConfig, writerConfig));
-        } else {
-            log.info("TABLE HAS BEEN DISTRIBUTED.");
-        }
+        log.warn("Pass: DISTRIBUTE TARGET TABLE");
+//        ListStringSQLResultHandler handler = new ListStringSQLResultHandler();
+//        pgHelper.runSQL(this.ifTableHasDistributedSql(readerConfig, writerConfig), handler);
+//
+//        if (handler.getResult().size() == 0) {
+//            log.info("DISTRIBUTE TARGET TABLE: ");
+//            pgHelper.runSQL(this.distributeTableSql(readerConfig, writerConfig));
+//        } else {
+//            log.info("TABLE HAS BEEN DISTRIBUTED.");
+//        }
         pgHelper.close();
     }
 
@@ -119,7 +121,10 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
                         , this.arg.getLayerYear()
                         , java.sql.Date.from(Instant.now())
                         , java.sql.Date.from(Instant.now())
-                        , 0);
+                        , 0
+                        , this.arg.getXzqdm()
+                        , this.arg.getXzqmc()
+                        , "LOADING");
             }
             msHelper.close();
         } catch (Exception e) {
@@ -195,12 +200,20 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         return "INSERT INTO `di_md_dsinfo`(`ID`, `DSNAME`, `ALIAS`, `CREATEBY`," +
                 " `SOURCETABLE`, `SOURCE`, `DESCRIPTION`," +
                 " `USAGES`, `METADATAPARAM`, `TEMPLATENAME`, `RELATIVEID`, `DATAYEAR`," +
-                " `CREATETIME`, `LASTMODIFYTIME`, `SIZE`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                " `CREATETIME`, `LASTMODIFYTIME`, `SIZE`, `XZQDM`, `XZQMC`, `STATE`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     }
 
     private String updateDatasetInfo(String tbName) {
         return "UPDATE `di_md_dsinfo` SET " +
                 "`SIZE` = `SIZE`+? ," +
+                "`STATE` = ? ," +
+                "`LASTMODIFYTIME` = ? " +
+                "WHERE `SOURCETABLE` = '" + tbName + "'";
+    }
+
+    private String updateLoadState(String tbName) {
+        return "UPDATE `di_md_dsinfo` SET " +
+                "`STATE` = ? ," +
                 "`LASTMODIFYTIME` = ? " +
                 "WHERE `SOURCETABLE` = '" + tbName + "'";
     }
@@ -252,6 +265,21 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         }
     }
 
+    @Override
+    protected void catchError() {
+        super.catchError();
+        try {
+            MSHelper msHelper = new MSHelper(this.msConfig);
+            msHelper.runSQL(updateLoadState(this.arg.getTableName()),
+                    "ERROR"
+                    , java.sql.Date.from(Instant.now()));
+            msHelper.close();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw e;
+        }
+    }
+
     /**
      * 建空间索引
      */
@@ -265,15 +293,21 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         try {
             log.info(String.format("CREATE SPATIAL INDEX FOR %s USING GIST", writerConfig.getTablename()));
             pgHelper.runSQL(this.createSpatialIndexSql(readerConfig, writerConfig, CRS.parseWKT(this.arg.getTargetCrs())));
-            log.info("Truncate Local Data: " + writerConfig.getTablename());
-            pgHelper.runSQL(this.truncateLocalDataSql(writerConfig));
+            log.warn("Pass: Truncate Local Data");
+//            log.info("Truncate Local Data: " + writerConfig.getTablename());
+//            pgHelper.runSQL(this.truncateLocalDataSql(writerConfig));
             log.info("update dataset info.");
             msHelper.runSQL(updateDatasetInfo(this.arg.getTableName()),
-                    this.metadata.getLayerCount()
+                    this.metadata.getLayerCount(),
+                    "SUCCESS"
                     , java.sql.Date.from(Instant.now()));
         } catch (FactoryException e) {
             throw new GISSparkException(e.getMessage());
         } finally {
+            msHelper.runSQL(updateLoadState(this.arg.getTableName()),
+                    "ERROR"
+                    , java.sql.Date.from(Instant.now()));
+            msHelper.close();
             pgHelper.close();
         }
     }

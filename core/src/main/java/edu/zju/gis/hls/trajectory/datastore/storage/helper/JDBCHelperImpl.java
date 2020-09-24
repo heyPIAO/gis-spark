@@ -128,6 +128,7 @@ public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBC
         try {
             this.conn = DriverManager.getConnection(this.initUrl(), this.config.getUsername(), this.config.getPassword());
         } catch (SQLException e) {
+            log.error(e.getMessage());
             throw new RuntimeException("JDBCHelper init connection failed");
         }
     }
