@@ -79,9 +79,9 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             public Iterator<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> call(Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>> in) throws Exception {
                 List<Tuple2<String, Tuple2<MultiPolygon, MultiPolygon>>> result = new ArrayList<>();
                 for (MultiPolygon tb3d : in._2._1) {
-                    String a = "aa";
+
                     for (MultiPolygon tb2d : in._2._2) {
-                        String b = "bb";
+
                         if (tb3d.getGeometry().intersects(tb2d.getGeometry())) {
                             //result.add(new Tuple2<>(tb3d.getFid()+ "##" + tb2d.getFid(), new Tuple2<>(tb3d, tb2d)));
 
@@ -128,8 +128,13 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                 MultiPolygon tb3d = t._2._1;
                 MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
-                tb3d = polygonFeatureEx(tb3d);
-                tb2d = polygonFeatureEx(tb2d);
+                Feature feature=new Feature();
+                Geometry tb3dg=feature.validedGeom((org.locationtech.jts.geom.MultiPolygon)tb3d.getGeometry());
+                Geometry tb2dg=feature.validedGeom((org.locationtech.jts.geom.MultiPolygon)tb2d.getGeometry());
+                tb3d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb3dg);
+                tb2d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb2dg);
+//                tb3d = polygonFeatureEx(tb3d);
+//                tb2d = polygonFeatureEx(tb2d);
 
                 try {
                     if (!tb3d.getGeometry().intersects(tb2d.getGeometry())) {

@@ -152,20 +152,20 @@ public class Feature <T extends Geometry> implements Serializable {
     }
   }
 
-  private Geometry validedGeom(Geometry g) {
+  public Geometry validedGeom(Geometry g) {
     if(g.isValid()){
       return g;
     }
     List<org.locationtech.jts.geom.Polygon> valided = null;
-    if (this.getGeometry() instanceof org.locationtech.jts.geom.Polygon) {
+    if (g instanceof org.locationtech.jts.geom.Polygon) {
       List<org.locationtech.jts.geom.Polygon> polygons=JTS.makeValid((org.locationtech.jts.geom.Polygon) this.getGeometry(), true);
       org.locationtech.jts.geom.Polygon polygon =polygons.get(0);
       for(int j=1;j<polygons.size();j++) {
         polygon = (org.locationtech.jts.geom.Polygon)(polygon.difference(polygons.get(j)));
       }
       valided.add(polygon);
-    } else if (this.getGeometry() instanceof org.locationtech.jts.geom.MultiPolygon) {
-      org.locationtech.jts.geom.MultiPolygon mps = (org.locationtech.jts.geom.MultiPolygon) this.getGeometry();
+    } else {// if (g instanceof org.locationtech.jts.geom.MultiPolygon)
+      org.locationtech.jts.geom.MultiPolygon mps = (org.locationtech.jts.geom.MultiPolygon) g;
       int i = mps.getNumGeometries();
       valided = new ArrayList<>();
       for (int m = 0; m < i; m++) {
