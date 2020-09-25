@@ -4,6 +4,7 @@ import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridID;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridUtil;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.model.Pipeline;
 import edu.zju.gis.hls.trajectory.model.TileJob;
@@ -24,9 +25,6 @@ import java.util.*;
  **/
 @Slf4j
 public class VectorTileGenerator implements Serializable {
-
-  public static int SCREEN_TILE_SIZE = 256;
-  public static int SCREEN_TILE_BUFFER = 1;
 
   private PyramidConfig pConfig;
 
@@ -67,7 +65,7 @@ public class VectorTileGenerator implements Serializable {
               Geometry g = tileJob.onlyPolygon(feature.getGeometry());
               Geometry og = tileJob.onlyPolygon(unionFeature.get(feature.getFid()).getGeometry());
               if(og == null) continue;
-              feature.setGeometry(tileJob.union(g, og, Math.max(tileEnvelope.getWidth()/(16*SCREEN_TILE_SIZE), tileEnvelope.getHeight()/(16*SCREEN_TILE_SIZE)), 0, 2));
+              feature.setGeometry(tileJob.union(g, og, Math.max(tileEnvelope.getWidth()/(16*Term.SCREEN_TILE_SIZE), tileEnvelope.getHeight()/(16*Term.SCREEN_TILE_SIZE)), 0, 2));
               unionFeature.put(feature.getFid(), feature);
             }
           }
@@ -83,7 +81,7 @@ public class VectorTileGenerator implements Serializable {
 
           if(gridID.getzLevel() > pConfig.getZMin()){
             Envelope upperLevelEnvelope = GridUtil.createTileBox(upperTileID, pConfig);
-            Pipeline upperLevelSimplifyPipeline = tileJob.getPipeline(pConfig.getCrs(), SCREEN_TILE_BUFFER, upperLevelEnvelope, false, false, true);
+            Pipeline upperLevelSimplifyPipeline = tileJob.getPipeline(pConfig.getCrs(), Term.SCREEN_TILE_BUFFER, upperLevelEnvelope, false, false, true);
             Iterator<String> keys = unionFeature.keySet().iterator();
             while(keys.hasNext()){
               String key = keys.next();
