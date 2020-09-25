@@ -1,7 +1,9 @@
-package edu.zju.gis.hls.trajectory.model;
+package edu.zju.gis.hls.trajectory.datastore.storage.writer.tile;
 
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridID;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.geojson.GeoJSONWriter;
 import lombok.Getter;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
@@ -19,25 +21,25 @@ import java.util.Map;
  * Created by lan yu on 2017/6/23.
  * Updated by Hu on 2019/09/03.
  */
-public class GeoJsonTileBuilder implements VectorTileBuilder {
+public class GeoJsonTileWriter implements VectorTileWriter {
     private BufferedOutputStream out;
     private Writer writer;
-    private GeoJSONBuilder jsonWriter;
+    private GeoJSONWriter jsonWriter;
     private CoordinatePrecisionReducerFilter precisionReducerFilter;
 
     @Getter
     private int count = 0;
 
-    public GeoJsonTileBuilder(String dir, TileID tileId, PyramidConfig pyramidConfig) throws IOException {
+    public GeoJsonTileWriter(String dir, GridID gridID, PyramidConfig pyramidConfig) throws IOException {
         int memoryBufferThreshold = 8096;
-        File dirFolder = new File(dir, String.valueOf(tileId.getzLevel()));
+        File dirFolder = new File(dir, String.valueOf(gridID.getzLevel()));
         if (!dirFolder.exists()){
             dirFolder.mkdir();
         }
         // tile_key = tileId.toString();
-        out = new BufferedOutputStream(new FileOutputStream( new File(dirFolder, tileId.getX()+"_" + tileId.getY() + ".geojson")),memoryBufferThreshold);
+        out = new BufferedOutputStream(new FileOutputStream( new File(dirFolder, gridID.getX()+"_" + gridID.getY() + ".geojson")),memoryBufferThreshold);
         writer = new OutputStreamWriter(out, Charset.forName("UTF-8"));
-        jsonWriter = new GeoJSONBuilder(writer);
+        jsonWriter = new GeoJSONWriter(writer);
         jsonWriter.object(); // start root object
         jsonWriter.key("type").value("FeatureCollection");
         jsonWriter.key("totalFeatures").value("unknown");

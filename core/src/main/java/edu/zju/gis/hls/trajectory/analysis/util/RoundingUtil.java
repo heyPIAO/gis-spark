@@ -2,7 +2,7 @@
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
-package edu.zju.gis.hls.trajectory.model;
+package edu.zju.gis.hls.trajectory.analysis.util;
 
 /**
  * Utility class for rounding double values.

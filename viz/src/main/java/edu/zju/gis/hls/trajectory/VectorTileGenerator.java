@@ -1,12 +1,12 @@
 package edu.zju.gis.hls.trajectory;
 
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridID;
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridUtil;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.model.Pipeline;
-import edu.zju.gis.hls.trajectory.model.TileID;
 import edu.zju.gis.hls.trajectory.model.TileJob;
-import edu.zju.gis.hls.trajectory.model.TileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -37,23 +37,23 @@ public class VectorTileGenerator implements Serializable {
   public <T extends KeyIndexedLayer> void generate(T layer, String outDir) throws Exception {
     String layerName = layer.getMetadata().getLayerName();
     JavaPairRDD<String, Feature> keyLayer = layer.getLayer();
-    JavaPairRDD<TileID, Feature> allFeatureRDD = keyLayer.mapToPair(x -> {
+    JavaPairRDD<GridID, Feature> allFeatureRDD = keyLayer.mapToPair(x -> {
       String[] id = x._1.split("_");
-      TileID tileID= new TileID();
-      tileID.setzLevel(Integer.parseInt(id[0]));
-      tileID.setX(Integer.parseInt(id[1]));
-      tileID.setY(Integer.parseInt(id[2]));
-      return new Tuple2<>(tileID, x._2);
+      GridID gridID= new GridID();
+      gridID.setzLevel(Integer.parseInt(id[0]));
+      gridID.setX(Integer.parseInt(id[1]));
+      gridID.setY(Integer.parseInt(id[2]));
+      return new Tuple2<>(gridID, x._2);
     });
 
     for(int i = pConfig.getZMax(); i >= pConfig.getZMin(); i--){
-      allFeatureRDD = allFeatureRDD.groupByKey().flatMapToPair(new PairFlatMapFunction<Tuple2<TileID, Iterable<Feature>>, TileID, Feature>() {
+      allFeatureRDD = allFeatureRDD.groupByKey().flatMapToPair(new PairFlatMapFunction<Tuple2<GridID, Iterable<Feature>>, GridID, Feature>() {
         @Override
-        public Iterator<Tuple2<TileID, Feature>> call(Tuple2<TileID, Iterable<Feature>> in) throws Exception {
+        public Iterator<Tuple2<GridID, Feature>> call(Tuple2<GridID, Iterable<Feature>> in) throws Exception {
           Iterator<Feature> featureIterator = in._2.iterator();
 
-          TileID tileID = in._1;
-          Envelope tileEnvelope = TileUtil.createTileBox(tileID, pConfig);
+          GridID gridID = in._1;
+          Envelope tileEnvelope = GridUtil.createTileBox(gridID, pConfig);
           TileJob tileJob = new TileJob();
           tileJob.setZMax(pConfig.getZMax());
 
@@ -72,17 +72,17 @@ public class VectorTileGenerator implements Serializable {
             }
           }
 
-          tileJob.buildTile(new ArrayList<Feature>(unionFeature.values()), tileID, pConfig, layerName, outDir);
+          tileJob.buildTile(new ArrayList<Feature>(unionFeature.values()), gridID, pConfig, layerName, outDir);
 
-          TileID upperTileID = new TileID();
-          upperTileID.setzLevel(tileID.getzLevel() - 1);
-          upperTileID.setX(tileID.getX() / 2);
-          upperTileID.setY(tileID.getY() / 2);
+          GridID upperTileID = new GridID();
+          upperTileID.setzLevel(gridID.getzLevel() - 1);
+          upperTileID.setX(gridID.getX() / 2);
+          upperTileID.setY(gridID.getY() / 2);
 
-          List<Tuple2<TileID, Feature>> result = new ArrayList<>();
+          List<Tuple2<GridID, Feature>> result = new ArrayList<>();
 
-          if(tileID.getzLevel() > pConfig.getZMin()){
-            Envelope upperLevelEnvelope = TileUtil.createTileBox(upperTileID, pConfig);
+          if(gridID.getzLevel() > pConfig.getZMin()){
+            Envelope upperLevelEnvelope = GridUtil.createTileBox(upperTileID, pConfig);
             Pipeline upperLevelSimplifyPipeline = tileJob.getPipeline(pConfig.getCrs(), SCREEN_TILE_BUFFER, upperLevelEnvelope, false, false, true);
             Iterator<String> keys = unionFeature.keySet().iterator();
             while(keys.hasNext()){
@@ -102,7 +102,7 @@ public class VectorTileGenerator implements Serializable {
           return result.iterator();
         }
       });
-      System.out.println("level" + i + ": " + allFeatureRDD.count());
+      log.info("level" + i + ": " + allFeatureRDD.count());
     }
 
   }

@@ -1,6 +1,6 @@
-package edu.zju.gis.hls.trajectory.model;
+package edu.zju.gis.hls.trajectory.datastore.storage.writer.geojson;
 
-import edu.zju.gis.hls.trajectory.model.RoundingUtil;
+import edu.zju.gis.hls.trajectory.analysis.util.RoundingUtil;
 import net.sf.json.JSONException;
 import net.sf.json.util.JSONBuilder;
 import org.geotools.referencing.CRS;
@@ -14,19 +14,12 @@ import java.util.*;
  * @author Hu
  * @date 2019/9/5
  **/
-public class GeoJSONBuilder extends JSONBuilder {
+public class GeoJSONWriter extends JSONBuilder {
   private CRS.AxisOrder axisOrder;
   private int numDecimals;
   private boolean encodeMeasures;
-  protected static final int POINT = 1;
-  protected static final int LINESTRING = 2;
-  protected static final int POLYGON = 3;
-  protected static final int MULTIPOINT = 4;
-  protected static final int MULTILINESTRING = 5;
-  protected static final int MULTIPOLYGON = 6;
-  protected static final int MULTIGEOMETRY = 7;
 
-  public GeoJSONBuilder(Writer w) {
+  public GeoJSONWriter(Writer w) {
     super(w);
     this.axisOrder = CRS.AxisOrder.EAST_NORTH;
     this.numDecimals = 6;
@@ -244,7 +237,7 @@ public class GeoJSONBuilder extends JSONBuilder {
     return this.endObject();
   }
 
-  public GeoJSONBuilder value(Object value) {
+  public GeoJSONWriter value(Object value) {
     if (value == null) {
       super.value(value);
     } else if (value instanceof Geometry) {

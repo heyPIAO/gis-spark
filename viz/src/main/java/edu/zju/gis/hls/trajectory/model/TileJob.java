@@ -1,7 +1,11 @@
 package edu.zju.gis.hls.trajectory.model;
 
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridID;
+import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridUtil;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.tile.GeoJsonTileWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.tile.VectorTileWriter;
 import lombok.Getter;
 import lombok.Setter;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -158,11 +162,11 @@ public class TileJob implements Serializable {
         }
     }
 
-    public void buildTile(List<Feature> features, TileID tileID, PyramidConfig pyramidConfig, String layerName, String outDir) throws Exception {
-        Envelope tileEnvelope = TileUtil.createTileBox(tileID, pyramidConfig);
-        VectorTileBuilder vectorTileBuilder;
+    public void buildTile(List<Feature> features, GridID gridID, PyramidConfig pyramidConfig, String layerName, String outDir) throws Exception {
+        Envelope tileEnvelope = GridUtil.createTileBox(gridID, pyramidConfig);
+        VectorTileWriter vectorTileWriter;
         Pipeline prePipeline = getPipeline(pyramidConfig.getCrs(), BUFFER, tileEnvelope, true, false, false);
-        vectorTileBuilder = new GeoJsonTileBuilder(outDir, tileID, pyramidConfig);
+        vectorTileWriter = new GeoJsonTileWriter(outDir, gridID, pyramidConfig);
         for (Feature feature: features) {
             Geometry tileGeometry = prePipeline.execute(feature.getGeometry());
             if (tileGeometry.isEmpty())
@@ -173,11 +177,11 @@ public class TileJob implements Serializable {
             if (tileGeometry == null)
                 continue;
 
-            vectorTileBuilder.addFeature(layerName, feature.getFid(), feature.getFid(),
+            vectorTileWriter.addFeature(layerName, feature.getFid(), feature.getFid(),
                     tileGeometry, feature.getAttributes());
         }
 
-        vectorTileBuilder.build();
+        vectorTileWriter.build();
     }
 
 }

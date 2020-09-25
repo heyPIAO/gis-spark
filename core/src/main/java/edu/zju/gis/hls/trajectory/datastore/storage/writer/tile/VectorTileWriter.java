@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.model;
+package edu.zju.gis.hls.trajectory.datastore.storage.writer.tile;
 
 
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
@@ -11,7 +11,7 @@ import java.util.Map;
  * collect features into a vector tile
  * Created by lan yu on 2017/6/23.
  */
-public interface VectorTileBuilder {
+public interface VectorTileWriter {
 
     /**
      * Add a feature to the tile
