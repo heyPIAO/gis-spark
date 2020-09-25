@@ -230,6 +230,22 @@ public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBC
     }
 
     @Override
+    public boolean runSQL(String sql, Object... params) {
+        log.info("SQL: " + sql);
+        PreparedStatement ps = null;
+        try {
+            ps = this.conn.prepareStatement(sql);
+            for (int i = 1; i < params.length + 1; i++) {
+                ps.setObject(i, params[i - 1]);
+            }
+            return ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new GISSparkException("JDBCHelper execute sql failed: " + sql);
+        }
+    }
+
+    @Override
     public boolean runSQL(String sql) {
         log.info("SQL: " + sql);
         PreparedStatement ps = null;

@@ -46,4 +46,6 @@ public interface JDBCHelper extends Closeable {
 
   boolean runSQL(String sql);
 
+  boolean runSQL(String sql, Object... params);
+
 }

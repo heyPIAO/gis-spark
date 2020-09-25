@@ -124,7 +124,7 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
                         , 0
                         , this.arg.getXzqdm()
                         , this.arg.getXzqmc()
-                        , "LOADING");
+                        , "RUNNING");
             }
             msHelper.close();
         } catch (Exception e) {
@@ -255,11 +255,11 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         try {
             InputStreamReader inputStreamReader = new InputStreamReader(in, "UTF-8");
             props.load(inputStreamReader);
-            this.msConfig.setUrl((String) (props.getOrDefault("url", msConfig.getUrl())));
-            this.msConfig.setPort(Integer.valueOf(props.getOrDefault("port", msConfig.getPort()).toString()));
-            this.msConfig.setDatabase((String) props.getOrDefault("database", msConfig.getDatabase()));
-            this.msConfig.setUsername((String) props.getOrDefault("username", msConfig.getUsername()));
-            this.msConfig.setPassword((String) props.getOrDefault("password", msConfig.getPassword()));
+            this.msConfig.setUrl((String) (props.getOrDefault("mysql.url", msConfig.getUrl())));
+            this.msConfig.setPort(Integer.valueOf(props.getOrDefault("mysql.port", msConfig.getPort()).toString()));
+            this.msConfig.setDatabase((String) props.getOrDefault("mysql.database", msConfig.getDatabase()));
+            this.msConfig.setUsername((String) props.getOrDefault("mysql.username", msConfig.getUsername()));
+            this.msConfig.setPassword((String) props.getOrDefault("mysql.password", msConfig.getPassword()));
         } catch (IOException e) {
             throw new GISSparkException("read mysql configuration failed: " + e.getMessage());
         }
