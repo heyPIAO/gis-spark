@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * TODO 改写到现有框架
  **/
 @Slf4j
-public class MongoHelper implements JDBCHelper {
+public  class MongoHelper implements JDBCHelper {
 
   private static MongoHelper instance = null;
 
@@ -155,6 +155,11 @@ public class MongoHelper implements JDBCHelper {
 
   @Override
   public boolean runSQL(String sql) {
+    throw new GISSparkException("Under developing");
+  }
+
+  @Override
+  public boolean runSQL(String sql, Object... params) {
     throw new GISSparkException("Under developing");
   }
 

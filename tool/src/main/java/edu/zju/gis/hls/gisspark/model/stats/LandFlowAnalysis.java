@@ -109,7 +109,8 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                     , tbName
                     , this.arg.getStatsWriterConfig()
                     , logBuilder.toString()
-                    , java.sql.Date.from(Instant.now()));
+                    , java.sql.Timestamp.from(Instant.now()));
+//                    , java.sql.Date.from(Instant.now()));
 
             MultiPolygonLayer tb3dLayer = tb3dLayerReader.read();
 
@@ -543,7 +544,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             pgHelper.runSQL(updateAnalysisLog(this.arg.getTaskName()), logBuilder.toString());
             pgHelper.runSQL(this.updateAnalysisInfo(this.arg.getTaskName())
                     , "ERROR"
-                    , java.sql.Date.from(Instant.now()));
+                    , java.sql.Timestamp.from(Instant.now()));
         }finally {
             pgHelper.close();
         }
@@ -892,25 +893,25 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
     //todo record state
     private String getIdByTaskName(String taskName) {
-        return "SELECT id FROM \"md_esdtask_record\" WHERE \"taskname\" = '" + taskName + "'";
+        return "SELECT id FROM "+this.pgConfig.getSchema()+".mr_esdtask_record WHERE \"taskname\" = '" + taskName + "'";
     }
 
     private String insertAnalysisInfo() {
-        return "INSERT INTO \"md_esdtask_record\" SET (\"id\", \"taskname\", \"taskstate\"" +
+        return "INSERT INTO "+this.pgConfig.getSchema()+".mr_esdtask_record (\"id\", \"taskname\", \"taskstate\"" +
                 ", \"resultaddress\", \"params\", \"log\", \"submittime\") " +
                 "VALUES (?,?,?,?,?,?,?)";
     }
 
     private String updateAnalysisInfo(String taskName) {
-        return "UPDATE \"md_esdtask_record\" SET " +
+        return "UPDATE "+this.pgConfig.getSchema()+".mr_esdtask_record SET " +
                 "\"taskstate\" = ? ," +
                 "\"finishtime\" = ? " +
                 "WHERE \"taskname\" = '" + taskName + "'";
     }
 
     private String updateAnalysisLog(String taskName) {
-        return "UPDATE \"md_esdtask_record\" SET " +
-                "\"log\" = ? ," +
+        return "UPDATE "+this.pgConfig.getSchema()+".mr_esdtask_record SET " +
+                "\"log\" = ? " +
                 "WHERE \"taskname\" = '" + taskName + "'";
     }
 
@@ -919,7 +920,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         PgHelper pgHelper = new PgHelper(this.pgConfig);
         pgHelper.runSQL(this.updateAnalysisInfo(this.arg.getTaskName())
                 , "SUCCESS"
-                , java.sql.Date.from(Instant.now()));
+                , java.sql.Timestamp.from(Instant.now()));
     }
 
     public static void main(String[] args) throws Exception {

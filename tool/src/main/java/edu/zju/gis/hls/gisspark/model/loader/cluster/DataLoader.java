@@ -55,6 +55,7 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
             LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
             writer.write(layer);
         } catch (Exception e) {
+            log.error("Load error:" + e.getMessage());
             catchError();
         }
     }
@@ -65,7 +66,7 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
     }
 
     protected void catchError() {
-        log.error("Load Error: " + metadata.getLayerName() + ": " + metadata.toJson());
+        log.error("Load Error.");
     }
 
     @Override
