@@ -17,6 +17,15 @@ public class LandFlowAnalysisArgs extends BaseArgs {
   @Option(name = "-taskName",usage = "任务名称", required = true)
   private String taskName; // 任务名称
 
+  @Option(name = "-year",usage = "数据年份", required = true)
+  private String year;
+
+  @Option(name = "-xzqdm",usage = "行政区代码", required = true)
+  private String xzqdm;
+
+  @Option(name = "-xzqmc",usage = "行政区名称", required = true)
+  private String xzqmc;
+
   @Option(name = "-tb3d",usage = "图斑三调图层读取参数定义,json", required = true)
   private String tb3dReaderConfig; // 三调图层
 
