@@ -56,7 +56,8 @@ import java.util.*;
 public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements Serializable {
 
     private static Integer DEFAULT_INDEX_LEVEL = 10;
-
+    private static Double DEFAULT_MU = 666.6666667;
+    private static Double DEFAULT_GQ = 10000.00;//0921改为公顷
     private PgConfig pgConfig = new PgConfig();
 
     public LandFlowAnalysis(SparkSessionType type, String[] args) {
@@ -114,6 +115,41 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 //                    , java.sql.Date.from(Instant.now()));
 
             MultiPolygonLayer tb3dLayer = tb3dLayerReader.read();
+
+            JavaPairRDD<String,Double> testRDD=tb3dLayer.mapToPair(new PairFunction<Tuple2<String, MultiPolygon>, String, Double>() {
+                @Override
+                public Tuple2<String, Double> call(Tuple2<String, MultiPolygon> input) throws Exception {
+                    MultiPolygon polygon=new MultiPolygon(input._2);
+                    Field field=polygon.getField("TBMJ");
+                    Double tbmj=Double.valueOf(polygon.getAttribute(field).toString());
+                    return new Tuple2<>("123",tbmj);
+                }
+            });
+            Tuple2<String,Double> tuple2=testRDD.reduce(new Function2<Tuple2<String, Double>, Tuple2<String, Double>, Tuple2<String, Double>>() {
+                @Override
+                public Tuple2<String, Double> call(Tuple2<String, Double> in1, Tuple2<String, Double> in2) throws Exception {
+                    return new Tuple2<>(in1._1,in1._2+in2._2);
+                }
+            });
+
+            Double toArea=tuple2._2;
+            BigDecimal bg=BigDecimal.valueOf(toArea/DEFAULT_MU);
+            Double toAreaMU=bg.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+            BigDecimal bg1=BigDecimal.valueOf(toArea/DEFAULT_GQ);
+            Double toAreaGQ=bg1.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+            String year=this.arg.getYear();
+            String xzqdm=this.arg.getXzqdm();
+            String xzqmc=this.arg.getXzqmc();
+            pgHelper.runSQL(this.insertMJ(), UUID.randomUUID()
+                    , xzqdm
+                    , xzqmc
+                    , year
+                    , toArea
+                    , toAreaGQ
+                    , toAreaMU
+                    , java.sql.Timestamp.from(Instant.now()));
+//                    , java.sql.Date.from(Instant.now()));
+
 
             DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
 
@@ -911,6 +947,12 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         return "INSERT INTO "+this.pgConfig.getSchema()+".mr_esdtask_record (\"id\", \"taskname\", \"taskstate\"" +
                 ", \"resultaddress\", \"params\", \"log\", \"submittime\") " +
                 "VALUES (?,?,?,?,?,?,?)";
+    }
+
+    private String insertMJ() {
+        return "INSERT INTO "+this.pgConfig.getSchema()+".mr_xzq_area (\"ID\", \"XZQDM\", \"XZQMC\"" +
+                ", \"YEAR\", \"MJ\", \"MJ_GQ\", \"MJ_MU\", \"CREATETIME\") " +
+                "VALUES (?,?,?,?,?,?,?,?)";
     }
 
     private String updateAnalysisInfo(String taskName) {
