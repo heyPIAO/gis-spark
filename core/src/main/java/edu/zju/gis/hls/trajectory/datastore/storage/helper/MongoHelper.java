@@ -158,4 +158,7 @@ public class MongoHelper implements JDBCHelper {
     throw new GISSparkException("Under developing");
   }
 
+//  @Override
+//  public boolean runSQL(String sql, Object... params){throw new GISSparkException("Under developing");}
+
 }
