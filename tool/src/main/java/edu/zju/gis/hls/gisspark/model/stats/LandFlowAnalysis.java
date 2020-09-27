@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 
@@ -538,6 +539,11 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             LayerWriter statWriter = LayerFactory.getWriter(ss, statsWriterConfig);
             statLayer.inferFieldMetadata();
             statWriter.write(statLayer);
+
+            pgHelper.runSQL(this.updateAnalysisInfo(this.arg.getTaskName())
+                    , "SUCCESS"
+                    , java.sql.Timestamp.from(Instant.now()));
+
         } catch (Exception e) {
             log.error("Run error:" + e.getMessage());
             logBuilder.append("计算失败！" + e.getMessage());
@@ -917,10 +923,8 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
     @Override
     public void finish() {
-        PgHelper pgHelper = new PgHelper(this.pgConfig);
-        pgHelper.runSQL(this.updateAnalysisInfo(this.arg.getTaskName())
-                , "SUCCESS"
-                , java.sql.Timestamp.from(Instant.now()));
+//        PgHelper pgHelper = new PgHelper(this.pgConfig);
+        log.info("Job Done.");
     }
 
     public static void main(String[] args) throws Exception {
