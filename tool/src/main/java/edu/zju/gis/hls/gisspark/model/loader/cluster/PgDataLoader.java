@@ -37,16 +37,17 @@ import java.util.UUID;
 public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
 
     private PgConfig pgConfig = new PgConfig();
+    private PgConfig pgMdConfig = new PgConfig();
     private MSConfig msConfig = new MSConfig();
 
     public PgDataLoader(String[] args) {
         super(args);
-        this.initMs();
+        this.initMd();
     }
 
     public PgDataLoader(SparkSessionType type, String[] args) {
         super(type, args);
-        this.initMs();
+        this.initMd();
     }
 
     /**
@@ -98,15 +99,15 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
     @Override
     protected void storeMetadata(LayerMetadata metadata) {
         super.storeMetadata(metadata);
-        MSHelper msHelper = new MSHelper(this.msConfig);
+        PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
         // TODO 将图层元数据信息存储到平台的 mysql 数据库中
         try {
             LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
             ListStringSQLResultHandler handler = new ListStringSQLResultHandler();
-            msHelper.runSQL(countSourceTable(this.arg.getTableName()), handler);
+            pgMdHelper.runSQL(countSourceTable(this.arg.getTableName()), handler);
             if (handler.getResult().size() == 0) {
                 log.info("create new dataset.");
-                msHelper.runSQL(insertDatasetInfo(),
+                pgMdHelper.runSQL(insertDatasetInfo(),
                         UUID.randomUUID().toString()
                         , this.arg.getLayerName()
                         , this.arg.getLayerAlias()
@@ -126,11 +127,11 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
                         , this.arg.getXzqmc()
                         , "RUNNING");
             }
-            msHelper.close();
+            pgMdHelper.close();
         } catch (Exception e) {
             log.error("Metadata store failed.");
             log.error(e.getMessage());
-            msHelper.close();
+            pgMdHelper.close();
             throw e;
         }
     }
@@ -184,6 +185,13 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
                 "in (select shardid from pg_dist_shard where logicalrelid='%s.%s' ::regclass)", wc.getSchema(), wc.getTablename());
     }
 
+    private String makeVaild(LayerReaderConfig rc, PgLayerWriterConfig wc) {
+        return String.format("update %s.%s set \"%s\"=st_astext(st_makevalid(st_geomfromtext(\"%s\")))", wc.getSchema(), wc.getTablename(), rc.getShapeField(), rc.getShapeField());
+
+//        return String.format("select * from pg_dist_shard_placement where shardid " +
+//                "in (select shardid from pg_dist_shard where logicalrelid='%s.%s' ::regclass)", wc.getSchema(), wc.getTablename());
+    }
+
     private String createSpatialIndexSql(LayerReaderConfig rc, PgLayerWriterConfig wc, CoordinateReferenceSystem targetCrs) {
         String tableName = wc.getTablename();
         Field shapeField = rc.getShapeField();
@@ -193,29 +201,29 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
     }
 
     private String countSourceTable(String tbName) {
-        return "SELECT * FROM `di_md_dsinfo` WHERE `SOURCETABLE` = '" + tbName + "'";
+        return "SELECT * FROM " + this.pgMdConfig.getSchema() + ".di_md_dsinfo WHERE SOURCETABLE = '" + tbName + "'";
     }
 
     private String insertDatasetInfo() {
-        return "INSERT INTO `di_md_dsinfo`(`ID`, `DSNAME`, `ALIAS`, `CREATEBY`," +
-                " `SOURCETABLE`, `SOURCE`, `DESCRIPTION`," +
-                " `USAGES`, `METADATAPARAM`, `TEMPLATENAME`, `RELATIVEID`, `DATAYEAR`," +
-                " `CREATETIME`, `LASTMODIFYTIME`, `SIZE`, `XZQDM`, `XZQMC`, `STATE`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT INTO " + this.pgMdConfig.getSchema() + ".di_md_dsinfo(id, dsname, alias, createby," +
+                " sourcetable, source, description," +
+                " usages, metadataparam, templatename, relativeid, datayear," +
+                " createtime, lastmodifytime, size, xzqdm, xzqmc, state) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     }
 
     private String updateDatasetInfo(String tbName) {
-        return "UPDATE `di_md_dsinfo` SET " +
-                "`SIZE` = `SIZE`+? ," +
-                "`STATE` = ? ," +
-                "`LASTMODIFYTIME` = ? " +
-                "WHERE `SOURCETABLE` = '" + tbName + "'";
+        return "UPDATE " + this.pgMdConfig.getSchema() + ".di_md_dsinfo SET " +
+                "size = size+? ," +
+                "state = ? ," +
+                "lastmodifytime = ? " +
+                "WHERE sourcetable = '" + tbName + "'";
     }
 
     private String updateLoadState(String tbName) {
-        return "UPDATE `di_md_dsinfo` SET " +
-                "`STATE` = ? ," +
-                "`LASTMODIFYTIME` = ? " +
-                "WHERE `SOURCETABLE` = '" + tbName + "'";
+        return "UPDATE " + this.pgMdConfig.getSchema() + ".di_md_dsinfo SET " +
+                "state = ? ," +
+                "lastmodify = ? " +
+                "WHERE sourcetable = '" + tbName + "'";
     }
 
     private String getAttrFromField(Field f) {
@@ -249,17 +257,18 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         this.pgConfig.setSchema(config.getSchema());
     }
 
-    private void initMs() {
+    private void initMd() {
         InputStream in = this.getClass().getResourceAsStream("/mysqlConfig.properties");
         Properties props = new Properties();
         try {
             InputStreamReader inputStreamReader = new InputStreamReader(in, "UTF-8");
             props.load(inputStreamReader);
-            this.msConfig.setUrl((String) (props.getOrDefault("mysql.url", msConfig.getUrl())));
-            this.msConfig.setPort(Integer.valueOf(props.getOrDefault("mysql.port", msConfig.getPort()).toString()));
-            this.msConfig.setDatabase((String) props.getOrDefault("mysql.database", msConfig.getDatabase()));
-            this.msConfig.setUsername((String) props.getOrDefault("mysql.username", msConfig.getUsername()));
-            this.msConfig.setPassword((String) props.getOrDefault("mysql.password", msConfig.getPassword()));
+            this.pgMdConfig.setUrl((String) (props.get("pg.url")));
+            this.pgMdConfig.setPort(Integer.valueOf(props.get("pg.port").toString()));
+            this.pgMdConfig.setDatabase((String) props.get("pg.database"));
+            this.pgMdConfig.setSchema((String) props.get("pg.schema"));
+            this.pgMdConfig.setUsername((String) props.get("pg.username"));
+            this.pgMdConfig.setPassword((String) props.get("pg.password"));
         } catch (IOException e) {
             throw new GISSparkException("read mysql configuration failed: " + e.getMessage());
         }
@@ -268,16 +277,22 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
     @Override
     protected void catchError() {
         super.catchError();
-        try {
-            MSHelper msHelper = new MSHelper(this.msConfig);
-            msHelper.runSQL(updateLoadState(this.arg.getTableName()),
-                    "ERROR"
-                    , java.sql.Date.from(Instant.now()));
-            msHelper.close();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw e;
-        }
+        PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
+        pgMdHelper.runSQL(updateLoadState(this.arg.getTableName()),
+                "ERROR"
+                , java.sql.Date.from(Instant.now()));
+        pgMdHelper.close();
+    }
+
+    @Override
+    protected void catchSuccess() {
+        super.catchSuccess();
+        PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
+        log.info("update dataset info.");
+        pgMdHelper.runSQL(updateDatasetInfo(this.arg.getTableName()),
+                this.metadata.getLayerCount(),
+                "SUCCESS"
+                , java.sql.Date.from(Instant.now()));
     }
 
     /**
@@ -289,25 +304,22 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
         PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
         PgHelper pgHelper = new PgHelper(this.pgConfig);
-        MSHelper msHelper = new MSHelper(this.msConfig);
+        PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
         try {
+            log.info("Make Vaild Geometry before build index.");
+            pgHelper.runSQL(makeVaild(readerConfig, writerConfig));
             log.info(String.format("CREATE SPATIAL INDEX FOR %s USING GIST", writerConfig.getTablename()));
             pgHelper.runSQL(this.createSpatialIndexSql(readerConfig, writerConfig, CRS.parseWKT(this.arg.getTargetCrs())));
             log.warn("Pass: Truncate Local Data");
 //            log.info("Truncate Local Data: " + writerConfig.getTablename());
 //            pgHelper.runSQL(this.truncateLocalDataSql(writerConfig));
-            log.info("update dataset info.");
-            msHelper.runSQL(updateDatasetInfo(this.arg.getTableName()),
-                    this.metadata.getLayerCount(),
-                    "SUCCESS"
-                    , java.sql.Date.from(Instant.now()));
         } catch (FactoryException e) {
-            throw new GISSparkException(e.getMessage());
-        } finally {
-            msHelper.runSQL(updateLoadState(this.arg.getTableName()),
+            pgMdHelper.runSQL(updateLoadState(this.arg.getTableName()),
                     "ERROR"
                     , java.sql.Date.from(Instant.now()));
-            msHelper.close();
+            throw new GISSparkException(e.getMessage());
+        } finally {
+            pgMdHelper.close();
             pgHelper.close();
         }
     }
