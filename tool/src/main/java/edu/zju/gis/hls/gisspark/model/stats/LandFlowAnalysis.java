@@ -171,10 +171,15 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                     List<Tuple2<String, Geometry>> result = new ArrayList<>();
 
-                    MultiPolygon tb3d = t._2._1;
-                    MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
-                    tb3d = polygonFeatureEx(tb3d);
-                    tb2d = polygonFeatureEx(tb2d);
+                MultiPolygon tb3d = t._2._1;
+                MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
+                Feature feature=new Feature();
+                Geometry tb3dg=feature.validedGeom((org.locationtech.jts.geom.MultiPolygon)tb3d.getGeometry());
+                Geometry tb2dg=feature.validedGeom((org.locationtech.jts.geom.MultiPolygon)tb2d.getGeometry());
+                tb3d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb3dg);
+                tb2d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb2dg);
+//                tb3d = polygonFeatureEx(tb3d);
+//                tb2d = polygonFeatureEx(tb2d);
 
                     try {
                         if (!tb3d.getGeometry().intersects(tb2d.getGeometry())) {
