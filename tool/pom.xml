@@ -23,6 +23,20 @@
             <artifactId>spark-sql_${scala.version}</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
 <!--        <dependency>-->
 <!--            <groupId>org.apache.spark</groupId>-->
 <!--            <artifactId>spark-hive_${scala.version}</artifactId>-->
@@ -59,8 +73,8 @@
                 <configuration>
                     <archive>
                         <manifest>
-<!--                            <mainClass>edu.zju.gis.hls.gisspark.model.loader.cluster.PgDataLoader</mainClass>-->
-                            <mainClass>edu.zju.gis.hls.gisspark.model.stats.LandUseAnalysis</mainClass>
+                            <mainClass>edu.zju.gis.hls.gisspark.model.loader.cluster.PgDataLoader</mainClass>
+<!--                            <mainClass>edu.zju.gis.hls.gisspark.model.stats.LandflowAnalysis</mainClass>-->
                         </manifest>
                     </archive>
                     <descriptorRefs>

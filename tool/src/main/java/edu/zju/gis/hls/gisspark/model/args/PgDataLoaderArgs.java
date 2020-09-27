@@ -26,6 +26,12 @@ public class PgDataLoaderArgs extends DataLoaderArgs{
     @Option(name = "-layerYear",usage = "图层数据年份", required = true)
     private String layerYear;
 
+    @Option(name = "-xzqdm",usage = "行政区代码", required = true)
+    private String xzqdm;
+
+    @Option(name = "-xzqmc",usage = "行政区名称", required = true)
+    private String xzqmc;
+
     @Option(name = "-layerTemplate",usage = "图层数据模版", required = true)
     private String layerTemplate;
 }

@@ -14,6 +14,9 @@ import org.kohsuke.args4j.Option;
 @Setter
 public class LandFlowAnalysisArgs extends BaseArgs {
 
+  @Option(name = "-taskName",usage = "任务名称", required = true)
+  private String taskName; // 任务名称
+
   @Option(name = "-tb3d",usage = "图斑三调图层读取参数定义,json", required = true)
   private String tb3dReaderConfig; // 三调图层
 

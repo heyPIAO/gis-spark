@@ -128,6 +128,7 @@ public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBC
         try {
             this.conn = DriverManager.getConnection(this.initUrl(), this.config.getUsername(), this.config.getPassword());
         } catch (SQLException e) {
+            log.error(e.getMessage());
             throw new RuntimeException("JDBCHelper init connection failed");
         }
     }
@@ -222,6 +223,22 @@ public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBC
                 r.add(this.mapToObject(rs, (Class<T>) ClassUtil.getTClass(callBack.getClass(), 0)));
             }
             callBack.handle(r);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new GISSparkException("JDBCHelper execute sql failed: " + sql);
+        }
+    }
+
+    @Override
+    public boolean runSQL(String sql, Object... params) {
+        log.info("SQL: " + sql);
+        PreparedStatement ps = null;
+        try {
+            ps = this.conn.prepareStatement(sql);
+            for (int i = 1; i < params.length + 1; i++) {
+                ps.setObject(i, params[i - 1]);
+            }
+            return ps.execute();
         } catch (SQLException e) {
             e.printStackTrace();
             throw new GISSparkException("JDBCHelper execute sql failed: " + sql);

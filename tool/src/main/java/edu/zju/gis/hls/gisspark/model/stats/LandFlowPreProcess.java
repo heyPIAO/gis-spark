@@ -184,7 +184,6 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
 
         result.inferFieldMetadata();
 
-        LayerMetadata md = result.getMetadata();
 
         resultWriter.write(result);
 
