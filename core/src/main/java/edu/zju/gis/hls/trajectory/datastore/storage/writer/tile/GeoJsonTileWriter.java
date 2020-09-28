@@ -45,7 +45,7 @@ public class GeoJsonTileWriter implements VectorTileWriter {
         jsonWriter.key("totalFeatures").value("unknown");
         jsonWriter.key("features");
         jsonWriter.array();
-        jsonWriter.setAxisOrder(CRS.getAxisOrder(pyramidConfig.getCrs()));
+//        jsonWriter.setAxisOrder(CRS.getAxisOrder(pyramidConfig.getCrs()));
 
         Unit<?> unit = pyramidConfig.getCrs().getCoordinateSystem().getAxis(0).getUnit();
         Unit<?> standardUnit = unit.getSystemUnit();

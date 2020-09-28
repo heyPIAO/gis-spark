@@ -55,6 +55,7 @@ public class Term implements Serializable {
   public static int UNIFORMGRID_DEFAULT_LEVEL = 10;
   public static int SCREEN_TILE_SIZE = 256;
   public static int SCREEN_TILE_BUFFER = 1;
+  public static int OVERSAMPLE_FACTOR = 1;
 
   public static Integer FIELD_NOT_EXIST = -99;
   public static Integer FIELD_LAST = -1;

@@ -4,15 +4,15 @@ import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridID;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.GridUtil;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.tile.GeoJsonTileWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.tile.MVTTileBuilder;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.tile.VectorTileWriter;
 import lombok.Getter;
 import lombok.Setter;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
-import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
@@ -26,60 +26,7 @@ import java.util.List;
 @Setter
 public class TileJob implements Serializable {
 
-    private final static Integer BUFFER = 1;
-    public final static Integer SCREEN_TILE_SIZE = 256;
-    public final static Integer OVERSAMPLE_FACTOR = 1;
     private static final Logger logger = LoggerFactory.getLogger(TileJob.class);
-    private int partition;
-    private int zMax;
-    private int zMin;
-
-    public TileJob() {
-        this.partition = 8;
-        this.zMax = 12;
-        this.zMax = 6;
-    }
-
-    /**
-     * 简化图像
-     * @param geo
-     * @param distanceTolerance
-     * @return
-     */
-    public static Geometry simplify(Geometry geo, double distanceTolerance) {
-        switch (geo.getDimension()) {
-            case 2:
-                return TopologyPreservingSimplifier.simplify(geo, distanceTolerance);
-            case 1:
-                return DouglasPeuckerSimplifier.simplify(geo, distanceTolerance);
-            default:
-                logger.warn("Unvalid geometry type for geometry simplify");
-                return geo;
-        }
-    }
-
-    /**
-     * 根据阈值过滤小图斑
-     * @param geo
-     * @param span
-     * @return
-     */
-    public static boolean smallGeomeryFilter(Geometry geo, double span) {
-        double area = span * span;
-        if (geo.getDimension() > 0) {
-            Envelope e = geo.getEnvelopeInternal();
-            if (Math.max(e.getWidth(), e.getHeight()) < span) {
-                return false;
-            }
-            if (e.getArea() < area) {
-                return false;
-            }
-            return true;
-        } else {
-            logger.error("Unvalid geometry type for small geometry filter");
-            return false;
-        }
-    }
 
     /**
      * 构建瓦片中每个像素处理的Pipeline
@@ -87,9 +34,9 @@ public class TileJob implements Serializable {
      */
     public Pipeline getPipeline(CoordinateReferenceSystem sourceCrs, int buffer, Envelope referenceEnvelop, boolean preprocess, boolean isClip, boolean isSimplify) {
         CoordinateReferenceSystem targetCrs = sourceCrs;
-        int mapWidth = SCREEN_TILE_SIZE;
-        int mapHeight = SCREEN_TILE_SIZE;
-        int overSampleFactor = OVERSAMPLE_FACTOR;
+        int mapWidth = Term.SCREEN_TILE_SIZE;
+        int mapHeight = Term.SCREEN_TILE_SIZE;
+        int overSampleFactor = Term.OVERSAMPLE_FACTOR;
         // rectangle of the image: width and height
         Rectangle paintArea = new Rectangle(mapWidth, mapHeight);
 
@@ -98,22 +45,17 @@ public class TileJob implements Serializable {
         Pipeline pipeline = null;
 
         try {
-            final PipelineBuilder builder =
-                    PipelineBuilder.newBuilder(
-                            renderingArea, paintArea, sourceCrs, overSampleFactor, buffer);
-
+            final PipelineBuilder builder = PipelineBuilder.newBuilder(renderingArea, paintArea, sourceCrs, overSampleFactor, buffer);
             if (preprocess){
-                pipeline =
-                        builder.preprocess()
-                                .collapseCollections()
-//                                .precision(targetCrs)
-                                .build();
+                pipeline = builder
+                        .preprocess()
+                        .collapseCollections()
+                        .build();
             } else  {
                 pipeline = builder
                         .clip(isClip, false)
                         .simplify(isSimplify)
                         .collapseCollections()
-//                        .precision(targetCrs)
                         .build();
             }
         } catch (FactoryException e) {
@@ -162,23 +104,28 @@ public class TileJob implements Serializable {
         }
     }
 
-    public void buildTile(List<Feature> features, GridID gridID, PyramidConfig pyramidConfig, String layerName, String outDir) throws Exception {
+    public void buildTile(List<Feature> features, GridID gridID, PyramidConfig pyramidConfig, String layerName, String fileType, String outDir) throws Exception {
         Envelope tileEnvelope = GridUtil.createTileBox(gridID, pyramidConfig);
+
         VectorTileWriter vectorTileWriter;
-        Pipeline prePipeline = getPipeline(pyramidConfig.getCrs(), BUFFER, tileEnvelope, true, false, false);
-        vectorTileWriter = new GeoJsonTileWriter(outDir, gridID, pyramidConfig);
+        Pipeline prePipeline = getPipeline(pyramidConfig.getCrs(), Term.SCREEN_TILE_BUFFER, tileEnvelope, true, false, false);
+        if(fileType.equals("geojson")) {
+            vectorTileWriter = new GeoJsonTileWriter(outDir, gridID, pyramidConfig);
+        }
+        else{
+            vectorTileWriter = new MVTTileBuilder(outDir, gridID, tileEnvelope, layerName);
+        }
+
         for (Feature feature: features) {
             Geometry tileGeometry = prePipeline.execute(feature.getGeometry());
-            if (tileGeometry.isEmpty())
+            if (tileGeometry.isEmpty()) {
                 continue;
-
+            }
             tileGeometry = onlyPolygon(tileGeometry);
-
-            if (tileGeometry == null)
+            if (tileGeometry == null) {
                 continue;
-
-            vectorTileWriter.addFeature(layerName, feature.getFid(), feature.getFid(),
-                    tileGeometry, feature.getAttributes());
+            }
+            vectorTileWriter.addFeature(layerName, feature.getFid(), feature.getFid(), tileGeometry, feature.getAttributes());
         }
 
         vectorTileWriter.build();

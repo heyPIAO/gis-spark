@@ -21,8 +21,7 @@ public interface VectorTileWriter {
      * @param geometry The geometry value
      * @param properties The non-geometry attributes of the feature
      */
-    boolean addFeature(String layerName, String featureId, String geometryName, Geometry geometry,
-                       Map<Field, Object> properties);
+    boolean addFeature(String layerName, String featureId, String geometryName, Geometry geometry, Map<Field, Object> properties);
 
     <T> T build() throws IOException;
 }

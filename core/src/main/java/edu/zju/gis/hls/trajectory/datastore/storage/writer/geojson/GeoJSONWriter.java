@@ -15,13 +15,14 @@ import java.util.*;
  * @date 2019/9/5
  **/
 public class GeoJSONWriter extends JSONBuilder {
-  private CRS.AxisOrder axisOrder;
+//  Todo AxisOrder
+//  private CRS.AxisOrder axisOrder;
   private int numDecimals;
   private boolean encodeMeasures;
 
   public GeoJSONWriter(Writer w) {
     super(w);
-    this.axisOrder = CRS.AxisOrder.EAST_NORTH;
+//    this.axisOrder = CRS.AxisOrder.EAST_NORTH;
     this.numDecimals = 6;
     this.encodeMeasures = false;
   }
@@ -114,17 +115,19 @@ public class GeoJSONWriter extends JSONBuilder {
 
   private JSONBuilder writeCoordinate(double x, double y, double z, double m) {
     this.array();
-    if (this.axisOrder == CRS.AxisOrder.NORTH_EAST) {
-      if (!Double.isNaN(y)) {
-        this.roundedValue(y);
-      }
-      this.roundedValue(x);
-    } else {
-      this.roundedValue(x);
-      if (!Double.isNaN(y)) {
-        this.roundedValue(y);
-      }
-    }
+//    if (this.axisOrder == CRS.AxisOrder.NORTH_EAST) {
+//      if (!Double.isNaN(y)) {
+//        this.roundedValue(y);
+//      }
+//      this.roundedValue(x);
+//    } else {
+//      this.roundedValue(x);
+//      if (!Double.isNaN(y)) {
+//        this.roundedValue(y);
+//      }
+//    }
+    this.roundedValue(x);
+    this.roundedValue(y);
 
     z = Double.isNaN(z) && !Double.isNaN(m) ? 0.0D : z;
     if (!Double.isNaN(z)) {
@@ -145,17 +148,22 @@ public class GeoJSONWriter extends JSONBuilder {
   protected JSONBuilder writeBoundingBox(Envelope env) {
     this.key("bbox");
     this.array();
-    if (this.axisOrder == CRS.AxisOrder.NORTH_EAST) {
-      this.roundedValue(env.getMinY());
-      this.roundedValue(env.getMinX());
-      this.roundedValue(env.getMaxY());
-      this.roundedValue(env.getMaxX());
-    } else {
-      this.roundedValue(env.getMinX());
-      this.roundedValue(env.getMinY());
-      this.roundedValue(env.getMaxX());
-      this.roundedValue(env.getMaxY());
-    }
+//    if (this.axisOrder == CRS.AxisOrder.NORTH_EAST) {
+//      this.roundedValue(env.getMinY());
+//      this.roundedValue(env.getMinX());
+//      this.roundedValue(env.getMaxY());
+//      this.roundedValue(env.getMaxX());
+//    } else {
+//      this.roundedValue(env.getMinX());
+//      this.roundedValue(env.getMinY());
+//      this.roundedValue(env.getMaxX());
+//      this.roundedValue(env.getMaxY());
+//    }
+
+    this.roundedValue(env.getMinX());
+    this.roundedValue(env.getMinY());
+    this.roundedValue(env.getMaxX());
+    this.roundedValue(env.getMaxY());
 
     return this.endArray();
   }
@@ -255,10 +263,6 @@ public class GeoJSONWriter extends JSONBuilder {
     }
 
     return this;
-  }
-
-  public void setAxisOrder(CRS.AxisOrder axisOrder) {
-    this.axisOrder = axisOrder;
   }
 
   public void setNumberOfDecimals(int numberOfDecimals) {

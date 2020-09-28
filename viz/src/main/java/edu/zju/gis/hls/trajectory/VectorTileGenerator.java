@@ -26,13 +26,28 @@ import java.util.*;
 @Slf4j
 public class VectorTileGenerator implements Serializable {
 
+  private int zMin;
+  private int zMax;
+  private String fileType;
   private PyramidConfig pConfig;
 
-  public VectorTileGenerator(PyramidConfig pConfig) {
-    this.pConfig = pConfig;
+  public VectorTileGenerator(int zMin, int zMax) {
+    this(zMin, zMax, "geojson");
+  }
+
+  public VectorTileGenerator(int zMin, int zMax, String fileType) {
+    this.zMin = zMin;
+    this.zMax = zMax;
+    this.fileType = fileType.equals("mvt")? fileType: "geojson";
   }
 
   public <T extends KeyIndexedLayer> void generate(T layer, String outDir) throws Exception {
+    pConfig = new PyramidConfig.PyramidConfigBuilder()
+            .setCrs(layer.getMetadata().getCrs())
+            .setBaseMapEnv(-180, 180, -90, 90)
+            .setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z)
+            .build();
+
     String layerName = layer.getMetadata().getLayerName();
     JavaPairRDD<String, Feature> keyLayer = layer.getLayer();
     JavaPairRDD<GridID, Feature> allFeatureRDD = keyLayer.mapToPair(x -> {
@@ -44,7 +59,7 @@ public class VectorTileGenerator implements Serializable {
       return new Tuple2<>(gridID, x._2);
     });
 
-    for(int i = pConfig.getZMax(); i >= pConfig.getZMin(); i--){
+    for(int i = zMax; i >= zMin; i--){
       allFeatureRDD = allFeatureRDD.groupByKey().flatMapToPair(new PairFlatMapFunction<Tuple2<GridID, Iterable<Feature>>, GridID, Feature>() {
         @Override
         public Iterator<Tuple2<GridID, Feature>> call(Tuple2<GridID, Iterable<Feature>> in) throws Exception {
@@ -53,7 +68,6 @@ public class VectorTileGenerator implements Serializable {
           GridID gridID = in._1;
           Envelope tileEnvelope = GridUtil.createTileBox(gridID, pConfig);
           TileJob tileJob = new TileJob();
-          tileJob.setZMax(pConfig.getZMax());
 
           Map<String, Feature> unionFeature = new HashMap<>();
           while(featureIterator.hasNext()){
@@ -70,7 +84,7 @@ public class VectorTileGenerator implements Serializable {
             }
           }
 
-          tileJob.buildTile(new ArrayList<Feature>(unionFeature.values()), gridID, pConfig, layerName, outDir);
+          tileJob.buildTile(new ArrayList<>(unionFeature.values()), gridID, pConfig, layerName, fileType, outDir);
 
           GridID upperTileID = new GridID();
           upperTileID.setzLevel(gridID.getzLevel() - 1);
@@ -79,7 +93,7 @@ public class VectorTileGenerator implements Serializable {
 
           List<Tuple2<GridID, Feature>> result = new ArrayList<>();
 
-          if(gridID.getzLevel() > pConfig.getZMin()){
+          if(gridID.getzLevel() > zMin){
             Envelope upperLevelEnvelope = GridUtil.createTileBox(upperTileID, pConfig);
             Pipeline upperLevelSimplifyPipeline = tileJob.getPipeline(pConfig.getCrs(), Term.SCREEN_TILE_BUFFER, upperLevelEnvelope, false, false, true);
             Iterator<String> keys = unionFeature.keySet().iterator();
@@ -100,7 +114,7 @@ public class VectorTileGenerator implements Serializable {
           return result.iterator();
         }
       });
-      log.info("level" + i + ": " + allFeatureRDD.count());
+      allFeatureRDD.count();
     }
 
   }
