@@ -8,6 +8,7 @@ import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
 import edu.zju.gis.hls.trajectory.datastore.util.MdbDataReader;
+import edu.zju.gis.hls.trajectory.datastore.util.PathSelector;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -53,35 +55,9 @@ public class MdbLayerReader<T extends Layer> extends LayerReader<T> {
       throw new LayerReaderException("reader config is not set correctly");
     }
 
-    String path = readerConfig.getSourcePath();
-
-    // setup data source
-    JavaRDD<String> data = null;
-    List<String> paths;
-    if (path.contains(";")) {
-      paths = Arrays.asList(path.split(";"));
-    } else {
-      paths = new ArrayList<>();
-      paths.add(path);
-    }
-
     //判断路径是否为文件夹，支持二级目录下所有.mdb文件路径的获取
-    List<String> paths2File = new ArrayList<>();
-    for (String subPath : paths) {
-      File subFile = new File(subPath.replace(SourceType.MDB.getPrefix(),""));
-      if (subFile.exists()) {
-        if (subFile.isFile() && subFile.getName().endsWith(".mdb")) {
-          paths2File.add(subFile.getAbsolutePath());
-        } else {
-          File[] subSubFiles = subFile.listFiles();
-          for (File subSubFile : subSubFiles) {
-            if (subSubFile.isFile() && subSubFile.getName().endsWith(".mdb"))
-              paths2File.add(subSubFile.getAbsolutePath());
-          }
-        }
-      }
-    }
-
+    List<String> paths2File = PathSelector.stripPath(readerConfig.getSourcePath(),SourceType.MDB.getPrefix(),".mdb");
+    JavaRDD<String> data = null;
     data = this.jsc.parallelize(paths2File, paths2File.size());
 
     JavaRDD<Tuple2<String, Feature>> features = data.flatMap(new FlatMapFunction<String, Tuple2<String, Feature>>() {

@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.gisspark.model.loader.cluster;
 
+import com.google.gson.Gson;
 import edu.zju.gis.hls.gisspark.model.BaseModel;
 import edu.zju.gis.hls.gisspark.model.args.DataLoaderArgs;
 import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
@@ -50,14 +51,14 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
             layer.makeSureCached();
             layer.analyze();
             metadata = layer.getMetadata();
+            log.info(metadata.getAttributes().toString());
             storeMetadata(metadata);
 
             LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
             writer.write(layer);
-            catchSuccess();
         } catch (Exception e) {
             log.error("Load error:" + e.getMessage());
-            catchError();
+            catchError(e);
         }
     }
 
@@ -66,12 +67,8 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
         log.info("Layer Count:" + metadata.getLayerCount());
     }
 
-    protected void catchSuccess() {
-        log.error("Load Success.");
-    }
-
-    protected void catchError() {
-        log.error("Load Error.");
+    protected void catchError(Exception e) {
+        log.error("Load Error: " + e.getMessage());
     }
 
     @Override

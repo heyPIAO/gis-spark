@@ -10,7 +10,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
 import edu.zju.gis.hls.trajectory.analysis.model.Point;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
@@ -28,7 +27,6 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.*;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.storage.StorageLevel;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.*;
@@ -92,6 +90,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
     public void run() throws Exception {
         StringBuilder logBuilder = new StringBuilder();
         PgHelper pgHelper = null;
+        boolean ifSuccess = true;
         try {
             pgHelper = new PgHelper(this.pgConfig);
             LayerReaderConfig tb3dReaderConfig = LayerFactory.getReaderConfig(this.arg.getTb3dReaderConfig());
@@ -101,10 +100,10 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
             LayerWriterConfig statsWriterConfig = LayerFactory.getWriterConfig(this.arg.getStatsWriterConfig());
             JSONObject writeConfig = new JSONObject(this.arg.getStatsWriterConfig());
-            //todo 暂时默认为pg输出
+            //todo 暂时默认为pg输出,此外会出现taskname缺失，导致出错
             String taskName = this.arg.getTaskName();
             String tbName = writeConfig.getString("tablename");
-            logBuilder.append("数据读取准备就绪...");
+            logBuilder.append("数据读取准备就绪...\r\n");
             pgHelper.runSQL(this.insertAnalysisInfo(), UUID.randomUUID()
                     , taskName
                     , "RUNNING"
@@ -116,30 +115,30 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
             MultiPolygonLayer tb3dLayer = tb3dLayerReader.read();
 
-            JavaPairRDD<String,Double> testRDD=tb3dLayer.mapToPair(new PairFunction<Tuple2<String, MultiPolygon>, String, Double>() {
+            JavaPairRDD<String, Double> testRDD = tb3dLayer.mapToPair(new PairFunction<Tuple2<String, MultiPolygon>, String, Double>() {
                 @Override
                 public Tuple2<String, Double> call(Tuple2<String, MultiPolygon> input) throws Exception {
-                    MultiPolygon polygon=new MultiPolygon(input._2);
-                    Field field=polygon.getField("TBMJ");
-                    Double tbmj=Double.valueOf(polygon.getAttribute(field).toString());
-                    return new Tuple2<>("123",tbmj);
+                    MultiPolygon polygon = new MultiPolygon(input._2);
+                    Field field = polygon.getField("TBMJ");
+                    Double tbmj = Double.valueOf(polygon.getAttribute(field).toString());
+                    return new Tuple2<>("123", tbmj);
                 }
             });
-            Tuple2<String,Double> tuple2=testRDD.reduce(new Function2<Tuple2<String, Double>, Tuple2<String, Double>, Tuple2<String, Double>>() {
+            Tuple2<String, Double> tuple2 = testRDD.reduce(new Function2<Tuple2<String, Double>, Tuple2<String, Double>, Tuple2<String, Double>>() {
                 @Override
                 public Tuple2<String, Double> call(Tuple2<String, Double> in1, Tuple2<String, Double> in2) throws Exception {
-                    return new Tuple2<>(in1._1,in1._2+in2._2);
+                    return new Tuple2<>(in1._1, in1._2 + in2._2);
                 }
             });
 
-            Double toArea=tuple2._2;
-            BigDecimal bg=BigDecimal.valueOf(toArea/DEFAULT_MU);
-            Double toAreaMU=bg.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-            BigDecimal bg1=BigDecimal.valueOf(toArea/DEFAULT_GQ);
-            Double toAreaGQ=bg1.setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-            String year=this.arg.getYear();
-            String xzqdm=this.arg.getXzqdm();
-            String xzqmc=this.arg.getXzqmc();
+            Double toArea = tuple2._2;
+            BigDecimal bg = BigDecimal.valueOf(toArea / DEFAULT_MU);
+            Double toAreaMU = bg.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            BigDecimal bg1 = BigDecimal.valueOf(toArea / DEFAULT_GQ);
+            Double toAreaGQ = bg1.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            String year = this.arg.getYear();
+            String xzqdm = this.arg.getXzqdm();
+            String xzqmc = this.arg.getXzqmc();
             pgHelper.runSQL(this.insertMJ(), UUID.randomUUID()
                     , xzqdm
                     , xzqmc
@@ -161,7 +160,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
             tb3dLayer.cache();
             xz2dLayer.cache();
-            logBuilder.append("数据读取完毕！计算中...");
+            logBuilder.append("数据读取完毕！计算中...\r\n");
             pgHelper.runSQL(this.updateAnalysisLog(taskName), logBuilder.toString());
 
             JavaPairRDD<String, Tuple2<MultiPolygon, MultiPolygon>> temp = tb3dLayerPair.cogroup(connected2d).flatMapToPair(new PairFlatMapFunction<Tuple2<String, Tuple2<Iterable<MultiPolygon>, Iterable<MultiPolygon>>>, String, Tuple2<MultiPolygon, MultiPolygon>>() {
@@ -207,13 +206,13 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
                     List<Tuple2<String, Geometry>> result = new ArrayList<>();
 
-                MultiPolygon tb3d = t._2._1;
-                MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
-                Feature feature=new Feature();
-                Geometry tb3dg=feature.validedGeom((org.locationtech.jts.geom.MultiPolygon)tb3d.getGeometry());
-                Geometry tb2dg=feature.validedGeom((org.locationtech.jts.geom.MultiPolygon)tb2d.getGeometry());
-                tb3d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb3dg);
-                tb2d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb2dg);
+                    MultiPolygon tb3d = t._2._1;
+                    MultiPolygon tb2d = (MultiPolygon) t._2._2._1();
+                    Feature feature = new Feature();
+                    Geometry tb3dg = feature.validedGeom((org.locationtech.jts.geom.MultiPolygon) tb3d.getGeometry());
+                    Geometry tb2dg = feature.validedGeom((org.locationtech.jts.geom.MultiPolygon) tb2d.getGeometry());
+                    tb3d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb3dg);
+                    tb2d.setGeometry((org.locationtech.jts.geom.MultiPolygon) tb2dg);
 //                tb3d = polygonFeatureEx(tb3d);
 //                tb2d = polygonFeatureEx(tb2d);
 
@@ -272,7 +271,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                             String error = String.format("Intersection Error: 3D(%s) vs 2D(%s), abort", tb3d.toString(), lf.toString());
                                             log.info("线状计算出错！");
                                             log.info(error);
-                                            logBuilder.append(error);
+                                            logBuilder.append(error + "\r\n");
                                         }
                                     }
                                 }
@@ -431,7 +430,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                                             String error = String.format("Intersection Error: 3D(%s) vs 2D(%s), abort", tb3d.toString(), lf.toString());
                                             log.info("线状计算出错！");
                                             log.info(error);
-                                            logBuilder.append(error);
+                                            logBuilder.append(error + "\r\n");
                                         }
                                     }
                                 }
@@ -512,7 +511,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
                         String error = String.format("Intersection Error: 3D(%s) vs 2D(%s), abort", tb3d.getAttribute("BSM"), tb2d.getFid());
                         log.info("面状计算出错！");
                         log.info(error);
-                        logBuilder.append(error);
+                        logBuilder.append(error + "\r\n");
                     }
 
                     return result.iterator();
@@ -532,7 +531,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 //        LayerWriter geomWriter = LayerFactory.getWriter(this.ss, geomWriterConfig);
 //        intersectedLayer.inferFieldMetadata();
 //        geomWriter.write(intersectedLayer);
-            logBuilder.append("开始计算统计结果...");
+            logBuilder.append("开始计算统计结果..." + "\r\n");
             pgHelper.runSQL(this.updateAnalysisLog(taskName), logBuilder.toString());
             // 写出统计结果
             JavaPairRDD<String, Double> flowAreaRDD = intersected.mapToPair(new PairFunction<Tuple2<String, Geometry>, String, Double>() {
@@ -581,18 +580,18 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
             statLayer.inferFieldMetadata();
             statWriter.write(statLayer);
 
+        } catch (Exception e) {
+            ifSuccess = false;
+            log.error("Run error:" + e.getMessage());
+            logBuilder.append("计算失败！" + e.getMessage() + "\r\n");
+            pgHelper.runSQL(updateAnalysisLog(this.arg.getTaskName()), logBuilder.toString());
+        } finally {
             pgHelper.runSQL(this.updateAnalysisInfo(this.arg.getTaskName())
-                    , "SUCCESS"
+                    , ifSuccess ? "SUCCESS" : "ERROR"
                     , java.sql.Timestamp.from(Instant.now()));
 
-        } catch (Exception e) {
-            log.error("Run error:" + e.getMessage());
-            logBuilder.append("计算失败！" + e.getMessage());
-            pgHelper.runSQL(updateAnalysisLog(this.arg.getTaskName()), logBuilder.toString());
-            pgHelper.runSQL(this.updateAnalysisInfo(this.arg.getTaskName())
-                    , "ERROR"
-                    , java.sql.Timestamp.from(Instant.now()));
-        }finally {
+            logBuilder.append("计算结束..." + "\r\n");
+            pgHelper.runSQL(this.updateAnalysisLog(this.arg.getTaskName()), logBuilder.toString());
             pgHelper.close();
         }
     }
@@ -940,30 +939,30 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
 
     //todo record state
     private String getIdByTaskName(String taskName) {
-        return "SELECT id FROM "+this.pgConfig.getSchema()+".mr_esdtask_record WHERE \"taskname\" = '" + taskName + "'";
+        return "SELECT id FROM " + this.pgConfig.getSchema() + ".mr_esdtask_record WHERE \"taskname\" = '" + taskName + "'";
     }
 
     private String insertAnalysisInfo() {
-        return "INSERT INTO "+this.pgConfig.getSchema()+".mr_esdtask_record (\"id\", \"taskname\", \"taskstate\"" +
+        return "INSERT INTO " + this.pgConfig.getSchema() + ".mr_esdtask_record (\"id\", \"taskname\", \"taskstate\"" +
                 ", \"resultaddress\", \"params\", \"log\", \"submittime\") " +
                 "VALUES (?,?,?,?,?,?,?)";
     }
 
     private String insertMJ() {
-        return "INSERT INTO "+this.pgConfig.getSchema()+".mr_xzq_area (\"ID\", \"XZQDM\", \"XZQMC\"" +
-                ", \"YEAR\", \"MJ\", \"MJ_GQ\", \"MJ_MU\", \"CREATETIME\") " +
+        return "INSERT INTO " + this.pgConfig.getSchema() + ".mr_xzq_area (\"id\", \"xzqdm\", \"xzqmc\"" +
+                ", \"year\", \"mj\", \"mj_gq\", \"mj_mu\", \"createtime\") " +
                 "VALUES (?,?,?,?,?,?,?,?)";
     }
 
     private String updateAnalysisInfo(String taskName) {
-        return "UPDATE "+this.pgConfig.getSchema()+".mr_esdtask_record SET " +
+        return "UPDATE " + this.pgConfig.getSchema() + ".mr_esdtask_record SET " +
                 "\"taskstate\" = ? ," +
                 "\"finishtime\" = ? " +
                 "WHERE \"taskname\" = '" + taskName + "'";
     }
 
     private String updateAnalysisLog(String taskName) {
-        return "UPDATE "+this.pgConfig.getSchema()+".mr_esdtask_record SET " +
+        return "UPDATE " + this.pgConfig.getSchema() + ".mr_esdtask_record SET " +
                 "\"log\" = ? " +
                 "WHERE \"taskname\" = '" + taskName + "'";
     }

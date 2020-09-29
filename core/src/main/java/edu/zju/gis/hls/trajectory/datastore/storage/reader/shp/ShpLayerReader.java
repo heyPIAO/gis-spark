@@ -8,6 +8,7 @@ import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
+import edu.zju.gis.hls.trajectory.datastore.util.PathSelector;
 import edu.zju.gis.hls.trajectory.datastore.util.ShpDataReader;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -57,39 +59,13 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
             throw new LayerReaderException("reader config is not set correctly");
         }
 
-        String path = readerConfig.getSourcePath();
-
-        // setup data source
-        JavaRDD<String> data = null;
-        List<String> paths;
-        if (path.contains(";")) {
-            paths = Arrays.asList(path.split(";"));
-        } else {
-            paths = new ArrayList<>();
-            paths.add(path);
-        }
-
         //判断路径是否为文件夹，支持二级目录下所有.shp文件路径的获取
-        List<String> paths2File = new ArrayList<>();
-        for (String subPath : paths) {
-            File subFile = new File(subPath.replace(SourceType.SHP.getPrefix(), ""));
-            if (subFile.exists()) {
-                if (subFile.isFile() && subFile.getName().endsWith(".shp")) {
-                    paths2File.add(subFile.getAbsolutePath());
-                } else {
-                    File[] subSubFiles = subFile.listFiles();
-                    for (File subSubFile : subSubFiles) {
-                        if (subSubFile.isFile() && subSubFile.getName().endsWith(".shp"))
-                            paths2File.add(subSubFile.getAbsolutePath());
-                    }
-                }
-            }
-        }
+        List<String> paths2File = PathSelector.stripPath(readerConfig.getSourcePath(),SourceType.SHP.getPrefix(),".shp");
 
         if (paths2File.size() == 0) {
             throw new GISSparkException("Shapefile Layer Reader Failed, File Path Number Is 0 ");
         }
-
+        JavaRDD<String> data = null;
         data = this.jsc.parallelize(paths2File, paths2File.size());
 
         JavaRDD<Tuple2<String, Feature>> features = data.flatMap(new FlatMapFunction<String, Tuple2<String, Feature>>() {

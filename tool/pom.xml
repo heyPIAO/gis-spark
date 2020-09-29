@@ -56,6 +56,16 @@
         </dependency>
     </dependencies>
     <build>
+<!--        <resources>-->
+<!--            <resource>-->
+<!--                <directory>../lib</directory>-->
+<!--                <includes>-->
+<!--                    <include>**/*.jar</include>-->
+<!--                    <include>**/*.dll</include>-->
+<!--                </includes>-->
+<!--                <filtering>true</filtering>-->
+<!--            </resource>-->
+<!--        </resources>-->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -74,7 +84,7 @@
                     <archive>
                         <manifest>
                             <mainClass>edu.zju.gis.hls.gisspark.model.loader.cluster.PgDataLoader</mainClass>
-<!--                            <mainClass>edu.zju.gis.hls.gisspark.model.stats.LandflowAnalysis</mainClass>-->
+<!--                            <mainClass>edu.zju.gis.hls.gisspark.model.stats.LandFlowAnalysis</mainClass>-->
                         </manifest>
                     </archive>
                     <descriptorRefs>

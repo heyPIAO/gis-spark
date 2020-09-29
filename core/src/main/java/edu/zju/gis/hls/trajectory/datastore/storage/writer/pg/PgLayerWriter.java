@@ -61,7 +61,7 @@ public class PgLayerWriter<T extends Layer> extends LayerWriter<Row> {
                 .option("dbtable", String.format("%s.%s", config.getSchema(), config.getTablename()))
                 .option("user", config.getUsername())
                 .option("password", config.getPassword())
-                .mode(config.getSaveMode().equals(SaveMode.Append) ? SaveMode.Append : SaveMode.ErrorIfExists)
+                .mode(config.getSaveMode())
                 .save();
         df.unpersist();
     }

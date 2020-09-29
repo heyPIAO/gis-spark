@@ -9,6 +9,7 @@ import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.SourceType;
+import edu.zju.gis.hls.trajectory.datastore.util.PathSelector;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -25,6 +26,7 @@ import scala.Tuple2;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -64,35 +66,8 @@ public class FileLayerReader<T extends Layer> extends LayerReader<T> {
         }
 
         // set up reader configuration
-        String path = readerConfig.getSourcePath();
+        List<String> paths2File = PathSelector.stripPath(readerConfig.getSourcePath(), SourceType.FILE.getPrefix(), "");
         CoordinateReferenceSystem crs = readerConfig.getCrs();
-
-        List<String> paths;
-        if (path.contains(";")) {
-            paths = Arrays.asList(path.split(";"));
-        } else {
-            paths = new ArrayList<>();
-            paths.add(path);
-        }
-
-        //判断路径是否为文件夹，支持二级目录下所有文件路径的获取
-        List<String> paths2File = new ArrayList<>();
-        for (String subPath : paths) {
-            File subFile = new File(subPath.replace(SourceType.FILE.getPrefix(), ""));
-            if (subFile.exists()) {
-                if (subFile.isFile()) {
-                    paths2File.add(subFile.getAbsolutePath());
-                } else {
-                    File[] subSubFiles = subFile.listFiles();
-                    for (File subSubFile : subSubFiles) {
-                        if (subSubFile.isFile())
-                            paths2File.add(subSubFile.getAbsolutePath());
-                    }
-                }
-            }
-        }
-
-
         // read data from source files
         JavaRDD<String> data = null;
         String[] ps = new String[paths2File.size()];

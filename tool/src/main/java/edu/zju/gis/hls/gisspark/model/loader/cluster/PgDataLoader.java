@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import sun.reflect.annotation.ExceptionProxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +39,7 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
 
     private PgConfig pgConfig = new PgConfig();
     private PgConfig pgMdConfig = new PgConfig();
-    private MSConfig msConfig = new MSConfig();
+    private boolean ifSuccess = true;
 
     public PgDataLoader(String[] args) {
         super(args);
@@ -120,8 +121,8 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
                         , this.arg.getLayerTemplate()
                         , "pgDataLoader"
                         , this.arg.getLayerYear()
-                        , java.sql.Date.from(Instant.now())
-                        , java.sql.Date.from(Instant.now())
+                        , java.sql.Timestamp.from(Instant.now())
+                        , java.sql.Timestamp.from(Instant.now())
                         , 0
                         , this.arg.getXzqdm()
                         , this.arg.getXzqmc()
@@ -186,7 +187,7 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
     }
 
     private String makeVaild(LayerReaderConfig rc, PgLayerWriterConfig wc) {
-        return String.format("update %s.%s set \"%s\"=st_astext(st_makevalid(st_geomfromtext(\"%s\")))", wc.getSchema(), wc.getTablename(), rc.getShapeField(), rc.getShapeField());
+        return String.format("update %s.%s set \"%s\"=st_astext(st_makevalid(st_geomfromtext(\"%s\")))", wc.getSchema(), wc.getTablename(), rc.getShapeField().getName(), rc.getShapeField().getName());
 
 //        return String.format("select * from pg_dist_shard_placement where shardid " +
 //                "in (select shardid from pg_dist_shard where logicalrelid='%s.%s' ::regclass)", wc.getSchema(), wc.getTablename());
@@ -222,7 +223,7 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
     private String updateLoadState(String tbName) {
         return "UPDATE " + this.pgMdConfig.getSchema() + ".di_md_dsinfo SET " +
                 "state = ? ," +
-                "lastmodify = ? " +
+                "lastmodifytime = ? " +
                 "WHERE sourcetable = '" + tbName + "'";
     }
 
@@ -270,29 +271,9 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
             this.pgMdConfig.setUsername((String) props.get("pg.username"));
             this.pgMdConfig.setPassword((String) props.get("pg.password"));
         } catch (IOException e) {
-            throw new GISSparkException("read mysql configuration failed: " + e.getMessage());
+            this.ifSuccess = false;
+            log.error("read mysql configuration failed: " + e.getMessage());
         }
-    }
-
-    @Override
-    protected void catchError() {
-        super.catchError();
-        PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
-        pgMdHelper.runSQL(updateLoadState(this.arg.getTableName()),
-                "ERROR"
-                , java.sql.Date.from(Instant.now()));
-        pgMdHelper.close();
-    }
-
-    @Override
-    protected void catchSuccess() {
-        super.catchSuccess();
-        PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
-        log.info("update dataset info.");
-        pgMdHelper.runSQL(updateDatasetInfo(this.arg.getTableName()),
-                this.metadata.getLayerCount(),
-                "SUCCESS"
-                , java.sql.Date.from(Instant.now()));
     }
 
     /**
@@ -313,12 +294,14 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
             log.warn("Pass: Truncate Local Data");
 //            log.info("Truncate Local Data: " + writerConfig.getTablename());
 //            pgHelper.runSQL(this.truncateLocalDataSql(writerConfig));
-        } catch (FactoryException e) {
-            pgMdHelper.runSQL(updateLoadState(this.arg.getTableName()),
-                    "ERROR"
-                    , java.sql.Date.from(Instant.now()));
-            throw new GISSparkException(e.getMessage());
+        } catch (Exception e) {
+            this.ifSuccess = false;
+            log.error(e.getMessage());
         } finally {
+            pgMdHelper.runSQL(updateLoadState(this.arg.getTableName()),
+                    this.ifSuccess ? "SUCCESS" : "ERROR"
+                    , java.sql.Timestamp.from(Instant.now()));
+            pgMdHelper.close();
             pgMdHelper.close();
             pgHelper.close();
         }

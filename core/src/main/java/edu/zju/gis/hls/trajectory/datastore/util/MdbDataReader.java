@@ -12,6 +12,10 @@ import org.gdal.ogr.FieldDefn;
 import org.gdal.ogr.ogr;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 /**
  * @author Hu
@@ -27,6 +31,7 @@ public class MdbDataReader extends DataReader {
 
     private String layerName;
     private org.gdal.ogr.Layer featureLayer;
+    private final static String TIMEPATTERN = "yyyy/MM/dd HH:mm:ss";
 
     public MdbDataReader(String filename, String layerName) {
         this.filename = filename.replace(SourceType.MDB.getPrefix(), "");
@@ -110,13 +115,36 @@ public class MdbDataReader extends DataReader {
 
     // TODO 太丑了
     // TODO gdal.Feature 还支持：byte[], Integer64, List<Integer>, List<Double>, List<String>，Datetime，框架暂不支持
+    // TODO moral: GetFieldAsDateTime方法太反人类了，写死了一个解析方案
     private static Object mapToObject(Feature f, FieldDefn ft) {
         String fieldTypeName = ft.GetTypeName();
         switch (fieldTypeName) {
             case "Integer":
                 return f.GetFieldAsInteger(ft.GetName());
             case "Double":
+            case "Real":
                 return f.GetFieldAsDouble(ft.GetName());
+            case "DateTime":
+                String timeStr = f.GetFieldAsString(ft.GetName());
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(TIMEPATTERN);
+                java.sql.Date dateTime = null;
+                try {
+                    dateTime = new java.sql.Date(simpleDateFormat.parse(timeStr).getTime());
+                } catch (ParseException e) {
+                    dateTime = new java.sql.Date(779890394000l);
+                }
+                return dateTime;
+            case "String":
+                String str = f.GetFieldAsString(ft.GetName());
+                byte[] bs = new byte[0];
+                try {
+                    bs = str.getBytes("GB2312");
+                    return new String(bs, StandardCharsets.UTF_8);
+                } catch (UnsupportedEncodingException e) {
+                    log.error("字符GBK->GBK失败：" + e.getMessage());
+                    return f.GetFieldAsString(ft.GetName());
+                }
+                //用新的字符编码生成字符串
             default:
                 return f.GetFieldAsString(ft.GetName());
         }
