@@ -26,10 +26,10 @@ public class VTGenerateExample {
         // Set base param
         int zMin = 9;
         int zMax = 12;
-        String fileType = "geojson";
-        String layerName = "Kecheng4326";
-        String source = "E:\\Data\\Kecheng\\Kecheng4326.shp";
-        String outDir = "E:\\Data\\vectorTile";
+        String fileType = "mvt";
+        String layerName = "LCRA";
+        String source = "E:\\Data\\shp\\LCRA.shp";
+        String outDir = "E:\\Data\\vectorTileMVT";
 
         // Setup SparkSession
         SparkSession ss = SparkSession

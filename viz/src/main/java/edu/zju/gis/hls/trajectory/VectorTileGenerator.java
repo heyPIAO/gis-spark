@@ -6,6 +6,7 @@ import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
+import edu.zju.gis.hls.trajectory.analysis.util.CrsUtils;
 import edu.zju.gis.hls.trajectory.model.Pipeline;
 import edu.zju.gis.hls.trajectory.model.TileJob;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +45,7 @@ public class VectorTileGenerator implements Serializable {
   public <T extends KeyIndexedLayer> void generate(T layer, String outDir) throws Exception {
     pConfig = new PyramidConfig.PyramidConfigBuilder()
             .setCrs(layer.getMetadata().getCrs())
-            .setBaseMapEnv(-180, 180, -90, 90)
+            .setBaseMapEnv(CrsUtils.getCrsEnvelope(layer.getMetadata().getCrs()))
             .setzLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z)
             .build();
 
