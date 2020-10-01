@@ -80,11 +80,11 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 Field dlbmF = new Field("lx_dlbm");
                 Field mjF = new Field("lx_mj");
                 Field wktF = new Field("lx_wkt");
-                mjF.setType(Float.class);
+                mjF.setType(Double.class);
                 if (!in._2._2.isPresent()) {/**/
                     f.addAttribute(bsmF, "NO_DATA");
                     f.addAttribute(dlbmF, "NO_DATA");
-                    f.addAttribute(mjF, 0.0f);
+                    f.addAttribute(mjF, 0.0);
                     f.addAttribute(wktF, "NO_DATA");
                 } else {
                     Feature lx = in._2._2.get();
@@ -143,9 +143,9 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 Field kdF = new Field("xz_kd");
                 Field kcblF = new Field("xz_kcbl");
                 Field wktF = new Field("xz_wkt");
-                kdF.setType(Float.class);
-                cdF.setType(Float.class);
-                kcblF.setType(Float.class);
+                kdF.setType(Double.class);
+                cdF.setType(Double.class);
+                kcblF.setType(Double.class);
                 if (in._2._2.isPresent()) {
                     Feature xz = in._2._2.get();
                     f.addAttribute(bsmF, xz.getAttribute("BSM"));
@@ -157,9 +157,9 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 } else {
                     f.addAttribute(bsmF, "NO_DATA");
                     f.addAttribute(dlbmF, "NO_DATA");
-                    f.addAttribute(cdF, 0.0f);
-                    f.addAttribute(kdF, 0.0f);
-                    f.addAttribute(kcblF, 0.0f);
+                    f.addAttribute(cdF, 0.0);
+                    f.addAttribute(kdF, 0.0);
+                    f.addAttribute(kcblF, 0.0);
                     f.addAttribute(wktF, "NO_DATA");
                 }
                 Field tb_wkt = new Field("tb_wkt");
