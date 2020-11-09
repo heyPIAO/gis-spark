@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.shp;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
@@ -91,7 +92,7 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
             @Override
             public Iterator<Tuple2<String, Feature>> call(String s) throws Exception {
                 List<Tuple2<String, Feature>> result = new ArrayList<>();
-                ShpDataReader reader = new ShpDataReader(s);
+                ShpDataReader reader = new ShpDataReader(s, readerConfig.getEncodeType());
                 reader.init();
                 SimpleFeature sf = reader.nextFeature();
                 // TODO check if shp layer type is right to the target layer type

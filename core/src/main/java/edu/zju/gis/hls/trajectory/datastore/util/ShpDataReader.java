@@ -38,8 +38,15 @@ public class ShpDataReader extends DataReader {
 
   private ShapefileDataStore shpDataStore;
 
+  private String charsetName;
+
   public ShpDataReader(String filename){
+    this(filename, "UTF-8");
+  }
+
+  public ShpDataReader(String filename, String charsetName){
     this.filename = filename.replace(SourceType.SHP.getPrefix(),"");
+    this.charsetName = charsetName;
   }
 
   @Override
@@ -58,7 +65,7 @@ public class ShpDataReader extends DataReader {
     try {
       this.shpDataStore = new ShapefileDataStore(file.toURI().toURL());
       // 设置编码
-      Charset charset = Charset.forName("UTF-8");
+      Charset charset = Charset.forName(this.charsetName);
       this.shpDataStore.setCharset(charset);
       String typeName = this.shpDataStore.getTypeNames()[0]; // 获取第一层图层名
       SimpleFeatureSource featureSource = this.shpDataStore.getFeatureSource (typeName);
