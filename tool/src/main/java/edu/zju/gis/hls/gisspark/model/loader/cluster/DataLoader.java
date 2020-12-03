@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.gisspark.model.loader.cluster;
 
+import com.google.gson.Gson;
 import edu.zju.gis.hls.gisspark.model.BaseModel;
 import edu.zju.gis.hls.gisspark.model.args.DataLoaderArgs;
 import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
@@ -35,30 +36,39 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
 
     @Override
     protected void run() throws Exception {
+        try {
+            LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
+            LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
 
-        LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
-        LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
-
-        LayerReader layerReader = LayerFactory.getReader(this.ss, readerConfig);
-        Layer<String, Feature> layer = (Layer<String, Feature>) layerReader.read();
+            LayerReader layerReader = LayerFactory.getReader(this.ss, readerConfig);
+            Layer<String, Feature> layer = (Layer<String, Feature>) layerReader.read();
 
 //    CoordinateReferenceSystem targetCrs = CRS.decode(this.arg.getTargetCrs());
 //    if (!layer.getMetadata().getCrs().equals(targetCrs))
 //      layer = layer.transform(targetCrs);
 
-        // 计算图层四至
-        layer.makeSureCached();
-        layer.analyze();
-        metadata = layer.getMetadata();
-        storeMetadata(metadata);
+            // 计算图层四至
+            layer.makeSureCached();
+            layer.analyze();
+            metadata = layer.getMetadata();
+            log.info(metadata.getAttributes().toString());
+            storeMetadata(metadata);
 
-        LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
-        writer.write(layer);
+            LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
+            writer.write(layer);
+        } catch (Exception e) {
+            log.error("Load error:" + e.getMessage());
+            catchError(e);
+        }
     }
 
     protected void storeMetadata(LayerMetadata metadata) {
         log.info("Store Layer Metadata for Layer " + metadata.getLayerName() + ": " + metadata.toJson());
         log.info("Layer Count:" + metadata.getLayerCount());
+    }
+
+    protected void catchError(Exception e) {
+        log.error("Load Error: " + e.getMessage());
     }
 
     @Override

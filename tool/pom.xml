@@ -23,6 +23,20 @@
             <artifactId>spark-sql_${scala.version}</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
 <!--        <dependency>-->
 <!--            <groupId>org.apache.spark</groupId>-->
 <!--            <artifactId>spark-hive_${scala.version}</artifactId>-->
@@ -42,6 +56,16 @@
         </dependency>
     </dependencies>
     <build>
+<!--        <resources>-->
+<!--            <resource>-->
+<!--                <directory>../lib</directory>-->
+<!--                <includes>-->
+<!--                    <include>**/*.jar</include>-->
+<!--                    <include>**/*.dll</include>-->
+<!--                </includes>-->
+<!--                <filtering>true</filtering>-->
+<!--            </resource>-->
+<!--        </resources>-->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -59,8 +83,8 @@
                 <configuration>
                     <archive>
                         <manifest>
-<!--                            <mainClass>edu.zju.gis.hls.gisspark.model.loader.cluster.PgDataLoader</mainClass>-->
-                            <mainClass>edu.zju.gis.hls.gisspark.model.stats.LandUseAnalysis</mainClass>
+                            <mainClass>edu.zju.gis.hls.gisspark.model.loader.cluster.PgDataLoader</mainClass>
+<!--                            <mainClass>edu.zju.gis.hls.gisspark.model.stats.LandFlowPreProcess</mainClass>-->
                         </manifest>
                     </archive>
                     <descriptorRefs>

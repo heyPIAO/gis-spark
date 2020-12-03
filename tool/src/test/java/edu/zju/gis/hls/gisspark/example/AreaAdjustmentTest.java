@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.gisspark.example;
 
-import edu.zju.gis.hls.gisspark.model.stats.AreaAdjustment;
+//import edu.zju.gis.hls.gisspark.model.stats.AreaAdjustment;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
@@ -36,11 +36,11 @@ public class AreaAdjustmentTest {
     Double targetArea = realTotalArea + 0.12;
     log.info(String.format("Total Area before adjust: %.2f", realTotalArea));
     log.info(String.format("Target Area: %.2f", targetArea));
-    List<Feature> result = AreaAdjustment.adjust(targetArea, FIELD.getName(), fs, SCALE);
-    result.forEach(x->log.info(x.toString()));
-    final Double[] total = {0.0};
-    result.forEach(x-> total[0] +=Double.valueOf(String.valueOf(x.getAttribute(FIELD.getName()))));
-    log.info(String.format("Total Area after adjust: %.2f", total[0]));
+//    List<Feature> result = AreaAdjustment.adjust(targetArea, FIELD.getName(), fs, SCALE);
+//    result.forEach(x->log.info(x.toString()));
+//    final Double[] total = {0.0};
+//    result.forEach(x-> total[0] +=Double.valueOf(String.valueOf(x.getAttribute(FIELD.getName()))));
+//    log.info(String.format("Total Area after adjust: %.2f", total[0]));
   }
 
 }
