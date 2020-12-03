@@ -128,20 +128,6 @@ public class MysqlLayerReader <T extends Layer> extends LayerReader<T> {
                     timestamp = Long.valueOf(row.getString(row.fieldIndex(tf.getName())));
                 }
 
-                // set up starttime if exists
-                Long startTime = null;
-                Field stf = readerConfig.getStartTimeField();
-                if (stf.isExist()) {
-                    startTime = Long.valueOf(row.getString(row.fieldIndex(stf.getName())));
-                }
-
-                // set up endtime if exists
-                Long endTime = null;
-                Field etf = readerConfig.getEndTimeField();
-                if (etf.isExist()) {
-                    endTime = Long.valueOf(String.valueOf(row.get(row.fieldIndex(etf.getName()))));
-                }
-
                 // set feature attributes
                 LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
                 Field[] fs = readerConfig.getAttributes();
@@ -152,7 +138,7 @@ public class MysqlLayerReader <T extends Layer> extends LayerReader<T> {
                     attributes.put(f, Converter.convert(String.valueOf(row.get(row.fieldIndex(name))), c));
                 }
 
-                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes);
                 return new Tuple2<>(feature.getFid(), feature);
             }
         });

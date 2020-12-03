@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Hu
  * @date 2019/9/9
- * 从 orc 文件中过滤目标数据
+ * 从点我达 orc 文件中过滤目标数据
  **/
 public class DataExtractor {
 

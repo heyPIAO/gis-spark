@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.gisspark.model.util;
 
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 
@@ -8,6 +9,10 @@ import org.apache.spark.sql.SparkSession;
  * @date 2019/11/8
  **/
 public class SparkUtil {
+
+    public static SparkSession getSparkSession(SparkSessionType type, String appName) {
+        return getSparkSession(type, appName, new SparkConf());
+    }
 
     public static SparkSession getSparkSession(SparkSessionType type, String appName, SparkConf conf) {
         switch (type) {
@@ -18,12 +23,13 @@ public class SparkUtil {
             case SHELL:
                 return createShellSparkSession(appName, conf);
             default:
-                return null;
+                throw new GISSparkException("Unsupport Spark Session Type: " + type.name());
         }
     }
 
     //TODO put these configuration into property file
     private static SparkConf overrideConf(SparkConf conf) {
+      conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "false"); // 不输出 _success
 //    conf.set("es.index.auto.create", "true");
 //    conf.set("es.nodes", "121.89.211.142");
 //    conf.set("es.nodes.discovery", "true");
@@ -38,8 +44,10 @@ public class SparkUtil {
         return SparkSession
                 .builder()
                 .appName(appName)
-                .master("local[8]")
-                .config(overrideConf(conf))
+                .master("local[1]")
+                .config(conf)
+                .config("spark.driver.host", "localhost")
+//                .config(overrideConf(conf))
 //                .enableHiveSupport()
                 .getOrCreate();
     }

@@ -6,7 +6,7 @@ import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
-import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryPoint;
+import edu.zju.gis.hls.trajectory.analysis.model.TimedPoint;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.*;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
@@ -62,10 +62,10 @@ public class TrajectoryPointLayerDemo {
 
     layer.cache();
 
-    List<Tuple2<String, TrajectoryPoint>> m0 = layer.collect();
+    List<Tuple2<String, TimedPoint>> m0 = layer.collect();
     logger.info("======================= M0 ========================");
     logger.info(String.format("result size: %d", m0.size()));
-    for (Tuple2<String, TrajectoryPoint> t: m0) {
+    for (Tuple2<String, TimedPoint> t: m0) {
       logger.info(t._2.toString());
     }
 
@@ -77,10 +77,10 @@ public class TrajectoryPointLayerDemo {
     IndexedLayer<TrajectoryPointLayer> til = si.index(layer);
     til = til.query(JTS.toGeometry(e));
     TrajectoryPointLayer layer0 = til.toLayer();
-    List<Tuple2<String, TrajectoryPoint>> m1 = layer0.collect();
+    List<Tuple2<String, TimedPoint>> m1 = layer0.collect();
     logger.info("======================= M1 ========================");
     logger.info(String.format("result size: %d", m1.size()));
-    for (Tuple2<String, TrajectoryPoint> t: m1) {
+    for (Tuple2<String, TimedPoint> t: m1) {
       logger.info(t._2.toString());
     }
 
@@ -88,10 +88,10 @@ public class TrajectoryPointLayerDemo {
     IndexedLayer<TrajectoryPointLayer> til2 = si2.index(layer);
     til2 = til2.query(JTS.toGeometry(e));
     TrajectoryPointLayer layer2 = til2.toLayer();
-    List<Tuple2<String, TrajectoryPoint>> m2 = layer2.collect();
+    List<Tuple2<String, TimedPoint>> m2 = layer2.collect();
     logger.info("======================= M2 ========================");
     logger.info(String.format("result size: %d", m2.size()));
-    for (Tuple2<String, TrajectoryPoint> t: m2) {
+    for (Tuple2<String, TimedPoint> t: m2) {
       logger.info(t._2.toString());
     }
 

@@ -4,7 +4,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
-import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -29,8 +28,6 @@ public class LayerMetadata extends Feature<Polygon> {
   private String layerName;
   private Long layerCount;
   private CoordinateReferenceSystem crs;
-  private double startTime;
-  private double endTime;
 
   public LayerMetadata(String fid, Polygon geometry, LinkedHashMap<Field, Object> attributes, String layerId, String layerName, CoordinateReferenceSystem crs) {
     super(fid, geometry, attributes);

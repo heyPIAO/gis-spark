@@ -13,9 +13,8 @@ public enum FieldType implements Serializable {
   ID_FIELD("FID"),
   SHAPE_FIELD("GEOM"),
   TIME_FIELD("TIME"),
-  START_TIME_FIELD("START_TIME"),
-  END_TIME_FIELD("END_TIME"),
-  NORMAL_FIELD("NORMAL_FIELD");
+  NORMAL_FIELD("NORMAL_FIELD"),
+  TEMPORAL_FIELD("TEMPORAL_FIELD"); // 字段值随时间变化
 
   @Getter
   @Setter
@@ -24,7 +23,5 @@ public enum FieldType implements Serializable {
   FieldType(String name) {
     this.fname = name;
   }
-
-
 
 }

@@ -18,8 +18,8 @@ public enum FeatureType implements Serializable {
   MULTI_POINT("multi_point", MultiPoint.class.getName()),
   MULTI_POLYLINE("multi_polyline", MultiPolyline.class.getName()),
   MULTI_POLYGON("multi_polygon", MultiPolygon.class.getName()),
-  TRAJECTORY_POINT("trajectory_point", TrajectoryPoint.class.getName()),
-  TRAJECTORY_POLYLINE("trajectory_polyline", TrajectoryPolyline.class.getName());
+  TRAJECTORY_POINT("trajectory_point", TimedPoint.class.getName()),
+  TRAJECTORY_POLYLINE("trajectory_polyline", MovingPoint.class.getName());
 
   @Getter
   private String name;

@@ -2,8 +2,10 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.FeatureType;
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalPoint;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
+import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +57,7 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
     return result;
   }
 
-  protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, LinkedHashMap<edu.zju.gis.hls.trajectory.analysis.model.Field, Object> attributes, Long timestamp, Long startTime, Long endTime) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+  protected Feature buildFeature(FeatureType featureType, String fid, Geometry geometry, LinkedHashMap<edu.zju.gis.hls.trajectory.analysis.model.Field, Object> attributes) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
     // 基于 java reflect 实现动态类 Feature 构造
     String className = featureType.getClassName();
@@ -83,11 +85,10 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
       c = featureClass.getConstructor(String.class, MultiPolygon.class, LinkedHashMap.class);
       feature = c.newInstance(fid, (MultiPolygon)convertToMulti(geometry), attributes);
     } else if (featureType.equals(FeatureType.TRAJECTORY_POINT)) {
-      c = featureClass.getConstructor(String.class, Point.class, LinkedHashMap.class, long.class);
-      feature = c.newInstance(fid, (Point)geometry, attributes, timestamp.longValue());
+      c = featureClass.getConstructor(String.class, TemporalPoint.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, (TemporalPoint)geometry, attributes);
     } else if (featureType.equals(FeatureType.TRAJECTORY_POLYLINE)) {
-      c = featureClass.getConstructor(String.class, LineString.class, LinkedHashMap.class, long.class, long.class);
-      feature = c.newInstance(fid, (LineString)geometry, attributes, startTime.longValue(), endTime.longValue());
+      throw new GISSparkException("You need to initialize TrajectoryPointLayer first, and then convert it to TrajectoryPolylineLayer");
     } else {
       log.error("Unsupport feature type: " + featureType.getName());
       return null;
@@ -117,8 +118,6 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
   @Override
   public void close() throws IOException {
     log.info("Close Layer Reader");
-//    this.ss.stop();
-//    this.ss.close();
   }
 
 }

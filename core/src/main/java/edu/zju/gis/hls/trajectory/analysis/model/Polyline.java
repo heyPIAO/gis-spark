@@ -6,7 +6,6 @@ import lombok.Setter;
 import org.locationtech.jts.geom.LineString;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * @author Hu

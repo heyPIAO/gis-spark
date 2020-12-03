@@ -98,18 +98,6 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
                     timestamp = Long.valueOf(String.valueOf(_atts.get(tf.getName())));
                 }
 
-                //set up starttime if exists
-                Field stf = readerConfig.getStartTimeField();
-                if (stf.isExist()) {
-                    startTime = Long.valueOf(String.valueOf(_atts.get(stf.getName())));
-                }
-
-                //set up endtime if exists
-                Field etf = readerConfig.getEndTimeField();
-                if (etf.isExist()) {
-                    endTime = Long.valueOf(String.valueOf(_atts.get(etf.getName())));
-                }
-
                 //set feature attributes
                 attributes = new LinkedHashMap<>();
                 Field[] fs = readerConfig.getAttributes();
@@ -119,7 +107,7 @@ public class ESLayerReader<T extends Layer> extends LayerReader<T> {
                     attributes.put(f, Converter.convert(String.valueOf(_atts.get(f.getName())), c));
                 }
 
-                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes);
                 return new Tuple2<>(feature.getFid(), feature);
             }
         });

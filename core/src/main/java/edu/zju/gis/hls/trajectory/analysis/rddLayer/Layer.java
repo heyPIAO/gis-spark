@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.spark.Partitioner;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -145,13 +144,25 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         Function shiftFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
             @Override
             public Tuple2<K, V> call(Tuple2<K, V> t) throws Exception {
-                Feature f = t._2;
+                V f = (V)(new Feature(t._2));
                 f.shift(deltaX, deltaY);
-                return new Tuple2<>(t._1, (V) f);
+                return new Tuple2<>(t._1, f);
             }
         };
 
         return this.mapToLayer(shiftFunction);
+    }
+
+    public Layer<K,V> makeValid() {
+        Function makeValidFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
+            @Override
+            public Tuple2<K, V> call(Tuple2<K, V> t) throws Exception {
+                V f = (V)(new Feature(t._2));
+                f.makeValid();
+                return new Tuple2<>(t._1, f);
+            }
+        };
+        return this.mapToLayer(makeValidFunction);
     }
 
     /**
@@ -164,9 +175,9 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         Function transformFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
             @Override
             public Tuple2<K, V> call(Tuple2<K, V> t) throws Exception {
-                Feature f = t._2;
+                V f = (V)(new Feature(t._2));
                 f.transform(metadata.getCrs(), ocrs);
-                return new Tuple2<>(t._1, (V) f);
+                return new Tuple2<>(t._1, f);
             }
         };
         this.metadata.setCrs(ocrs);
@@ -234,7 +245,7 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         Function<Tuple2<K, V>, Boolean> filterFunction = new Function<Tuple2<K, V>, Boolean>() {
             @Override
             public Boolean call(Tuple2<K, V> v) throws Exception {
-                return !((Feature) v._2).isEmpty();
+                return !(v._2).isEmpty();
             }
         };
         return this.filterToLayer(filterFunction);
@@ -281,7 +292,6 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
 
         // collect 之后再去重
         return keys.collect().stream().distinct().collect(Collectors.toList());
-        // return keys.collect();
     }
 
     /**
@@ -395,31 +405,54 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
      * Layer transform to Dataset
      */
     public Dataset<Row> toDataset(SparkSession ss) {
-        JavaRDD<Row> rdd = (this.rdd().toJavaRDD()).map(x -> x._2).map(x -> new GenericRow(x.toObjectArray()));
-        Dataset<Row> df = ss.createDataFrame(rdd, this.getLayerStructType());
-        return df;
+        JavaRDD<Row> rdd = this.rdd().toJavaRDD().map(x -> x._2).map(x -> new GenericRow(x.toObjectArray()));
+        return ss.createDataFrame(rdd, this.getLayerStructType());
     }
 
     /**
-     * 根据Layer的元数据信息获取Dataset的StructType
-     * structtype的顺序默认：ID为第1列，SHAPE为最后一列
+     * Layer transform to Dataset with GeometryField which is supported by user defined geometry function
+     */
+    public Dataset<Row> toGeomDataset(SparkSession ss) {
+        JavaRDD<Row> rdd = this.rdd().toJavaRDD().map(x -> x._2).map(x -> new GenericRow(x.toObjectArray(true)));
+        return ss.createDataFrame(rdd, this.getLayerStructType(true));
+    }
+
+    /**
+     * 根据Layer的元数据信息获取 Dataset 的 StructType
+     * StructType的顺序默认：ID为第1列，SHAPE为最后一列
      */
     private StructType getLayerStructType() {
-        Map<Field, Object> layerAttrs = this.metadata.getExistAttributes();
+        return this.getLayerStructType(false);
+    }
+
+    private StructType getLayerStructType(boolean geomReserved) {
+        Map<Field, Object> layerAttrs = this.getMetadata().getExistAttributes();
 
         List<StructField> sfsl = new LinkedList<>();
-        sfsl.add(convertFieldToStructField(this.metadata.getIdField()));
+        Field idField = this.getMetadata().getIdField();
+        if (idField == null) {
+            idField = Term.FIELD_DEFAULT_ID;
+        }
+        sfsl.add(convertFieldToStructField(idField));
 
         Field[] attrs = new Field[layerAttrs.size()];
         layerAttrs.keySet().toArray(attrs);
         for (int i = 0; i < layerAttrs.size(); i++) {
-            if (attrs[i].getFieldType().equals(FieldType.ID_FIELD) || attrs[i].getFieldType().equals(FieldType.SHAPE_FIELD)) {
+            if (attrs[i].getFieldType().equals(FieldType.ID_FIELD)
+              || attrs[i].getFieldType().equals(FieldType.SHAPE_FIELD)) {
                 continue;
             }
             sfsl.add(convertFieldToStructField(attrs[i]));
         }
 
-        sfsl.add(convertFieldToStructField(this.metadata.getShapeField()));
+        if (!(this instanceof StatLayer)) {
+            Field shapeField = this.getMetadata().getShapeField();
+            if (shapeField == null) {
+                shapeField = Term.FIELD_DEFAULT_SHAPE;
+            }
+            sfsl.add(convertFieldToStructField(shapeField, geomReserved));
+        }
+
         StructField[] sfs = new StructField[sfsl.size()];
         sfsl.toArray(sfs);
         return new StructType(sfs);
@@ -430,9 +463,16 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
      */
     private StructField convertFieldToStructField(Field field) {
         return new StructField(field.getName(),
-                Field.converFieldTypeToDataType(field),
+                Field.converFieldTypeToDataType(field, false),
                 !(field.getFieldType().equals(FieldType.ID_FIELD) || field.getFieldType().equals(FieldType.SHAPE_FIELD)),
                 Metadata.empty());
+    }
+
+    private StructField convertFieldToStructField(Field field, boolean geomReserved) {
+        return new StructField(field.getName(),
+          Field.converFieldTypeToDataType(field, geomReserved),
+          !(field.getFieldType().equals(FieldType.ID_FIELD) || field.getFieldType().equals(FieldType.SHAPE_FIELD)),
+          Metadata.empty());
     }
 
 }

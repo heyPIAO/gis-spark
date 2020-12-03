@@ -2,25 +2,21 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import edu.zju.gis.hls.trajectory.analysis.util.ClassUtil;
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalLineString;
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalPoint;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.analysis.util.GeometryUtil;
+import edu.zju.gis.hls.trajectory.analysis.util.TWKTWriter;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.geotools.geometry.jts.JTS;
-import org.geotools.geometry.jts.WKTWriter2;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.util.AffineTransformation;
-import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
@@ -32,8 +28,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIMAL;
 
@@ -45,7 +39,7 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.GEOMETRY_JSON_DECIM
 @Getter
 @Setter
 @Slf4j
-public class Feature <T extends Geometry> implements Serializable {
+public class Feature <T extends Geometry> implements Serializable, Cloneable {
 
   protected String fid;
   protected T geometry;
@@ -56,9 +50,9 @@ public class Feature <T extends Geometry> implements Serializable {
     return Feature.empty(Point.class);
   }
 
+
   public Feature() {
     this.fid = UUID.randomUUID().toString();
-//    this.geometry = (T) GeometryUtil.createEmptyGeometry(ClassUtil.getTClass(this.getClass(), 0));
     this.geometry = null;
     this.attributes = new LinkedHashMap<>();
   }
@@ -87,20 +81,9 @@ public class Feature <T extends Geometry> implements Serializable {
    */
   public static <F extends Feature> F empty(Class<F> f) {
     try {
-//      Class gc = ClassUtil.getTClass(f, 0);
       Constructor c = f.getConstructor();
       return (F)c.newInstance();
-//      return (F) c.newInstance(UUID.randomUUID().toString(), GeometryUtil.createEmptyGeometry(gc), new LinkedHashMap<>());
-    } catch (NoSuchMethodException e) {
-      e.printStackTrace();
-      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
-    } catch (InstantiationException e) {
-      e.printStackTrace();
-      throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
-    } catch (InvocationTargetException e) {
+    } catch (Exception e) {
       e.printStackTrace();
       throw new GISSparkException("Unvalid feature type: " + f.getTypeName());
     }
@@ -119,16 +102,11 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   public Object getAttribute(String key){
-    for (Map.Entry<Field, Object> a: attributes.entrySet()) {
-      if (a.getKey().getName().equals(key)) {
-        return a.getValue();
-      }
-    }
-    return null;
+    return this.getAttribute(this.getField(key));
   }
 
   public Object getAttribute(Field key){
-    return this.getAttribute(key.getName());
+    return this.attributes.get(key);
   }
 
   public Field getField(String name) {
@@ -140,52 +118,28 @@ public class Feature <T extends Geometry> implements Serializable {
     return null;
   }
 
-  public Feature(Feature f){
-    LinkedHashMap<Field, Object> map = new LinkedHashMap<>();
-    map.putAll(f.getAttributes());
+  @Deprecated
+  public Feature(Feature f) {
+
+    if (f instanceof MovingPoint) {
+      throw new GISSparkException("Self copy constructor does not support MovingPoint Feature, " +
+              "please use function clone() for MovingPoint deep copy");
+    }
+
     this.fid = f.getFid();
-    this.attributes = map;
+    this.attributes = (LinkedHashMap<Field, Object>) f.getAttributes().clone();
     if (f.isEmpty() && f.getGeometry() == null) {
       this.geometry = null;
     } else {
       this.geometry = (T)f.getGeometry().copy();
     }
+
   }
 
-  private Geometry validedGeom(Geometry g) {
-    if(g.isValid()){
-      return g;
+  public void makeValid() {
+    if (!this.geometry.isValid()) {
+      this.geometry = (T)GeometryUtil.validedGeom3(this.getGeometry());
     }
-    List<org.locationtech.jts.geom.Polygon> valided = null;
-    if (this.getGeometry() instanceof org.locationtech.jts.geom.Polygon) {
-      List<org.locationtech.jts.geom.Polygon> polygons=JTS.makeValid((org.locationtech.jts.geom.Polygon) this.getGeometry(), true);
-      org.locationtech.jts.geom.Polygon polygon =polygons.get(0);
-      for(int j=1;j<polygons.size();j++) {
-        polygon = (org.locationtech.jts.geom.Polygon)(polygon.difference(polygons.get(j)));
-      }
-      valided.add(polygon);
-    } else if (this.getGeometry() instanceof org.locationtech.jts.geom.MultiPolygon) {
-      org.locationtech.jts.geom.MultiPolygon mps = (org.locationtech.jts.geom.MultiPolygon) this.getGeometry();
-      int i = mps.getNumGeometries();
-      valided = new ArrayList<>();
-      for (int m = 0; m < i; m++) {
-        List<org.locationtech.jts.geom.Polygon> polygons=JTS.makeValid((org.locationtech.jts.geom.Polygon) mps.getGeometryN(m), true);
-        org.locationtech.jts.geom.Polygon polygon =polygons.get(0);
-        for(int j=1;j<polygons.size();j++) {
-          polygon = (org.locationtech.jts.geom.Polygon)(polygon.difference(polygons.get(j)));
-        }
-        valided.add(polygon);
-      }
-    }
-    GeometryFactory gf = new GeometryFactory();
-    if (valided != null && valided.size() > 0) {
-      org.locationtech.jts.geom.Polygon[] polygons = new org.locationtech.jts.geom.Polygon[valided.size()];
-      for (int i=0; i<valided.size(); i++) {
-        polygons[i] = valided.get(i);
-      }
-      return gf.createMultiPolygon(polygons);
-    }
-    throw new GISSparkException("Unvalid Geometry: " + g.toString());
   }
 
   public Feature intersection(Feature f, Boolean attrReserved) {
@@ -195,8 +149,8 @@ public class Feature <T extends Geometry> implements Serializable {
     try {
       g = this.getGeometry().intersection(g2);
     } catch (Exception e) {
-      Geometry g0 = validedGeom(this.getGeometry());
-      Geometry g1 = validedGeom(g2);
+      Geometry g0 = GeometryUtil.validedGeom3(this.getGeometry());
+      Geometry g1 = GeometryUtil.validedGeom3(g2);
       g = g0.intersection(g1);
     }
 
@@ -307,6 +261,16 @@ public class Feature <T extends Geometry> implements Serializable {
     }
   }
 
+  public static Feature buildTemporalFeature(String fid, Geometry g, LinkedHashMap<Field, Object> attrs, LinkedHashMap<Field, Object[]> temporalAttrs) {
+    if (g instanceof TemporalPoint) {
+      return new TimedPoint(fid, (TemporalPoint)g, attrs);
+    } else if (g instanceof TemporalLineString) {
+      return new MovingPoint(fid, (TemporalLineString) g, attrs, temporalAttrs);
+    } else {
+      throw new GISSparkException("Unsupport temporal geometry type for method: edu.zju.gis.hls.trajectory.analysis.model.Feature.buildTemporalFeature()");
+    }
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -331,7 +295,7 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   public String getGeometryWkt() {
-    WKTWriter2 wktWriter = new WKTWriter2(2);
+    TWKTWriter wktWriter = new TWKTWriter(2);
     return wktWriter.write(geometry);
   }
 
@@ -434,19 +398,27 @@ public class Feature <T extends Geometry> implements Serializable {
   }
 
   public Object[] toObjectArray() {
+    return this.toObjectArray(false);
+  }
+
+  public Object[] toObjectArray(boolean geomReserved) {
     List<Field> fields = IteratorUtils.toList(this.getExistAttributes().keySet().iterator());
     Object[] objs;
     if (this.isEmpty()) {
-      objs = new Object[fields.size()+1];
+      objs = new Object[fields.size()+1]; // Fid
     } else {
-      objs = new Object[fields.size()+2];
+      objs = new Object[fields.size()+2]; // Fid and Geometry
     }
     objs[0] = this.fid;
     for (int i=0; i<fields.size(); i++) {
       objs[i+1] = this.getAttribute(fields.get(i));
     }
     if (!this.isEmpty()) {
-      objs[objs.length-1] = this.getGeometryWkt();
+      if (geomReserved) {
+        objs[objs.length-1] = this.getGeometry();
+      } else {
+        objs[objs.length-1] = this.getGeometryWkt();
+      }
     }
     return objs;
   }

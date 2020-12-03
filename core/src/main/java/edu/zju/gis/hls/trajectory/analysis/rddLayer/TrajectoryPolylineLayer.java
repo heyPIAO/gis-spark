@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
 import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryOD;
-import edu.zju.gis.hls.trajectory.analysis.model.TrajectoryPolyline;
+import edu.zju.gis.hls.trajectory.analysis.model.MovingPoint;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.rdd.RDD;
@@ -12,21 +12,21 @@ import scala.reflect.ClassTag;
  * @author Hu
  * @date 2019/9/19
  **/
-public class TrajectoryPolylineLayer extends Layer<String, TrajectoryPolyline> {
+public class TrajectoryPolylineLayer extends Layer<String, MovingPoint> {
 
-  public TrajectoryPolylineLayer(RDD<Tuple2<String, TrajectoryPolyline>> rdd){
-    this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(TrajectoryPolyline.class));
+  public TrajectoryPolylineLayer(RDD<Tuple2<String, MovingPoint>> rdd){
+    this(rdd, scala.reflect.ClassTag$.MODULE$.apply(String.class), scala.reflect.ClassTag$.MODULE$.apply(MovingPoint.class));
   }
 
-  private TrajectoryPolylineLayer(RDD<Tuple2<String, TrajectoryPolyline>> rdd, ClassTag<String> kClassTag, ClassTag<TrajectoryPolyline> trajectoryPolylineClassTag) {
+  private TrajectoryPolylineLayer(RDD<Tuple2<String, MovingPoint>> rdd, ClassTag<String> kClassTag, ClassTag<MovingPoint> trajectoryPolylineClassTag) {
     super(rdd, kClassTag, trajectoryPolylineClassTag);
   }
 
   public TrajectoryODLayer extractOD() {
-    JavaRDD<Tuple2<String, TrajectoryPolyline>> t = this.rdd().toJavaRDD();
-    JavaRDD<Tuple2<String, TrajectoryOD>> tOD = t.map(new Function<Tuple2<String, TrajectoryPolyline>, Tuple2<String, TrajectoryOD>>() {
+    JavaRDD<Tuple2<String, MovingPoint>> t = this.rdd().toJavaRDD();
+    JavaRDD<Tuple2<String, TrajectoryOD>> tOD = t.map(new Function<Tuple2<String, MovingPoint>, Tuple2<String, TrajectoryOD>>() {
       @Override
-      public Tuple2<String, TrajectoryOD> call(Tuple2<String, TrajectoryPolyline> in) throws Exception {
+      public Tuple2<String, TrajectoryOD> call(Tuple2<String, MovingPoint> in) throws Exception {
         TrajectoryOD tpOD = in._2.extractOD();
         if (tpOD == null) {
           return new Tuple2<>("EMPTY", null);

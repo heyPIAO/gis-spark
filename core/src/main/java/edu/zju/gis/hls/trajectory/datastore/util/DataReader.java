@@ -74,8 +74,8 @@ public abstract class DataReader implements Closeable, Serializable {
     return result;
   }
 
-  protected String readCRS() {
-    return this.crs;
+  protected void readCRS() {
+    this.crs = Term.DEFAULT_CRS.toWKT();
   }
 
   protected abstract String[] readHeader();

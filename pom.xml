@@ -14,6 +14,7 @@
         <module>example</module>
         <module>viz</module>
         <module>tool</module>
+        <module>sql</module>
     </modules>
 
     <properties>
@@ -24,9 +25,9 @@
         <mysql.version>8.0.16</mysql.version>
         <postgresql.version>42.2.14</postgresql.version>
         <mybatis.version>3.4.5</mybatis.version>
-        <hadoop.version>2.7.3</hadoop.version>
-        <scala.version>2.11</scala.version>
-        <spark.version>2.3.3</spark.version>
+        <hadoop.version>3.3.0</hadoop.version>
+        <scala.version>2.12</scala.version>
+        <spark.version>3.0.0</spark.version>
         <spring.version>2.0.3.RELEASE</spring.version>
         <lombok.version>1.18.6</lombok.version>
         <gt.version>21.1</gt.version>
@@ -146,7 +147,7 @@
                 <artifactId>gdal</artifactId>
                 <version>${gdal.version}</version>
                 <scope>system</scope>
-                <systemPath>D:\Work\DaLunWen\code\trajectory-spark\lib\gdal.jar</systemPath>
+                <systemPath>/home/DaLunWen/code/trajectory-spark/lib/gdal.jar</systemPath>
             </dependency>
         </dependencies>
     </dependencyManagement>

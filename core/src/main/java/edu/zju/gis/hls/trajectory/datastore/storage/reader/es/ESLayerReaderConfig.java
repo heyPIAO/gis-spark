@@ -13,7 +13,6 @@ import lombok.ToString;
  **/
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 public class ESLayerReaderConfig extends LayerReaderConfig {
 

@@ -61,7 +61,7 @@ public abstract class BaseModel<T extends BaseArgs> implements Serializable {
     initSparkSession(type, appName, sc);
   }
 
-  // TODO 对于Spark的参数注入，如需要Kryo序列化的配置，es 的配置等，可在这里执行
+  // TODO 对于Spark的参数注入，如需要Kryo序列化的配置，es的配置等，可在这里执行
   protected void initSparkSession(SparkSessionType type, String appName, SparkConf conf) {
     this.ss = SparkUtil.getSparkSession(type, appName, conf);
     this.jsc = new JavaSparkContext(this.ss.sparkContext());

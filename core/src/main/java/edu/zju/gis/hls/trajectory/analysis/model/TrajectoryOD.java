@@ -1,14 +1,12 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalLineString;
 import lombok.Getter;
 import lombok.Setter;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * @author Hu
@@ -18,33 +16,26 @@ import java.util.Map;
  **/
 @Getter
 @Setter
-public class TrajectoryOD extends TrajectoryPolyline {
+public class TrajectoryOD extends MovingPoint {
 
-  public TrajectoryOD(String fid, Point start, Point end, LinkedHashMap<Field, Object> attributes, long startTime, long endTime) {
-    super(fid, new GeometryFactory().createLineString(new Coordinate[]{start.getCoordinate(), end.getCoordinate()}), attributes, startTime, endTime);
+  public TrajectoryOD(String fid, Point start, Point end, LinkedHashMap<Field, Object> attributes,LinkedHashMap<Field, Object[]> temporalAttributes, long startTime, long endTime) {
+    super(fid, Term.CUSTOM_GEOMETRY_FACTORY.createTemporalLineString(new Coordinate[]{start.getCoordinate(), end.getCoordinate()}, new long[]{startTime, endTime}), attributes, temporalAttributes);
   }
 
   public TrajectoryOD(TrajectoryOD f) {
     super(f);
   }
 
-  public LineString getODLine() {
+  public TemporalLineString getODLine() {
     return this.geometry;
   }
 
-  public Point getStart() {
-    return this.geometry.getStartPoint();
+  public TimedPoint getStart() {
+    return this.getIndic(0);
   }
 
-  public Point getEnd() {
-    return this.geometry.getEndPoint();
-  }
-
-  @Override
-  protected Map<String, Object> getGeometryMap() {
-    Map<String, Object> r = super.getGeometryMap();
-    r.put("type", "od");
-    return r;
+  public TimedPoint getEnd() {
+    return this.getIndic(1);
   }
 
 }

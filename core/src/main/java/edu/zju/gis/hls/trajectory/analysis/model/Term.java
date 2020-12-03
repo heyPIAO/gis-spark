@@ -3,10 +3,14 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
+import edu.zju.gis.hls.trajectory.analysis.util.CustomGeometryFactory;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.serializer.CRSJsonSerializer;
 import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.CoordinateSequenceFactory;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.impl.CoordinateArraySequenceFactory;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
@@ -63,14 +67,14 @@ public class Term implements Serializable {
   public static Field FIELD_DEFAULT_SHAPE =  new Field(SHAPE_FIELD.name(), SHAPE_FIELD.name().toLowerCase(), Geometry.class.getName(), 0, FIELD_LAST, SHAPE_FIELD);
   public static Field FIELD_DEFAULT_ID = new Field(ID_FIELD.name(), ID_FIELD.name().toLowerCase(), String.class.getName(), 0, FIELD_NOT_EXIST, ID_FIELD);
   public static Field FIELD_DEFAULT_TIME = new Field(TIME_FIELD.name(), TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, TIME_FIELD);
-  public static Field FIELD_DEFAULT_START_TIME = new Field(START_TIME_FIELD.name(), START_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, START_TIME_FIELD);
-  public static Field FIELD_DEFAULT_END_TIME = new Field(END_TIME_FIELD.name(), END_TIME_FIELD.name().toLowerCase(), Long.class.getName(), 0, FIELD_NOT_EXIST, END_TIME_FIELD);
-
   // Geometry 转 GeoJSON 的坐标精度
   public static Integer GEOMETRY_JSON_DECIMAL = 9;
 
   public static Gson GSON_CONTEXT = new GsonBuilder().registerTypeAdapter(CoordinateReferenceSystem.class, new CRSJsonSerializer())
     .registerTypeAdapter(CoordinateReferenceSystem.class, new CRSJsonSerializer.CRSJsonDeserializer()).create();
+  public static GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
+  public static CustomGeometryFactory CUSTOM_GEOMETRY_FACTORY = new CustomGeometryFactory();
+  public static CoordinateSequenceFactory COORDINATE_SEQUENCE_FACTORY = CoordinateArraySequenceFactory.instance();
 
   // 图层元数据信息的属性名称
   public static Field LAYER_META_COUNT_FIELD = new Field("LAYER_COUNT", "count", Long.class.getName(), 0, FIELD_EXIST, NORMAL_FIELD);

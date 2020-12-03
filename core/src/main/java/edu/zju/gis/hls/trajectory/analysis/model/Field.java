@@ -1,11 +1,15 @@
 package edu.zju.gis.hls.trajectory.analysis.model;
 
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalLineString;
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalPoint;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.spark.sql.hls.udt.*;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
 import org.locationtech.jts.geom.Geometry;
 
 import java.io.Serializable;
@@ -27,7 +31,6 @@ public class Field implements Serializable {
     @Setter
     private String alias;
 
-    @Setter
     private String type;
 
     @Setter
@@ -47,6 +50,14 @@ public class Field implements Serializable {
 
     public Field(Field f) {
         this(f.name, f.alias, f.type, f.length, f.index, f.fieldType);
+    }
+
+    public Field(String name, String type) {
+        this(name, name, type, Term.FIELD_LENGTH, Term.FIELD_EXIST, FieldType.NORMAL_FIELD);
+    }
+
+    public Field(String name, String type, FieldType fieldType) {
+        this(name, name, type, Term.FIELD_LENGTH, Term.FIELD_EXIST, fieldType);
     }
 
     // 字段默认存在
@@ -83,6 +94,10 @@ public class Field implements Serializable {
         this.exist = (index >= Term.FIELD_LAST);
     }
 
+    public boolean isTemporal() {
+        return this.fieldType.equals(FieldType.TEMPORAL_FIELD);
+    }
+
     public void setType(Class c) {
         this.setType(c.getName());
     }
@@ -110,7 +125,14 @@ public class Field implements Serializable {
      */
     public static boolean equalFieldClass(DataType sourceClass, String uClass) {
         if (sourceClass.sameType(DataTypes.StringType)) {
-            return uClass.equals(String.class.getName()) || uClass.equals(Geometry.class.getName());
+            return uClass.equals(String.class.getName())
+              || uClass.equals(Geometry.class.getName())
+              || uClass.equals(org.locationtech.jts.geom.Point.class.getName())
+              || uClass.equals(org.locationtech.jts.geom.MultiPoint.class.getName())
+              || uClass.equals(org.locationtech.jts.geom.LineString.class.getName())
+              || uClass.equals(org.locationtech.jts.geom.MultiLineString.class.getName())
+              || uClass.equals(org.locationtech.jts.geom.Polygon.class.getName())
+              || uClass.equals(org.locationtech.jts.geom.MultiPolygon.class.getName());
         } else if (sourceClass.sameType(DataTypes.IntegerType)) {
             return uClass.equals(Integer.class.getName()) || uClass.equals(String.class.getName());
         } else if (sourceClass.sameType(DataTypes.LongType)) {
@@ -125,25 +147,43 @@ public class Field implements Serializable {
             return uClass.equals(Date.class.getName()) || uClass.equals(String.class.getName());
         } else if (sourceClass.sameType(DataTypes.TimestampType)) {
             return uClass.equals(Timestamp.class.getName()) || uClass.equals(String.class.getName());
+        } else if (sourceClass instanceof DecimalType) {
+            return uClass.equals(Double.class.getName()) || uClass.equals(String.class.getName());
         } else {
             throw new GISSparkException("Unsupport DataType: " + sourceClass.typeName());
         }
     }
 
+    public static DataType converFieldTypeToDataType(Field field) {
+        return converFieldTypeToDataType(field, false);
+    }
+
     /**
      * 将用户定义的图层字段类型转为SparkSQL的DataType
-     * TODO 扩写 DataType，自定义 Geometry 对应的 DataType
-     *
+     * TODO 映射关系写到 enum 里面去
      * @param field
      * @return reference: #{org.apache.spark.sql.Row}
      */
-    public static DataType converFieldTypeToDataType(Field field) {
+    public static DataType converFieldTypeToDataType(Field field, boolean geomReserved) {
+
         String fieldType = field.getType();
+
+        if (field.getFieldType().equals(FieldType.SHAPE_FIELD)) {
+            if (!geomReserved) return DataTypes.StringType;
+            if (fieldType.equals(org.locationtech.jts.geom.Point.class.getName())) return new PointUDT();
+            if (fieldType.equals(org.locationtech.jts.geom.LineString.class.getName())) return new PolylineUDT();
+            if (fieldType.equals(org.locationtech.jts.geom.Polygon.class.getName())) return new PolygonUDT();
+            if (fieldType.equals(org.locationtech.jts.geom.MultiPoint.class.getName())) return new MultiPointUDT();
+            if (fieldType.equals(org.locationtech.jts.geom.MultiLineString.class.getName())) return new MultiPolylineUDT();
+            if (fieldType.equals(org.locationtech.jts.geom.MultiPolygon.class.getName())) return new MultiPolygonUDT();
+            if (fieldType.equals(TemporalPoint.class.getName())) return new TemporalPointUDT();
+            if (fieldType.equals(TemporalLineString.class.getName())) return new TemporalPolylineUDT();
+            throw new GISSparkException("Unsupport Geometry DataType: " + fieldType);
+        }
+
         if (fieldType.equals(String.class.getName())) {
             return DataTypes.StringType;
-        } else if (fieldType.equals(Geometry.class.getName())) {
-            return DataTypes.StringType;
-        } else if (fieldType.equals(Integer.class.getName())) {
+        }  else if (fieldType.equals(Integer.class.getName())) {
             return DataTypes.IntegerType;
         } else if (fieldType.equals(Long.class.getName())) {
             return DataTypes.LongType;
@@ -173,4 +213,5 @@ public class Field implements Serializable {
     public boolean isGeometry() {
         return this.type.equals(Geometry.class.getName());
     }
+
 }

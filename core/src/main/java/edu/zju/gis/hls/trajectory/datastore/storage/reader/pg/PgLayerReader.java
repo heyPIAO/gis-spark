@@ -83,8 +83,6 @@ public class PgLayerReader<T extends Layer> extends LayerReader<T> {
                 names.add(field.getName());
             }
         }
-        names.add(this.readerConfig.getIdField().getName());
-        names.add(this.readerConfig.getShapeField().getName());
 
         log.info("select column names: " + String.join(", ", names));
         if (names.size() == 1) {
@@ -117,9 +115,6 @@ public class PgLayerReader<T extends Layer> extends LayerReader<T> {
                 // set up geometry
                 Field geof = readerConfig.getShapeField();
                 String wktstr = row.getString(row.fieldIndex(geof.getName()));
-//        WKBReader wkbReader = new WKBReader();
-//        byte[] aux = WKBReader.hexToBytes(wkbstr);
-//        Geometry geometry = wkbReader.read(aux);
                 WKTReader wktReader = new WKTReader();
                 Geometry geometry = wktReader.read(wktstr);
 
@@ -132,17 +127,6 @@ public class PgLayerReader<T extends Layer> extends LayerReader<T> {
 
                 // set up starttime if exists
                 Long startTime = null;
-                Field stf = readerConfig.getStartTimeField();
-                if (stf.isExist()) {
-                    startTime = Long.valueOf(row.getString(row.fieldIndex(stf.getName())));
-                }
-
-                // set up endtime if exists
-                Long endTime = null;
-                Field etf = readerConfig.getEndTimeField();
-                if (etf.isExist()) {
-                    endTime = Long.valueOf(String.valueOf(row.get(row.fieldIndex(etf.getName()))));
-                }
 
                 // set feature attributes
                 LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
@@ -154,7 +138,7 @@ public class PgLayerReader<T extends Layer> extends LayerReader<T> {
                     attributes.put(f, Converter.convert(String.valueOf(row.get(row.fieldIndex(name))), c));
                 }
 
-                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes);
                 return new Tuple2<>(feature.getFid(), feature);
             }
         });

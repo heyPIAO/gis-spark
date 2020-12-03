@@ -112,19 +112,6 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
                         timestamp = Long.valueOf(String.valueOf(sf.getAttribute(timeField.getName())));
                     }
 
-                    // 如果有 startTime/endTime，获取
-                    Field startTimeField = readerConfig.getStartTimeField();
-                    Long startTime = null;
-                    if (startTimeField.isExist()) {
-                        startTime = Long.valueOf(String.valueOf(sf.getAttribute(startTimeField.getName())));
-                    }
-
-                    Field endTimeField = readerConfig.getEndTimeField();
-                    Long endTime = null;
-                    if (endTimeField.isExist()) {
-                        endTime = Long.valueOf(String.valueOf(sf.getAttribute(endTimeField.getName())));
-                    }
-
                     LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
 
                     Field[] keys = readerConfig.getAttributes();
@@ -141,7 +128,7 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
                     }
 
                     // build feature
-                    Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+                    Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes);
                     result.add(new Tuple2<>(fid, feature));
 
                     sf = reader.nextFeature();

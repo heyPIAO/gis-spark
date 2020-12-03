@@ -3,8 +3,10 @@ package edu.zju.gis.hls.trajectory.datastore.storage.reader.file;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalPoint;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerMetadata;
+import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.util.Converter;
 import edu.zju.gis.hls.trajectory.datastore.exception.LayerReaderException;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
@@ -17,14 +19,12 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.SparkSession;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.WKTReader;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -35,8 +35,8 @@ import java.util.*;
  * （1）不支持有 header 的文件
  * （2）若不设置空间列，默认最后一列为空间列 wkt
  * （3）若不设置 key(fid) 列，则 key(fid) 会被自动创建（基于UUID）
- * （4）若 T 类型为 TrajectoryPointLayer 或 TrajectoryPolylineLayer，则必须设置对应 timestamp 或者是 startTime, endTime 字段
- * 注： headers 中不应有 key(fid)，timestamp, startTime, endTime，geometry 等字段
+ * （4）若 T 类型为 TrajectoryPointLayer 则必须设置对应 timestamp
+ * 注： headers 中不应有 key(fid)，timestamp, geometry 等字段
  **/
 @ToString
 @Slf4j
@@ -75,7 +75,7 @@ public class FileLayerReader<T extends Layer> extends LayerReader<T> {
             paths.add(path);
         }
 
-        //判断路径是否为文件夹，支持二级目录下所有文件路径的获取
+        // 判断路径是否为文件夹，支持二级目录下所有文件路径的获取
         List<String> paths2File = new ArrayList<>();
         for (String subPath : paths) {
             File subFile = new File(subPath.replace(SourceType.FILE.getPrefix(), ""));
@@ -91,7 +91,6 @@ public class FileLayerReader<T extends Layer> extends LayerReader<T> {
                 }
             }
         }
-
 
         // read data from source files
         JavaRDD<String> data = null;
@@ -130,27 +129,20 @@ public class FileLayerReader<T extends Layer> extends LayerReader<T> {
                 Long timestamp = null;
                 if (readerConfig.getTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
                     timestamp = Long.valueOf(fields[readerConfig.getTimeField().getIndex()].trim());
+                    // 对于TrajectoryPointLayer，geometry需要额外操作
+                    if (readerConfig.getLayerType().equals(LayerType.TRAJECTORY_POINT_LAYER)) {
+                        if (!(geometry instanceof Point)) {
+                            throw new LayerReaderException("TrajectoryPointLayer's geometry type must be point, given " + geometry.getGeometryType());
+                        }
+                        Point p = (Point) geometry;
+                        geometry = new TemporalPoint(timestamp, p.getCoordinateSequence());
+                    }
                 }
 
-                // 如果有 startTime，endTime，获取
-                Long startTime = null;
-                if (readerConfig.getStartTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
-                    startTime = Long.valueOf(fields[readerConfig.getStartTimeField().getIndex()].trim());
-                }
-
-                Long endTime = null;
-                if (readerConfig.getEndTimeField().getIndex() != Term.FIELD_NOT_EXIST) {
-                    endTime = Long.valueOf(fields[readerConfig.getEndTimeField().getIndex()].trim());
-                }
 
                 // 获取 attributes
                 LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
 
-                // TODO 数据测试
-                if(fields.length < 17) {
-                    log.error("fields length is less than 17 for geometry, abort");
-                    return new Tuple2<>("EMPTY", Feature.empty());
-                }
 
                 for (Field f : fs) {
                     int index = f.getIndex();
@@ -160,10 +152,10 @@ public class FileLayerReader<T extends Layer> extends LayerReader<T> {
                 }
 
                 // build feature
-                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+                Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes);
                 return new Tuple2<>(fid, feature);
             }
-        }).filter(x -> !x._1.equals("EMPTY"));
+        });
 
         T layer = this.rddToLayer(features.rdd());
 
@@ -172,9 +164,7 @@ public class FileLayerReader<T extends Layer> extends LayerReader<T> {
         lm.setCrs(crs);
         lm.setLayerName(readerConfig.getLayerName());
 
-        // TODO ?? WHY ??
-        // this.readerConfig.getIdField().setIndex(Term.FIELD_EXIST);
-        lm.setAttributes(readerConfig.getAllAttributes());
+        lm.setAttributes(readerConfig.getAllAttributes(false));
 
         layer.setMetadata(lm);
         return layer;

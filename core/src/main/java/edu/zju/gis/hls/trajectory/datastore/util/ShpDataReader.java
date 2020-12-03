@@ -108,18 +108,16 @@ public class ShpDataReader extends DataReader {
     }
   }
 
-  protected String readCRS() {
-    if (this.crs == null) {
-      String path = filename.replace(".shp", ".prj");
-      File file = new File(path);
-      if (!file.exists()) return null;
-      try {
-        this.crs = FileUtil.readByLine(path, 1, false).get(0);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+  protected void readCRS() {
+    String path = filename.replace(".shp", ".prj");
+    File file = new File(path);
+    if (!file.exists()) return;
+    try {
+      this.crs = FileUtil.readByLine(path, 1, false).get(0);
+    } catch (IOException e) {
+      log.error("Shapefile Read CRS Failed: " + e.getLocalizedMessage());
+      log.warn("Set CRS to default");
     }
-    return this.crs;
   }
 
   @Override

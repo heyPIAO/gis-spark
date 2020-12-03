@@ -49,6 +49,34 @@
                     </descriptorRefs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.2</version>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <scalaVersion>${scala.version}.12</scalaVersion>
+                    <!--<args>-->
+
+                    <!--<arg>-target:jvm-1.8</arg>-->
+                    <!--</args>-->
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -132,11 +160,11 @@
             <artifactId>mongo-spark-connector_${scala.version}</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>edu.zju.gis</groupId>
-            <artifactId>dbfg-query-server</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>edu.zju.gis</groupId>-->
+            <!--<artifactId>dbfg-query-server</artifactId>-->
+            <!--<version>1.0.0</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>org.elasticsearch</groupId>
@@ -154,6 +182,13 @@
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
             <version>${es.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.locationtech.spatial4j/spatial4j -->
+        <dependency>
+            <groupId>org.locationtech.spatial4j</groupId>
+            <artifactId>spatial4j</artifactId>
+            <version>0.7</version>
         </dependency>
 
         <dependency>

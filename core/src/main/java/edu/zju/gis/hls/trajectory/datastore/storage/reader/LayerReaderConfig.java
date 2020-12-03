@@ -29,11 +29,9 @@ public abstract class LayerReaderConfig implements Serializable {
   protected String layerName;
   protected String sourcePath;
   protected LayerType layerType;
-  protected Field[] attributes; // 不包括 shape, id, startTime, endTime, Time 的所有需要读取的 Field 信息
+  protected Field[] attributes; // 不包括 shape, id, Time 的所有需要读取的 Field 信息
   protected Field shapeField = Term.FIELD_DEFAULT_SHAPE;
   protected Field idField = Term.FIELD_DEFAULT_ID;
-  protected Field startTimeField = Term.FIELD_DEFAULT_START_TIME;
-  protected Field endTimeField = Term.FIELD_DEFAULT_END_TIME;
   protected Field timeField = Term.FIELD_DEFAULT_TIME;
   protected CoordinateReferenceSystem crs = Term.DEFAULT_CRS;
 
@@ -56,6 +54,11 @@ public abstract class LayerReaderConfig implements Serializable {
    */
   public boolean check() {
 
+    // TODO 支持直接读取 Trajectory Polyline Layer
+    if (this.layerType.equals(LayerType.TRAJECTORY_POLYLINE_LAYER)) {
+      throw new LayerReaderException("trajectory polyline layer cannot be read directly yet, need to get it from trajectory point layer");
+    }
+
     if (this.sourcePath.trim().length() == 0) {
       throw new LayerReaderException("set source path first");
     }
@@ -68,10 +71,6 @@ public abstract class LayerReaderConfig implements Serializable {
       throw new LayerReaderException("time index needs to be set for trajectory point layer");
     }
 
-    if (this.layerType.equals(LayerType.TRAJECTORY_POLYLINE_LAYER) && (startTimeField == null || endTimeField == null)) {
-      throw new LayerReaderException("start time index or end time index needs to be set for trajectory polyline layer");
-    }
-
     // ID字段必须为String类型
     if (!this.idField.getType().equals(String.class.getName())) {
       throw new LayerReaderException("Id field class type must be String");
@@ -80,11 +79,15 @@ public abstract class LayerReaderConfig implements Serializable {
     return true;
   }
 
+  public Field[] getAllAttributes() {
+      return this.getAllAttributes(true);
+  }
+
   /**
    * 获取包含 ID，时间，空间字段的的所有图层字段
    * @return
    */
-  public Field[] getAllAttributes() {
+  public Field[] getAllAttributes(boolean reserveTimeField) {
     List<Field> fs = new ArrayList<>();
     fs.add(idField);
     if (attributes != null && attributes.length > 0) {
@@ -92,9 +95,7 @@ public abstract class LayerReaderConfig implements Serializable {
         fs.add(f);
       }
     }
-    fs.add(startTimeField);
-    fs.add(endTimeField);
-    fs.add(timeField);
+    if (reserveTimeField) fs.add(timeField);
     fs.add(shapeField);
     return fs.toArray(new Field[0]);
   }
