@@ -1,5 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.util;
 
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalLineString;
+import edu.zju.gis.hls.trajectory.analysis.proto.TemporalPoint;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.WKTReader2;
@@ -7,7 +9,6 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
-import org.locationtech.jts.io.WKTWriter;
 import org.locationtech.jts.operation.polygonize.Polygonizer;
 
 import java.util.ArrayList;
@@ -17,11 +18,11 @@ import java.util.List;
 
 public class GeometryUtil {
 
-    private static WKBReader wkbReader = new WKBReader();
-    private static WKBWriter wkbWriter = new WKBWriter();
+    private static TWKBReader wkbReader = new TWKBReader();
+    private static TWKBWriter wkbWriter = new TWKBWriter();
     private static WKTReader2 wktReader = new WKTReader2();
-    private static WKTWriter wktWriter = new WKTWriter();
-    private static GeometryFactory gf = new GeometryFactory();
+    private static TWKTWriter wktWriter = new TWKTWriter();
+    private static CustomGeometryFactory gf = new CustomGeometryFactory();
 
    public static <T extends Geometry> byte[] toByteArray(T g) {
        return wkbWriter.write(g);
@@ -71,7 +72,11 @@ public class GeometryUtil {
            return (T) gf.createPolygon();
        } if (t.equals(MultiPolygon.class)) {
            return (T) gf.createMultiPolygon();
-       } else {
+       } if (t.equals(TemporalPoint.class)) {
+           return (T) gf.createTemporalPoint();
+       } if (t.equals(TemporalLineString.class)) {
+           return (T) gf.createTemporalLineString();
+       }  else {
            throw new GISSparkException("Unvalid geometry type: " + t.getClass().getName());
        }
    }

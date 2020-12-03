@@ -24,6 +24,7 @@ public class TemporalLineString extends LineString {
         this(new long[points.size()], points, factory);
     }
 
+
     public TemporalLineString(long[] instants, CoordinateSequence points) {
         this(instants, points, Term.GEOMETRY_FACTORY);
     }

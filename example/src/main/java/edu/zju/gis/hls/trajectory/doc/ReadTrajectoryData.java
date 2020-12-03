@@ -24,7 +24,7 @@ public class ReadTrajectoryData {
         SparkSession ss = SparkSqlUtil.createSparkSessionWithSqlExtent(SparkSessionType.LOCAL, "ReadTrajectoryData");
 
         FileLayerReaderConfig layerReaderConfig = new FileLayerReaderConfig();
-        layerReaderConfig.setSourcePath("file:///home/DaLunWen/data/trajectory/test_10_wkt");
+        layerReaderConfig.setSourcePath("file:///home/DaLunWen/data/trajectory/test_10_wkt/part-00001");
         layerReaderConfig.setLayerType(LayerType.TRAJECTORY_POINT_LAYER);
         layerReaderConfig.setLayerName("CarTripPointLayer");
 
@@ -45,14 +45,12 @@ public class ReadTrajectoryData {
 
         TrajectoryPolylineLayer trajectoryLayer = layer.convertToPolylineLayer(carIdField.getName());
 
-        trajectoryLayer.makeSureCached();
-        trajectoryLayer.print();
-
         Dataset<Row> row = trajectoryLayer.toGeomDataset(ss);
         row.printSchema();
 
         row.createOrReplaceTempView("CarTripLayer");
-        Dataset<Row> m = ss.sql("select * from CarTripLayer");
+
+        Dataset<Row> m = ss.sql("select * from CarTripLayer where st_contains(st_makeBBOX(116.184, 116.609, 39.739, 40.103), shape)");
         m.explain(true);
         m.show(false);
 
