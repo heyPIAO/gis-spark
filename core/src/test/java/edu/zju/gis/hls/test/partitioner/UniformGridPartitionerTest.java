@@ -55,31 +55,34 @@ public class UniformGridPartitionerTest {
     LayerReader<MultiPolygonLayer> provinceLayerReader = LayerFactory.getReader(ss, config);
     MultiPolygonLayer provinceLayer = provinceLayerReader.read();
 
+    provinceLayer.makeSureCached();
+    List r = provinceLayer.collect();
+
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(8));
     KeyIndexedLayer<MultiPolygonLayer> indexedProvinceLayer = si.index(provinceLayer);
 
+    indexedProvinceLayer.makeSureCached();
+    List m = indexedProvinceLayer.getLayer().collect();
+
     // 查看均匀格网索引下的 province layer 图层
-    log.info(" ===== INDEXED LAYER START ===== ");
-    log.info("partition info: \n" );
-    indexedProvinceLayer.getLayer().partitions().forEach(x->log.info(x.toString()));
+    printInfo(" ===== INDEXED LAYER START ===== ");
+    printInfo("partition info: \n" );
+    indexedProvinceLayer.getLayer().partitions().forEach(x->printInfo(x.toString()));
 
-    log.info("rdd partitioner: \n");
-    log.info(indexedProvinceLayer.getLayer().partitioner().get().toString());
+    printInfo("rdd partitioner: \n");
+    printInfo(indexedProvinceLayer.getLayer().partitioner().get().toString());
 
-    log.info("key range feature: \n");
+    printInfo("key range feature: \n");
     indexedProvinceLayer.getPartitioner().getKeyRanges().forEach((x1, x2)-> {
-      log.info(String.format("%s: %s", x1, x2.toString()));
+      printInfo(String.format("%s: %s", x1, x2.toString()));
     });
-
-    DistributeSpatialPartitioner partitioner = indexedProvinceLayer.getPartitioner();
-    log.info(partitioner.toString());
 
     List<Tuple2<String, MultiPolygon>> features = indexedProvinceLayer.getLayer().collect();
     features.forEach(x->{
-      log.info(String.format("%s: %s", x._1, x._2));
+      printInfo(String.format("%s: %s", x._1, x._2));
     });
 
-    log.info(" ===== INDEXED LAYER FINISH ===== ");
+    printInfo(" ===== INDEXED LAYER FINISH ===== ");
 
     ss.stop();
     ss.close();
@@ -89,6 +92,10 @@ public class UniformGridPartitionerTest {
     Field xzqdm = new Field("XZQDM","行政区代码", 2, FieldType.NORMAL_FIELD);
     Field xzqmc = new Field("XZQMC", "行政区名称", 3, FieldType.NORMAL_FIELD);
     return new Field[]{xzqdm, xzqmc};
+  }
+
+  public static void printInfo(String s) {
+    System.out.print(s);
   }
 
 }

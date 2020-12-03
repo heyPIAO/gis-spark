@@ -89,6 +89,12 @@
                 <groupId>org.geotools</groupId>
                 <artifactId>gt-main</artifactId>
                 <version>${gt.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -147,7 +153,7 @@
                 <artifactId>gdal</artifactId>
                 <version>${gdal.version}</version>
                 <scope>system</scope>
-                <systemPath>/home/DaLunWen/code/trajectory-spark/lib/gdal.jar</systemPath>
+                <systemPath>D:\Work\DaLunWen\code\trajectory-spark-1203\lib\gdal.jar</systemPath>
             </dependency>
         </dependencies>
     </dependencyManagement>
