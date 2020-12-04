@@ -3,7 +3,9 @@ package edu.zju.gis.hls.test.partitioner;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
+import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTree;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreePartitioner;
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
@@ -51,8 +53,13 @@ public class RTreeIndexPartitionerTest {
     LayerReader<MultiPolygonLayer> provinceLayerReader = LayerFactory.getReader(ss, config);
     MultiPolygonLayer provinceLayer = provinceLayerReader.read();
 
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RTREE, new RTreeIndexConfig());
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RTREE, new RTreeIndexConfig((int)(provinceLayer.count() * 0.1)));
     KeyIndexedLayer<MultiPolygonLayer> indexedProvinceLayer = si.index(provinceLayer);
+
+    indexedProvinceLayer.makeSureCached();
+    RTreePartitioner partitioner = (RTreePartitioner) indexedProvinceLayer.getPartitioner();
+    RTree rTree = partitioner.getRTree();
+    printInfo(String.valueOf(rTree.isFinish()));
 
     // 查看均匀格网索引下的 province layer 图层
     printInfo(" ===== INDEXED LAYER START ===== ");

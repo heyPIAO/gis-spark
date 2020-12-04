@@ -25,6 +25,10 @@ public class RTreeIndexConfig extends IndexConfig {
     this(isClip, 1000);
   }
 
+  public RTreeIndexConfig(int sampleSize) {
+    this(false, sampleSize);
+  }
+
   public RTreeIndexConfig(boolean isClip, int sampleSize) {
     this.isClip = isClip;
     this.sampleSize = sampleSize;

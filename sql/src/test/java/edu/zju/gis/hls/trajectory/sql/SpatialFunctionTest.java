@@ -1,7 +1,10 @@
 package edu.zju.gis.hls.trajectory.sql;
 
 import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
-import edu.zju.gis.hls.trajectory.analysis.model.*;
+import edu.zju.gis.hls.trajectory.analysis.model.DoubleField;
+import edu.zju.gis.hls.trajectory.analysis.model.Field;
+import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
+import edu.zju.gis.hls.trajectory.analysis.model.LongField;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.PointLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReader;

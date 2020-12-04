@@ -37,7 +37,6 @@ public class RTreePartitioner extends PreBuildSpatialPartitioner {
 
   public RTreePartitioner(int partitionNum) {
     super(partitionNum);
-    this.rTree = new RTree(this.conf.getSampleSize()/partitionNum);
   }
 
   public void setCrs(CoordinateReferenceSystem crs) {
@@ -47,6 +46,7 @@ public class RTreePartitioner extends PreBuildSpatialPartitioner {
 
   public void setConf(RTreeIndexConfig conf) {
     this.conf = conf;
+    this.rTree = new RTree(this.conf.getSampleSize()/partitionNum);
   }
 
   @Override
@@ -69,6 +69,7 @@ public class RTreePartitioner extends PreBuildSpatialPartitioner {
   @Override
   public <V extends Feature> void build(List<Tuple2<String, V>> samples) {
     this.rTree.insert(samples);
+    this.rTree.finish();
   }
 
   @Override

@@ -5,8 +5,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Objects;
-
 /**
  * @author Hu
  * @date 2020/6/23
