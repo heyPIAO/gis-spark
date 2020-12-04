@@ -3,7 +3,6 @@ package edu.zju.gis.hls.test.partitioner;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.partitioner.DistributeSpatialPartitioner;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
@@ -55,14 +54,10 @@ public class UniformGridPartitionerTest {
     LayerReader<MultiPolygonLayer> provinceLayerReader = LayerFactory.getReader(ss, config);
     MultiPolygonLayer provinceLayer = provinceLayerReader.read();
 
-    provinceLayer.makeSureCached();
-    List r = provinceLayer.collect();
-
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(8));
     KeyIndexedLayer<MultiPolygonLayer> indexedProvinceLayer = si.index(provinceLayer);
 
     indexedProvinceLayer.makeSureCached();
-    List m = indexedProvinceLayer.getLayer().collect();
 
     // 查看均匀格网索引下的 province layer 图层
     printInfo(" ===== INDEXED LAYER START ===== ");
@@ -77,9 +72,10 @@ public class UniformGridPartitionerTest {
       printInfo(String.format("%s: %s", x1, x2.toString()));
     });
 
-    List<Tuple2<String, MultiPolygon>> features = indexedProvinceLayer.getLayer().collect();
-    features.forEach(x->{
-      printInfo(String.format("%s: %s", x._1, x._2));
+    List r = indexedProvinceLayer.getLayer().take(10);
+    r.forEach(x->{
+      Tuple2 t = (Tuple2)x;
+      printInfo(t._1 + "_" + t._2.toString());
     });
 
     printInfo(" ===== INDEXED LAYER FINISH ===== ");
@@ -95,7 +91,7 @@ public class UniformGridPartitionerTest {
   }
 
   public static void printInfo(String s) {
-    System.out.print(s);
+    System.out.println(s);
   }
 
 }

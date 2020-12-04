@@ -1,5 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.index;
 
+import edu.zju.gis.hls.trajectory.analysis.index.equalGrid.EqualGridIndex;
+import edu.zju.gis.hls.trajectory.analysis.index.equalGrid.EqualGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.InnerRTreeIndex;
@@ -24,6 +26,7 @@ public class SpatialIndexFactory {
   public static DistributeSpatialIndex getDistributedSpatialIndex(IndexType type, IndexConfig config) {
     switch (type) {
       case UNIFORM_GRID: return config == null ? new UniformGridIndex():new UniformGridIndex((UniformGridIndexConfig) config);
+      case EQUAL_GRID: return config == null ? new EqualGridIndex():new EqualGridIndex((EqualGridIndexConfig) config);
       default:
         log.error("Unvalid distributed spatial index type");
         throw new UnsupportedOperationException("Unvalid distributed spatial index type");

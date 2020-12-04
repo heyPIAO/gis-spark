@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
-import edu.zju.gis.hls.trajectory.analysis.index.partitioner.DistributeSpatialPartitioner;
+import edu.zju.gis.hls.trajectory.analysis.index.partitioner.SpatialPartitioner;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
@@ -34,8 +34,11 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
 
   @Getter
   @Setter
-  protected DistributeSpatialPartitioner partitioner;
+  protected SpatialPartitioner partitioner;
 
+  public KeyIndexedLayer(SpatialPartitioner partitioner) {
+    this.partitioner = partitioner;
+  }
 
   public LayerMetadata getMetadata() {
     return this.layer.metadata;
@@ -61,9 +64,7 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
     this.indexType = l.getIndexType();
   }
 
-
-
-  public List<String> queryPartitionsIds(Geometry geometry) {
+  public List<String> queryPartitionsKeys(Geometry geometry) {
     return this.partitioner.getKey(geometry);
   }
 

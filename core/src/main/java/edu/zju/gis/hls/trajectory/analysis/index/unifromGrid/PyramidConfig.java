@@ -72,7 +72,7 @@ public class PyramidConfig implements Serializable{
 
         public PyramidConfig build(boolean isLayerConfig) {
             if (checkConfigBuilder(isLayerConfig)) {
-                config.gridSizes = GridUtil.initGridSizes(config.zLevelRange[0], config.zLevelRange[1], config.extent);
+                config.gridSizes = UniformGridUtil.initGridSizes(config.zLevelRange[0], config.zLevelRange[1], config.extent);
                 config.pixelResolution = new double[config.gridSizes.length];
                 int i = 0;
                 for (double gridSize : config.gridSizes) {

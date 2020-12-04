@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
 
 import edu.zju.gis.hls.trajectory.analysis.index.KeyRangeFeature;
-import edu.zju.gis.hls.trajectory.analysis.index.partitioner.SpaceSplitDistributeSpatialPartitioner;
+import edu.zju.gis.hls.trajectory.analysis.index.partitioner.SpaceSplitSpatialPartitioner;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,12 +16,12 @@ import java.util.List;
 /**
  * @author Hu
  * @date 2020/8/24
- * 均匀格网的分区器
+ * 二维均匀格网的分区器
  **/
 @Getter
 @Setter
 @ToString(callSuper = true)
-public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartitioner {
+public class UniformGridPartitioner extends SpaceSplitSpatialPartitioner {
 
   private PyramidConfig pc;
   private UniformGridIndexConfig conf;
@@ -46,25 +46,25 @@ public class UniformGridPartitioner extends SpaceSplitDistributeSpatialPartition
     if (this.keyRanges!= null && this.keyRanges.size() > 0 && this.keyRanges.get(key)!=null) {
       return this.keyRanges.get(key);
     }
-    GridID gridID = GridID.fromString(key);
-    Polygon tileEnvelope = GridUtil.createTileBoxGeo(gridID, pc);
+    UniformGrid uniformGrid = UniformGrid.fromString(key);
+    Polygon tileEnvelope = UniformGridUtil.createTileBoxGeo(uniformGrid, pc);
     return new KeyRangeFeature(key, tileEnvelope, getPartition(key));
   }
 
   @Override
   public List<String> getKey(Geometry geometry) {
     ReferencedEnvelope envelope = JTS.toEnvelope(geometry);
-    ZLevelInfo tZLevelInfo = GridUtil.initZLevelInfoPZ(pc, envelope)[conf.getIndexLevel() - pc.getZLevelRange()[0]];
+    ZLevelInfo tZLevelInfo = UniformGridUtil.initZLevelInfoPZ(pc, envelope)[conf.getIndexLevel() - pc.getZLevelRange()[0]];
     List<String> keys = new ArrayList<>();
     for (int tile_x = tZLevelInfo.getTileRanges()[0]; tile_x <= tZLevelInfo.getTileRanges()[1]; tile_x++) {
       for (int tile_y = tZLevelInfo.getTileRanges()[2]; tile_y <= tZLevelInfo.getTileRanges()[3]; tile_y++) {
-        GridID gridID = new GridID();
-        gridID.setX(tile_x);
-        gridID.setY(tile_y);
-        gridID.setzLevel(z);
-        Polygon tileEnvelope = GridUtil.createTileBoxGeo(gridID, pc);
+        UniformGrid uniformGrid = new UniformGrid();
+        uniformGrid.setX(tile_x);
+        uniformGrid.setY(tile_y);
+        uniformGrid.setzLevel(z);
+        Polygon tileEnvelope = UniformGridUtil.createTileBoxGeo(uniformGrid, pc);
         if (tileEnvelope.intersects(geometry)) {
-          keys.add((new GridID(conf.getIndexLevel(), tile_x, tile_y)).toString());
+          keys.add((new UniformGrid(conf.getIndexLevel(), tile_x, tile_y)).toString());
         }
       }
     }

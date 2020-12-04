@@ -5,7 +5,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.datastore.exception.DataQueryException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.spark.api.java.function.Function;
 import org.locationtech.jts.geom.Geometry;
 
 import java.io.Serializable;

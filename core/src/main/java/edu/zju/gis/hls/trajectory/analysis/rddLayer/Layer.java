@@ -283,15 +283,15 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         // 分区内部先去重
         JavaRDD<String> keys = this.keys().map(x -> (String) x).mapPartitions(new FlatMapFunction<Iterator<String>, String>() {
             @Override
-            public Iterator<String> call(Iterator<String> it) throws Exception {
+            public Iterator<String> call(Iterator<String> it) {
                 List<String> m = IteratorUtils.toList(it);
                 List<String> r = m.stream().distinct().collect(Collectors.toList());
                 return r.iterator();
             }
         });
-
+        List<String> result = keys.collect();
         // collect 之后再去重
-        return keys.collect().stream().distinct().collect(Collectors.toList());
+        return result.stream().distinct().collect(Collectors.toList());
     }
 
     /**

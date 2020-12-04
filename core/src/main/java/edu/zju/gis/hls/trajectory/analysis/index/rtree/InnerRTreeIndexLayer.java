@@ -40,16 +40,11 @@ public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer
 
   @Override
   public InnerRTreeIndexLayer<L> query(Geometry geometry) {
-    List<String> partitionIds = this.layer.queryPartitionsIds(geometry);
+    List<String> partitionIds = this.layer.queryPartitionsKeys(geometry);
     JavaRDD<Tuple2<String, Feature>> t = indexedPartition.filter(m->partitionIds.contains(m._1)).flatMap(new FlatMapFunction<Tuple2<String, RTree>, Tuple2<String, Feature>>() {
       @Override
       public Iterator<Tuple2<String, Feature>> call(Tuple2<String, RTree> in) throws Exception {
-        List<Feature> l = in._2.query(geometry);
-        List<Tuple2<String, Feature>> result = new ArrayList<>();
-        for (Feature f: l) {
-          result.add(new Tuple2<>(in._1, f));
-        }
-        return result.iterator();
+        return (in._2.query(geometry)).iterator();
       }
     });
 

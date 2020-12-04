@@ -23,20 +23,15 @@ import java.util.List;
 @Slf4j
 public class UniformGridIndexLayer<L extends Layer> extends KeyIndexedLayer<L> {
 
-  private PyramidConfig pc;
-  private UniformGridIndexConfig conf;
-
-  public UniformGridIndexLayer(PyramidConfig pc, UniformGridIndexConfig conf) {
+  public UniformGridIndexLayer() {
     super();
     this.indexType = IndexType.UNIFORM_GRID;
-    this.pc = pc;
-    this.conf = conf;
   }
 
   @Override
   public UniformGridIndexLayer<L> query(Geometry geometry) {
 
-    List<String> tiles = this.queryPartitionsIds(geometry);
+    List<String> tiles = this.queryPartitionsKeys(geometry);
     this.layer = (L) this.layer.filterToLayer(new Function<Tuple2, Boolean>() {
       @Override
       public Boolean call(Tuple2 in) throws Exception {
