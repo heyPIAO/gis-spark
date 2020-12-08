@@ -16,6 +16,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Hu
@@ -76,6 +77,11 @@ public class EqualGridPartitioner extends SpaceSplitSpatialPartitioner {
         throw new GISSparkException("Unsupport dimension type for EqualGridPartitioner: " + conf.getDimension());
     }
     return min;
+  }
+
+  @Override
+  public List<KeyRangeFeature> getKeyRangeFeatures(Geometry geometry) {
+    return this.getKey(geometry).stream().map(x->this.getKeyRangeFeature(x)).collect(Collectors.toList());
   }
 
   @Override

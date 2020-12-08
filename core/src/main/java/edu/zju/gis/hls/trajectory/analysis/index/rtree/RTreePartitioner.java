@@ -5,6 +5,7 @@ import edu.zju.gis.hls.trajectory.analysis.index.partitioner.PreBuildSpatialPart
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.util.CrsUtils;
+import edu.zju.gis.hls.trajectory.analysis.util.GeometryUtil;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.locationtech.jts.geom.Polygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -27,8 +29,6 @@ import java.util.stream.Collectors;
 @ToString(callSuper = true)
 @Slf4j
 public class RTreePartitioner extends PreBuildSpatialPartitioner {
-
-  public static String DAUM_NODE_KEY = "DAUM";
 
   private RTree rTree;
   private RTreeIndexConfig conf;
@@ -46,20 +46,36 @@ public class RTreePartitioner extends PreBuildSpatialPartitioner {
 
   public void setConf(RTreeIndexConfig conf) {
     this.conf = conf;
-    this.rTree = new RTree(this.conf.getSampleSize()/partitionNum);
+    this.rTree = new RTree(this.conf.getSampleSize()/partitionNum, this.crs);
+    this.isClip = conf.isClip();
   }
 
+  /**
+   * 重写根据空间范围查询分区方法
+   * @param geometry
+   * @return
+   */
   @Override
-  public List<String> getKey(Geometry geometry) {
-    return this.rTree.query(geometry).stream().
-      map(x->x._1).collect(Collectors.toList());
+  public List<KeyRangeFeature> getKeyRangeFeatures(Geometry geometry) {
+    List<Tuple2<String, Feature>> qs = this.rTree.query(geometry);
+    List<KeyRangeFeature> result = new ArrayList<>();
+    for (Tuple2<String, Feature> q: qs) {
+      result.add(this.generateKeyRangeFeature(q._1, (Polygon)q._2.getGeometry().getEnvelope()));
+    }
+    return result;
   }
 
+  /**
+   * 重写根据key查询对应分区空间范围信息的方法
+   * @param key
+   * @return
+   */
   @Override
   public KeyRangeFeature getKeyRangeFeature(String key) {
-    if (key.equals(DAUM_NODE_KEY)) {
-      log.warn("DAUM node key");
-      return null;
+    if (key.equals(RTree.DAUM_KEY)) {
+      return new KeyRangeFeature(key,
+        GeometryUtil.envelopeToPolygon(CrsUtils.getCrsEnvelope(this.crs)),
+        getPartition(key));
     }
     return new KeyRangeFeature(key,
       (Polygon)(this.rTree.query(key))._2.getGeometry(),
@@ -68,7 +84,7 @@ public class RTreePartitioner extends PreBuildSpatialPartitioner {
 
   @Override
   public <V extends Feature> void build(List<Tuple2<String, V>> samples) {
-    this.rTree.insert(samples);
+    this.rTree.insert(samples.stream().map(x->(Tuple2<String, Feature>)x).collect(Collectors.toList()));
     this.rTree.finish();
   }
 

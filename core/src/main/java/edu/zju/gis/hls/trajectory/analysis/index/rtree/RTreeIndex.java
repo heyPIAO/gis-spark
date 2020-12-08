@@ -11,6 +11,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Serializable;
 import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,6 +44,15 @@ public class RTreeIndex implements DistributeSpatialIndex, Serializable {
     return this.index(layer, withKeyRanges, layer.context().defaultParallelism());
   }
 
+  /**
+   * Index 过程包括两个步骤：（1）构建分区器；（2）将数据根据分区规则重新散列
+   * @param layer
+   * @param withKeyRanges
+   * @param numPartitions
+   * @param <L>
+   * @param <T>
+   * @return
+   */
   @Override
   public <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer, boolean withKeyRanges, int numPartitions) {
     CoordinateReferenceSystem crs = layer.getMetadata().getCrs();
@@ -51,7 +61,11 @@ public class RTreeIndex implements DistributeSpatialIndex, Serializable {
     partitioner.setCrs(crs);
     layer.makeSureCached();
     List<Tuple2<String, Feature>> samples = layer.takeSample(false, c.getSampleSize());
-    partitioner.build(samples);
+    List<Tuple2<String, Feature>> rsamples = new ArrayList<>();
+    for (int i=0; i< samples.size(); i++) {
+      rsamples.add(new Tuple2<String, Feature>(String.valueOf(i), samples.get(i)._2));
+    }
+    partitioner.build(rsamples);
     RTreeIndexLayer<L> result = new RTreeIndexLayer<L>(partitioner);
     L klayer = (L) layer.flatMapToLayer(partitioner).partitionByToLayer(partitioner);
     result.setLayer(klayer);

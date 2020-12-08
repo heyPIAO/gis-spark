@@ -6,8 +6,6 @@ import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
-import edu.zju.gis.hls.trajectory.analysis.index.rtree.InnerRTreeIndex;
-import edu.zju.gis.hls.trajectory.analysis.index.rtree.InnerRTreeIndexConfig;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,7 +19,7 @@ public class SpatialIndexFactory {
     return SpatialIndexFactory.getDistributedSpatialIndex(type, null);
   }
 
-  public static InnerSpatialIndex getInnerSpatialIndex(IndexType type) {
+  public static SpatialIndex getInnerSpatialIndex(IndexType type) {
     return SpatialIndexFactory.getInnerSpatialIndex(type, null);
   }
 
@@ -36,9 +34,9 @@ public class SpatialIndexFactory {
     }
   }
 
-  public static InnerSpatialIndex getInnerSpatialIndex(IndexType type, IndexConfig config) {
+  public static SpatialIndex getInnerSpatialIndex(IndexType type, IndexConfig config) {
     switch (type) {
-      case RTREE: return config == null ? new InnerRTreeIndex():new InnerRTreeIndex((InnerRTreeIndexConfig) config);
+      case RTREE: return config == null ? new RTreeIndex():new RTreeIndex((RTreeIndexConfig) config);
       default:
         log.error("Unvalid inner spatial index type");
         throw new UnsupportedOperationException("Unvalid inner spatial index type");

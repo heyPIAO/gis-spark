@@ -12,6 +12,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Hu
@@ -39,6 +40,11 @@ public class UniformGridPartitioner extends SpaceSplitSpatialPartitioner {
 
   public UniformGridPartitioner(PyramidConfig pc, int partitionNum) {
     this(pc, new UniformGridIndexConfig(), partitionNum);
+  }
+
+  @Override
+  public List<KeyRangeFeature> getKeyRangeFeatures(Geometry geometry) {
+    return this.getKey(geometry).stream().map(x->this.getKeyRangeFeature(x)).collect(Collectors.toList());
   }
 
   @Override

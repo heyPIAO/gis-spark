@@ -7,6 +7,7 @@ import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Serializable;
 import scala.Tuple2;
 
@@ -20,13 +21,14 @@ import java.util.*;
  **/
 public class InnerRTreeIndex implements InnerSpatialIndex, Serializable {
 
-  private InnerRTreeIndexConfig conf;
+  private RTreeIndexConfig conf;
+  private CoordinateReferenceSystem crs;
 
   public InnerRTreeIndex() {
-    this(new InnerRTreeIndexConfig());
+    this(new RTreeIndexConfig());
   }
 
-  public InnerRTreeIndex(InnerRTreeIndexConfig conf) {
+  public InnerRTreeIndex(RTreeIndexConfig conf) {
     this.conf = conf;
   }
 
@@ -63,7 +65,7 @@ public class InnerRTreeIndex implements InnerSpatialIndex, Serializable {
         gridId = m._1;
         Class c = m._2.getClass();
 //        LayerType lt = LayerType.findLayerType(FeatureType.getFeatureType(c.getName()));
-        rTree = new RTree(1000);
+        rTree = new RTree(1000, crs);
         rTree.insert(m._2.getGeometry().getEnvelopeInternal(), m._1, m._2);
       } else {
         return result.iterator();

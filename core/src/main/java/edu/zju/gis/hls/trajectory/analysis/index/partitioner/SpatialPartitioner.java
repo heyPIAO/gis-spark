@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.apache.spark.Partitioner;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.util.Utils;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.TopologyException;
@@ -50,35 +51,22 @@ public abstract class SpatialPartitioner extends Partitioner
    * @param geometry
    * @return
    */
-  public abstract List<String> getKey(Geometry geometry);
+  public List<String> getKey(Geometry geometry) {
+    return this.getKeyRangeFeatures(geometry).stream().map(x->x.getFid()).collect(Collectors.toList());
+  }
 
-  /**
-   * 根据 Feature 获取对应的 key
-   * @param feature
-   * @return
-   */
-  public List<Tuple2<String, Feature>> getKey(Feature feature) {
-    return this.getKey(feature.getGeometry()).stream().map(x->new Tuple2<>(x, feature)).collect(Collectors.toList());
+  public List<String> getKey(Feature feature) {
+    return this.getKey(feature.getGeometry());
   }
 
   /**
    * 获取与Geometry相交的分区 grid 的 Partition Range Feature
-   * 一个 geometry 可能会覆盖多个分区 Grid
+   * 一个 geometry 可能会覆盖多个分区
    * @param geometry
    * @return
    */
-  public List<KeyRangeFeature> getKeyRangeFeatures(Geometry geometry) {
-    return this.getKey(geometry).stream().map(x->this.getKeyRangeFeature(x)).collect(Collectors.toList());
-  }
+  public abstract List<KeyRangeFeature> getKeyRangeFeatures(Geometry geometry);
 
-  public List<KeyRangeFeature> getKeyRangeFeatures(Feature feature) {
-    return this.getKeyRangeFeatures(feature.getGeometry());
-  }
-
-  @Override
-  public int numPartitions() {
-    return this.partitionNum;
-  }
 
   /**
    * 获取指定分区 key 的区域
@@ -86,6 +74,25 @@ public abstract class SpatialPartitioner extends Partitioner
    * @return
    */
   public abstract KeyRangeFeature getKeyRangeFeature(String key);
+
+  public List<KeyRangeFeature> getKeyRangeFeatures(Feature feature) {
+    return this.getKeyRangeFeatures(feature.getGeometry());
+  }
+
+  /**
+   * 生成分区空间范围表达 Feature
+   * @param key
+   * @param p
+   * @return
+   */
+  public KeyRangeFeature generateKeyRangeFeature(String key, Polygon p) {
+    return new KeyRangeFeature(key, p, this.getPartition(key));
+  }
+
+  @Override
+  public int numPartitions() {
+    return this.partitionNum;
+  }
 
   /**
    * 根据分区key获取分区序号，与 HashPartition 原理上一致

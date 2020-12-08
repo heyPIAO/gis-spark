@@ -34,6 +34,11 @@ public class RTreeIndexConfig extends IndexConfig {
     this.sampleSize = sampleSize;
   }
 
+  public RTreeIndexConfig(RTreeIndexConfig config) {
+    this.isClip = config.isClip;
+    this.sampleSize = config.sampleSize;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

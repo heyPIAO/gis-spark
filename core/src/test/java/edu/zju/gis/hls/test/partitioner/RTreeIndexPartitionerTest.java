@@ -30,7 +30,7 @@ public class RTreeIndexPartitionerTest {
   public static void main(String[] args) throws Exception {
 
     SparkSession ss = SparkSession.builder()
-      .master("local[4]")
+      .master("local[1]")
       .appName("RTreePartitionerTest")
       .getOrCreate();
 
@@ -74,8 +74,10 @@ public class RTreeIndexPartitionerTest {
       printInfo(String.format("%s: %s", x1, x2.toString()));
     });
 
+    indexedProvinceLayer.makeSureCached();
+
     List<Tuple2<String, MultiPolygon>> r = indexedProvinceLayer.getLayer().take(10);
-    r.forEach(x->printInfo(x._1 + "_" + x._2.toString()));
+    r.forEach(x->printInfo(x._1 + "\t" + x._2.toString()));
 
     printInfo(" ===== INDEXED LAYER FINISH ===== ");
 

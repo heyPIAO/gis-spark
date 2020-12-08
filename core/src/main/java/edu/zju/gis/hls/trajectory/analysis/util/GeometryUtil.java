@@ -37,6 +37,10 @@ public class GeometryUtil {
        }
    }
 
+   public static Polygon envelopeToPolygon(Envelope e) {
+     return (Polygon)gf.toGeometry(e);
+   }
+
    public static Geometry createBBox(Double xmin, Double xmax, Double ymin, Double ymax) {
        return gf.toGeometry(new Envelope(xmin, xmax, ymin, ymax));
    }
