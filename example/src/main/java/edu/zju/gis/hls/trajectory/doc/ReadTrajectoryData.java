@@ -24,7 +24,7 @@ public class ReadTrajectoryData {
         SparkSession ss = SparkSqlUtil.createSparkSessionWithSqlExtent(SparkSessionType.LOCAL, "ReadTrajectoryData");
 
         FileLayerReaderConfig layerReaderConfig = new FileLayerReaderConfig();
-        layerReaderConfig.setSourcePath("file:///home/DaLunWen/data/trajectory/test_10_wkt/part-00001");
+        layerReaderConfig.setSourcePath("file:///E://2020data/part-00001");
         layerReaderConfig.setLayerType(LayerType.TRAJECTORY_POINT_LAYER);
         layerReaderConfig.setLayerName("CarTripPointLayer");
 

@@ -9,7 +9,8 @@ import lombok.Getter;
 @Getter
 public enum IndexType {
 
-  UNIFORM_GRID("uniform_grid", 0), RTREE("rtree", 1), EQUAL_GRID("equal_grid", 5);
+  UNIFORM_GRID("uniform_grid", 0), RTREE("rtree", 1),
+  QUAD_TREE("quad_tree",2),EQUAL_GRID("equal_grid", 5);
 
   IndexType(String name, int type) {
     this.name = name;
