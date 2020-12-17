@@ -237,6 +237,10 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
         return this.initialize(this, this.repartition(this.getNumPartitions()).rdd());
     }
 
+    public Layer<K, V> mapPartitionsToLayer(PairFlatMapFunction f) {
+        return this.initialize(this, this.mapPartitionsToPair(f).rdd());
+    }
+
     public Layer<K, V> partitionByToLayer(Partitioner partitioner) {
         return this.initialize(this, this.partitionBy(partitioner).rdd());
     }

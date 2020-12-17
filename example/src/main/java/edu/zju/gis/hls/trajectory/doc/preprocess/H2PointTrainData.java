@@ -14,9 +14,12 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.SparkSession;
+import scala.Tuple2;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Iterator;
 
 /**
  * @author Hu
@@ -40,8 +43,14 @@ public class H2PointTrainData {
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridConfig(4, 2));
     KeyIndexedLayer<TrajectoryPointLayer> indexedLayer = si.index(layer);
     TrajectoryPointLayer trajectoryPointLayer = indexedLayer.getLayer();
-    JavaPairRDD<String, Iterable<TimedPoint>> layer2 = trajectoryPointLayer.mapPartitions
-
+    trajectoryPointLayer = (TrajectoryPointLayer) trajectoryPointLayer.mapPartitionsToLayer(new PairFlatMapFunction<Iterator<Tuple2<String, TimedPoint>>, String, Iterable<TimedPoint>>() {
+      @Override
+      public Iterator<Tuple2<String, Iterable<TimedPoint>>> call(Iterator<Tuple2<String, TimedPoint>> tuple2Iterator) throws Exception {
+        // TODO 在格网内部，根据时间戳进行排序，并添加到index字段中
+        
+        return null;
+      }
+    });
 
   }
 
