@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.doc;
+package edu.zju.gis.hls.trajectory.doc.core;
 
 import edu.zju.gis.hls.trajectory.analysis.index.hilbertcurve.HilbertCurve;
 import edu.zju.gis.hls.trajectory.analysis.util.CrsUtils;
