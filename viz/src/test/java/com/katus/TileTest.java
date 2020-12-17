@@ -1,9 +1,8 @@
 package com.katus;
 
 import edu.zju.gis.hls.trajectory.PyramidTileGenerator;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndex;
-import edu.zju.gis.hls.trajectory.analysis.model.Feature;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.PyramidConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndex;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.*;
@@ -48,8 +47,8 @@ public class TileTest {
 //        layer.analyze();
 //        LayerMetadata meta = layer.getMetadata();
         // index the layer
-        UniformGridIndex uniformGridIndex = new UniformGridIndex();
-        KeyIndexedLayer<MultiPolygonLayer> qLayer = uniformGridIndex.index(layer);
+        RectGridIndex rectGridIndex = new RectGridIndex();
+        KeyIndexedLayer<MultiPolygonLayer> qLayer = rectGridIndex.index(layer);
         // build the pyramid
         PyramidConfig.PyramidConfigBuilder builder = new PyramidConfig.PyramidConfigBuilder();
         PyramidConfig pyramidConfig = builder

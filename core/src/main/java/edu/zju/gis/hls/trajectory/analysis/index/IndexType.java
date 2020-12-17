@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 public enum IndexType {
 
-  UNIFORM_GRID("uniform_grid", 0), RTREE("rtree", 1), EQUAL_GRID("equal_grid", 5);
+  RECT_GRID("rect_grid", 0), RTREE("rtree", 1), EQUAL_GRID("equal_grid", 5), UNIFORM_GRID("uniform_grid", 2);
 
   IndexType(String name, int type) {
     this.name = name;
@@ -20,7 +20,7 @@ public enum IndexType {
   private int type;
 
   public static IndexType Default() {
-    return UNIFORM_GRID;
+    return RECT_GRID;
   }
 
 }

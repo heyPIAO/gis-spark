@@ -5,16 +5,14 @@ import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.StatLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function2;
@@ -75,7 +73,7 @@ public class LandFlowAnalysis3D extends BaseModel<LandFlowAnalysis3DArgs> {
       }
     });
 
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RECT_GRID, new RectGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
 
     KeyIndexedLayer indexedLayer1 = si.index(gareaLayer1);
     KeyIndexedLayer indexedLayer2 = si.index(gareaLayer2);

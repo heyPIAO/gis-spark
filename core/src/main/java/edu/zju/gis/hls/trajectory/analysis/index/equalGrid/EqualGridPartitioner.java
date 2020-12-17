@@ -34,6 +34,7 @@ public class EqualGridPartitioner extends SpaceSplitSpatialPartitioner {
   public EqualGridPartitioner(int partitionNum) {
     super(partitionNum);
     this.conf = new EqualGridIndexConfig(partitionNum);
+    this.isClip = this.conf.isClip();
   }
 
   public void setCrs(CoordinateReferenceSystem crs) {

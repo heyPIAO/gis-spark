@@ -15,6 +15,7 @@
         <module>viz</module>
         <module>tool</module>
         <module>sql</module>
+        <module>dl</module>
     </modules>
 
     <properties>

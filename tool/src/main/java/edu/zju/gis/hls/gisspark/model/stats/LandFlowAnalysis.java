@@ -5,7 +5,7 @@ import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.model.MultiPolygon;
 import edu.zju.gis.hls.trajectory.analysis.model.Point;
@@ -61,7 +61,7 @@ public class LandFlowAnalysis extends BaseModel<LandFlowAnalysisArgs> implements
         MultiPolygonLayer xz2dLayer = this.read2dLayer(ss, xz2dReaderConfig);
         xz2dLayer.cache();
 
-        DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
+        DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RECT_GRID, new RectGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
 
         KeyIndexedLayer<MultiPolygonLayer> l1 = si.index(xz2dLayer, false);
         KeyIndexedLayer<MultiPolygonLayer> l2 = si.index(tb3dLayer, false);

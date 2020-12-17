@@ -4,8 +4,10 @@ import edu.zju.gis.hls.trajectory.analysis.index.equalGrid.EqualGridIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.equalGrid.EqualGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndexConfig;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndex;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndex;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.uniformGrid.UniformGridConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.uniformGrid.UniformGridIndex;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -25,8 +27,9 @@ public class SpatialIndexFactory {
 
   public static DistributeSpatialIndex getDistributedSpatialIndex(IndexType type, IndexConfig config) {
     switch (type) {
-      case UNIFORM_GRID: return config == null ? new UniformGridIndex():new UniformGridIndex((UniformGridIndexConfig) config);
+      case RECT_GRID: return config == null ? new RectGridIndex():new RectGridIndex((RectGridIndexConfig) config);
       case EQUAL_GRID: return config == null ? new EqualGridIndex():new EqualGridIndex((EqualGridIndexConfig) config);
+      case UNIFORM_GRID: return config == null ? new UniformGridIndex():new UniformGridIndex((UniformGridConfig) config);
       case RTREE: return config == null ? new RTreeIndex():new RTreeIndex((RTreeIndexConfig) config);
       default:
         log.error("Unvalid distributed spatial index type");

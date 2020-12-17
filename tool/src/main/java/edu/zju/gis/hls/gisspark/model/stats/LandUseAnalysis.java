@@ -5,7 +5,7 @@ import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.Term;
@@ -103,8 +103,8 @@ public class LandUseAnalysis extends BaseModel<LandUseAnalysisArgs> {
             }
         });
 
-        DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID,
-                new UniformGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
+        DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RECT_GRID,
+                new RectGridIndexConfig(DEFAULT_INDEX_LEVEL, false));
         KeyIndexedLayer indexedLayer = si.index(targetLayer);
         KeyIndexedLayer extendIndexedLayer = si.index(extendLayer);
 

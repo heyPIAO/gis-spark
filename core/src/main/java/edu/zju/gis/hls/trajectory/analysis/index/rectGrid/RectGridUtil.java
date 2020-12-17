@@ -1,4 +1,4 @@
-package edu.zju.gis.hls.trajectory.analysis.index.unifromGrid;
+package edu.zju.gis.hls.trajectory.analysis.index.rectGrid;
 
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.*;
@@ -10,7 +10,7 @@ import static edu.zju.gis.hls.trajectory.analysis.model.Term.SCREEN_TILE_SIZE;
 /**
  * Created by ylj on 2017/10/10.
  */
-public class UniformGridUtil implements Serializable {
+public class RectGridUtil implements Serializable {
 
     /**
      * 获取地图数据在基准地图中所覆盖的所有瓦片信息，且是每一层级的瓦片信息
@@ -40,49 +40,49 @@ public class UniformGridUtil implements Serializable {
      * @param zLevelInfos       地图数据的层级信息
      * @return
      */
-    public static UniformGrid getTileID(long index, int zMin, ZLevelInfo[] zLevelInfos){
-        UniformGrid uniformGrid = null;
+    public static Grid getTileID(long index, int zMin, ZLevelInfo[] zLevelInfos){
+        Grid grid = null;
         int leng = zLevelInfos.length;
         for (int z = 0; z < leng; z ++){
             if (index >= zLevelInfos[z].getTotalCount()){
                 index -= zLevelInfos[z].getTotalCount();
             }else{
-                uniformGrid = new UniformGrid();
-                uniformGrid.setzLevel(z + zMin);
+                grid = new Grid();
+                grid.setzLevel(z + zMin);
                 int width = (zLevelInfos[z].getTileRanges()[1]-zLevelInfos[z].getTileRanges()[0]);
                 int x = (int)(index  % width);
                 int y = (int)((index - x) / width);
-                uniformGrid.setX(x + zLevelInfos[z].getTileRanges()[0]);
-                uniformGrid.setY(y + zLevelInfos[z].getTileRanges()[2]);
+                grid.setX(x + zLevelInfos[z].getTileRanges()[0]);
+                grid.setY(y + zLevelInfos[z].getTileRanges()[2]);
                 break;
             }
         }
-        return uniformGrid;
+        return grid;
     }
 
     /**
      * 构建瓦片所对应的空间范围
-     * @param uniformGrid
+     * @param grid
      * @param pyramidConfig
      * @return
      */
-    public static Envelope createTileBox(UniformGrid uniformGrid, PyramidConfig pyramidConfig){
+    public static Envelope createTileBox(Grid grid, PyramidConfig pyramidConfig){
         Envelope baseEnv = pyramidConfig.getBaseMapEnv();
-        double minX = baseEnv.getMinX() + pyramidConfig.getGridSize(uniformGrid.getzLevel()) * uniformGrid.getX();
-        double maxX = baseEnv.getMinX() + pyramidConfig.getGridSize(uniformGrid.getzLevel()) * (uniformGrid.getX() + 1);
-        double minY = baseEnv.getMinY() + pyramidConfig.getGridSize(uniformGrid.getzLevel()) * uniformGrid.getY();
-        double maxY = baseEnv.getMinY() + pyramidConfig.getGridSize(uniformGrid.getzLevel()) * (uniformGrid.getY() + 1);
+        double minX = baseEnv.getMinX() + pyramidConfig.getGridSize(grid.getzLevel()) * grid.getX();
+        double maxX = baseEnv.getMinX() + pyramidConfig.getGridSize(grid.getzLevel()) * (grid.getX() + 1);
+        double minY = baseEnv.getMinY() + pyramidConfig.getGridSize(grid.getzLevel()) * grid.getY();
+        double maxY = baseEnv.getMinY() + pyramidConfig.getGridSize(grid.getzLevel()) * (grid.getY() + 1);
         return new Envelope(minX, maxX, minY, maxY);
     }
 
     /**
      * 构建瓦片所对应的空间范围
-     * @param uniformGrid
+     * @param grid
      * @param pyramidConfig
      * @return
      */
-    public static Polygon createTileBoxGeo(UniformGrid uniformGrid, PyramidConfig pyramidConfig){
-        return JTS.toGeometry(createTileBox(uniformGrid, pyramidConfig));
+    public static Polygon createTileBoxGeo(Grid grid, PyramidConfig pyramidConfig){
+        return JTS.toGeometry(createTileBox(grid, pyramidConfig));
     }
 
     /**

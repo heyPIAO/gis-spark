@@ -73,7 +73,7 @@ public class TrajectoryPointLayerDemo {
     Envelope e = new Envelope(120.0826484129990348, 120.2443047286111408, 30.2467093379181975, 30.3120984094017416);
 
     // construct spatial index
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID);
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RECT_GRID);
     IndexedLayer<TrajectoryPointLayer> til = si.index(layer);
     til = til.query(JTS.toGeometry(e));
     TrajectoryPointLayer layer0 = til.toLayer();

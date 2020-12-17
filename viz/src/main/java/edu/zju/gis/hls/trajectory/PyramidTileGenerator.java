@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory;
 
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.RasterImage;

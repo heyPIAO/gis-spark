@@ -5,7 +5,7 @@ import edu.zju.gis.hls.gisspark.model.args.ClipArgs;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.UniformGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.operate.ClipOperator;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.IndexedLayer;
@@ -51,7 +51,7 @@ public class Clip extends BaseModel<ClipArgs> {
     Layer result = null;
 
     if (this.arg.getIndexBaseLayer()) {
-      DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridIndexConfig(4));
+      DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RECT_GRID, new RectGridIndexConfig(4));
       IndexedLayer il = si.index(layer2);
       result = clip.run(fs, il);
     } else {

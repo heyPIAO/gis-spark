@@ -3,10 +3,8 @@ package edu.zju.gis.hls.test.partitioner;
 import edu.zju.gis.hls.trajectory.analysis.index.DistributeSpatialIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.IndexType;
 import edu.zju.gis.hls.trajectory.analysis.index.SpatialIndexFactory;
-import edu.zju.gis.hls.trajectory.analysis.index.uniformGrid.UniformGridConfig;
-import edu.zju.gis.hls.trajectory.analysis.model.Field;
-import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
-import edu.zju.gis.hls.trajectory.analysis.model.Term;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.MultiPolygonLayer;
@@ -14,6 +12,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
 import org.opengis.referencing.FactoryException;
 import scala.Tuple2;
@@ -23,16 +22,17 @@ import java.util.List;
 
 /**
  * @author Hu
- * @date 2020/12/11
+ * @date 2020/8/25
  **/
-public class UniformGridPartitionerTest {
+@Slf4j
+public class RectGridPartitionerTest {
 
   public static void main(String[] args) throws FactoryException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
 
 
     SparkSession ss = SparkSession.builder()
-      .master("local[1]")
-      .appName("UniformGridParitionerTest")
+      .master("local[4]")
+      .appName("RectGridParitionerTest")
       .getOrCreate();
 
     Field shapeField = Term.FIELD_DEFAULT_SHAPE;
@@ -54,7 +54,7 @@ public class UniformGridPartitionerTest {
     LayerReader<MultiPolygonLayer> provinceLayerReader = LayerFactory.getReader(ss, config);
     MultiPolygonLayer provinceLayer = provinceLayerReader.read();
 
-    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridConfig(2, 2));
+    DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.RECT_GRID, new RectGridIndexConfig(8));
     KeyIndexedLayer<MultiPolygonLayer> indexedProvinceLayer = si.index(provinceLayer);
 
     indexedProvinceLayer.makeSureCached();
@@ -93,6 +93,5 @@ public class UniformGridPartitionerTest {
   public static void printInfo(String s) {
     System.out.println(s);
   }
-
 
 }

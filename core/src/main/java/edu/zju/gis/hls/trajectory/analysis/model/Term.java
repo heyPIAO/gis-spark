@@ -2,7 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.model;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import edu.zju.gis.hls.trajectory.analysis.index.unifromGrid.PyramidConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.PyramidConfig;
 import edu.zju.gis.hls.trajectory.analysis.util.CustomGeometryFactory;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
 import edu.zju.gis.hls.trajectory.datastore.serializer.CRSJsonSerializer;
