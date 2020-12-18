@@ -15,7 +15,9 @@ import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
@@ -58,8 +60,19 @@ public class ShpDataReader extends DataReader {
     try {
       this.shpDataStore = new ShapefileDataStore(file.toURI().toURL());
       // 设置编码
-      Charset charset = Charset.forName("UTF-8");
-      this.shpDataStore.setCharset(charset);
+//      Charset charset = Charset.forName("UTF-8");
+//      this.shpDataStore.setCharset(charset);
+
+      File cpgFile = new File(filename.replace(".shp",".cpg"));
+      if(cpgFile.exists()){
+        FileReader fr = new FileReader(filename.replace(".shp",".cpg"));
+        BufferedReader bf = new BufferedReader(fr);
+        Charset charset = Charset.forName(bf.readLine());
+        this.shpDataStore.setCharset(charset);
+      }else{
+        Charset charset = Charset.forName("UTF-8");
+        this.shpDataStore.setCharset(charset);
+      }
       String typeName = this.shpDataStore.getTypeNames()[0]; // 获取第一层图层名
       SimpleFeatureSource featureSource = this.shpDataStore.getFeatureSource (typeName);
       FeatureCollection<SimpleFeatureType, SimpleFeature> collection = featureSource.getFeatures();
