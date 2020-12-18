@@ -103,7 +103,7 @@ public class ShpLayerReader<T extends Layer> extends LayerReader<T> {
 
                     LinkedHashMap<Field, Object> attributes = new LinkedHashMap<>();
 
-                    Field[] keys = readerConfig.getAttributes();
+                    Field[] keys = readerConfig.getAttributes();//TODO:读取所有字段
 
                     for (Field key : keys) {
                         Object shpField = sf.getAttribute(key.getName());

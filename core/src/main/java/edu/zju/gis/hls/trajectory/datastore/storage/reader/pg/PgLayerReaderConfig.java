@@ -23,6 +23,9 @@ public class PgLayerReaderConfig extends LayerReaderConfig {
   private String username;
   private String password;
   private String filter = "1=1"; // 过滤条件
+  private Integer fetchSize = 1000; // 每次往返提取的行数 仅对读取生效
+  private Integer batchSize = 1000; // 每次往返插入的行数 仅对写入生效
+  private Integer numPartitions = 8; // 分区数
 
   @Override
   public boolean check() {

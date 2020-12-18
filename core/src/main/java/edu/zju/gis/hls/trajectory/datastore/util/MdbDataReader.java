@@ -45,6 +45,7 @@ public class MdbDataReader extends DataReader {
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
 //    gdal.SetConfigOption("SHAPE_ENCODING", "CP936");
         gdal.SetConfigOption("SHAPE_ENCODING", "GBK");
+
     }
 
     @Override

@@ -174,14 +174,43 @@ public class PgLayerReader<T extends Layer> extends LayerReader<T> {
 
     protected Dataset<Row> readFromSource() {
         String dbtableSql = String.format("(%s) as %s_t", this.getReaderConfig().getFilterSql(), this.readerConfig.getDbtable());
-        return this.ss.read().format("jdbc")
+        Dataset<Row> tempDf = this.ss.read().format("jdbc")
                 .option("url", this.readerConfig.getSourcePath())
                 .option("dbtable", dbtableSql)
                 .option("user", this.readerConfig.getUsername())
                 .option("password", this.readerConfig.getPassword())
                 .option("continueBatchOnError", true)
-                .option("pushDownPredicate", true) // 默认请求下推
+                .option("pushDownPredicate", true)
+                .option("fetchsize", this.readerConfig.getFetchSize())
+//                .option("partitionColumn",this.readerConfig.getIdField().getName())
+//              users need to specify all or none for the following options: 'partitionColumn', 'lowerBound', 'upperBound', and 'numPartitions'
                 .load();
+        long total = tempDf.count();
+        log.info("Total record: " + total);
+        Properties connectionProps = new Properties();
+        connectionProps.put("user", this.readerConfig.getUsername());
+        connectionProps.put("password", this.readerConfig.getPassword());
+        connectionProps.put("driver", "org.postgresql.Driver");
+        return this.ss.read()
+                .option("continueBatchOnError", true)
+                .option("pushDownPredicate", true)
+                .option("fetchsize", this.readerConfig.getFetchSize())
+                .option("batchsize", this.readerConfig.getBatchSize())
+                .jdbc(this.readerConfig.getSourcePath(),
+                        dbtableSql,
+                        getPredicates(total, this.readerConfig.getNumPartitions()),
+                        connectionProps);
+    }
+
+    private static String[] getPredicates(long total, int num) {
+        long interval = total % num == 0 ? total / num : total / num + 1;
+        long offset = 0;
+        String[] result = new String[num];
+        for (int i = 0; i < num; i++) {
+            result[i] = "1=1 LIMIT " + interval + " OFFSET " + offset;
+            offset += interval;
+        }
+        return result;
     }
 
     protected void checkReaderConfig() {

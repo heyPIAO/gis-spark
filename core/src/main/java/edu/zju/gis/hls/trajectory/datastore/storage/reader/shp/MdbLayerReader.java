@@ -64,7 +64,7 @@ public class MdbLayerReader<T extends Layer> extends LayerReader<T> {
       @Override
       public Iterator<Tuple2<String, Feature>> call(String s) throws Exception {
         List<Tuple2<String, Feature>> result = new ArrayList<>();
-        MdbDataReader reader = new MdbDataReader(s, readerConfig.getTargetLayerName());
+        MdbDataReader reader = new MdbDataReader(s, readerConfig.getTargetLayerName());//TODO:
         reader.init();
         org.gdal.ogr.Feature sf = reader.nextFeature();
         WKTReader2 wktReader = new WKTReader2();

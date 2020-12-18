@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -156,6 +157,11 @@ public  class MongoHelper implements JDBCHelper {
   @Override
   public boolean runSQL(String sql) {
     throw new GISSparkException("Under developing");
+  }
+
+  @Override
+  public ResultSet select(String sql) {
+    return null;
   }
 
   @Override

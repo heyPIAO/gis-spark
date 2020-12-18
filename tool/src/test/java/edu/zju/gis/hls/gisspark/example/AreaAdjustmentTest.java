@@ -5,6 +5,14 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.analysis.model.FieldType;
 import lombok.extern.slf4j.Slf4j;
+import org.geotools.geometry.jts.GeometryClipper;
+import org.geotools.geometry.jts.LiteCoordinateSequenceFactory;
+import org.geotools.geometry.jts.WKTReader2;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
 
 import java.util.ArrayList;
 import java.util.List;

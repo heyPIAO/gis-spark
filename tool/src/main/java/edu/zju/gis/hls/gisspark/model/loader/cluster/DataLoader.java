@@ -1,6 +1,5 @@
 package edu.zju.gis.hls.gisspark.model.loader.cluster;
 
-import com.google.gson.Gson;
 import edu.zju.gis.hls.gisspark.model.BaseModel;
 import edu.zju.gis.hls.gisspark.model.args.DataLoaderArgs;
 import edu.zju.gis.hls.gisspark.model.util.SparkSessionType;
@@ -13,8 +12,6 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.geotools.referencing.CRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * @author Hu
@@ -52,7 +49,7 @@ public class DataLoader<A extends DataLoaderArgs> extends BaseModel<A> {
             layer.analyze();
             metadata = layer.getMetadata();
             log.info(metadata.getAttributes().toString());
-            storeMetadata(metadata);
+            //storeMetadata(metadata);
 
             LayerWriter writer = LayerFactory.getWriter(ss, writerConfig);
             writer.write(layer);

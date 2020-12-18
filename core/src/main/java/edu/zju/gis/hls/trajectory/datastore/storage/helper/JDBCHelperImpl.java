@@ -7,6 +7,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.config.JDBCHelperConfig;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
+import org.locationtech.jts.geom.Geometry;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -133,6 +134,8 @@ public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBC
         }
     }
 
+
+
     protected String initUrl() {
         StringBuilder sb = new StringBuilder(this.dbUrl());
         if (sb.lastIndexOf("?") == -1) {
@@ -256,6 +259,20 @@ public abstract class JDBCHelperImpl<T extends JDBCHelperConfig> implements JDBC
             e.printStackTrace();
             throw new GISSparkException("JDBCHelper execute sql failed: " + sql);
         }
+    }
+
+    public ResultSet select(String sql){
+        log.info("SQL: " + sql);
+        try{
+            this.statement = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            this.statement.setFetchSize(Integer.MIN_VALUE); // streaming read
+            this.resultSet = this.statement.executeQuery();
+            return this.resultSet;
+        }catch(SQLException e){
+            e.printStackTrace();
+            throw new GISSparkException("JDBCHelper execute sql failed: " + sql);
+        }
+
     }
 
     private void closeConn() {

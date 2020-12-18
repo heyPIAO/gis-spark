@@ -79,24 +79,30 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 Field bsmF = new Field("lx_id");
                 Field dlbmF = new Field("lx_dlbm");
                 Field mjF = new Field("lx_mj");
+                Field dlbzF = new Field("lx_dlbz");
                 Field wktF = new Field("lx_wkt");
                 mjF.setType(Double.class);
                 if (!in._2._2.isPresent()) {/**/
                     f.addAttribute(bsmF, "NO_DATA");
                     f.addAttribute(dlbmF, "NO_DATA");
                     f.addAttribute(mjF, 0.0);
+                    f.addAttribute(dlbzF, "");
                     f.addAttribute(wktF, "NO_DATA");
                 } else {
                     Feature lx = in._2._2.get();
+                    String a = String.valueOf(lx.getAttribute("DLBZ"));
+                    if (a.contains("POINT"))
+                        log.error("ssda");
                     f.addAttribute(bsmF, lx.getAttribute("BSM"));
                     f.addAttribute(dlbmF, lx.getAttribute("DLBM"));
                     f.addAttribute(mjF, lx.getAttribute("MJ"));
+                    f.addAttribute(dlbzF, lx.getAttribute("DLBZ"));
                     f.addAttribute(wktF, lx.getGeometryWkt());
                 }
-                if (f.getAttributes().size() != 10) {
-                    int size = f.getAttributes().size();
-                    log.error("DLTB JOIN LXDW Size Error, error size :" + size);
-                }
+//                if (f.getAttributes().size() != 12) {
+//                    int size = f.getAttributes().size();
+//                    log.error("DLTB JOIN LXDW Size Error, error size :" + size);
+//                }
                 return new Tuple2<>(StringUtils.join(keys, "##"), f);
             }
         });
@@ -107,10 +113,10 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 String[] kf = new String[2];
                 kf[0] = o._2.getAttribute("KCTBDWDM1").toString();
                 kf[1] = o._2.getAttribute("KCTBBH1").toString();
-                if (o._2.getAttributes().size() != 9) {
-                    int size = o._2.getAttributes().size();
-                    log.error("XZDW Field Size Error, error size :" + size);
-                }
+//                if (o._2.getAttributes().size() != 9) {
+//                    int size = o._2.getAttributes().size();
+//                    log.error("XZDW Field Size Error, error size :" + size);
+//                }
                 return new Tuple2<>(StringUtils.join(kf, "##"), o._2);
             }
         });
@@ -121,10 +127,10 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 String[] kf = new String[2];
                 kf[0] = o._2.getAttribute("KCTBDWDM2").toString();
                 kf[1] = o._2.getAttribute("KCTBBH2").toString();
-                if (o._2.getAttributes().size() != 9) {
-                    int size = o._2.getAttributes().size();
-                    log.error("XZDW Field Size Error, error size :" + size);
-                }
+//                if (o._2.getAttributes().size() != 9) {
+//                    int size = o._2.getAttributes().size();
+//                    log.error("XZDW Field Size Error, error size :" + size);
+//                }
                 return new Tuple2<>(StringUtils.join(kf, "##"), o._2);
             }
         });
@@ -142,17 +148,21 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                 Field cdF = new Field("xz_cd");
                 Field kdF = new Field("xz_kd");
                 Field kcblF = new Field("xz_kcbl");
+                Field dlbzF = new Field("xz_dlbz");
                 Field wktF = new Field("xz_wkt");
                 kdF.setType(Double.class);
                 cdF.setType(Double.class);
                 kcblF.setType(Double.class);
                 if (in._2._2.isPresent()) {
                     Feature xz = in._2._2.get();
+                    if(!String.valueOf(f.getAttribute("lx_id")).equals("NO_DATA"))
+                        log.error("dasd");
                     f.addAttribute(bsmF, xz.getAttribute("BSM"));
                     f.addAttribute(dlbmF, xz.getAttribute("DLBM"));
                     f.addAttribute(cdF, xz.getAttribute("CD"));
                     f.addAttribute(kdF, xz.getAttribute("KD"));
                     f.addAttribute(kcblF, xz.getAttribute("KCBL"));
+                    f.addAttribute(dlbzF, xz.getAttribute("DLBZ"));
                     f.addAttribute(wktF, xz.getGeometryWkt());
                 } else {
                     f.addAttribute(bsmF, "NO_DATA");
@@ -160,12 +170,13 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
                     f.addAttribute(cdF, 0.0);
                     f.addAttribute(kdF, 0.0);
                     f.addAttribute(kcblF, 0.0);
+                    f.addAttribute(dlbzF, "");
                     f.addAttribute(wktF, "NO_DATA");
                 }
                 Field tb_wkt = new Field("tb_wkt");
                 f.addAttribute(tb_wkt, in._2._1.getGeometryWkt());
 
-                if (f.getAttributes().size() != 17) {
+                if (f.getAttributes().size() != 20) {
                     int size = f.getAttributes().size();
                     log.error("DLTB JOIN XZDW Field Size Error, error size :" + size);
                 }
@@ -173,18 +184,10 @@ public class LandFlowPreProcess extends BaseModel<LandFlowPreProcessArgs> {
             }
         });
 
-        l2.cache();
-        l2.first();
-        long l2_length = l2.count();
-
         Layer result = new Layer(l2.rdd());
-
         LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getWriterConfig());
         LayerWriter resultWriter = LayerFactory.getWriter(this.ss, writerConfig);
-
         result.inferFieldMetadata();
-
-
         resultWriter.write(result);
 
     }

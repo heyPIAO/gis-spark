@@ -17,6 +17,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.helper.PgHelper;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.shp.ShpWriterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
@@ -59,27 +60,31 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
     protected void prepare() {
         super.prepare();
         LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
-        PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
-        writerConfig.setTablename(this.arg.getTableName());
-        this.initPgConfig(writerConfig);
-        PgHelper pgHelper = new PgHelper(this.pgConfig);
-        switch (writerConfig.getSaveMode()) {
-            case Overwrite:
-                log.info("Drop TARGET TABLE: " + writerConfig.getTablename());
-                log.info("CREATE TARGET TABLE: " + writerConfig.getTablename());
-                pgHelper.runSQL(this.createTableSqlWithDrop(readerConfig, writerConfig));
-                break;
-            case Append:
-                log.info("CREATE TARGET TABLE IF NOT EXIST: " + writerConfig.getTablename());
-                pgHelper.runSQL(this.createTableSqlIfNotExists(readerConfig, writerConfig));
-                break;
-            case ErrorIfExists:
-                log.info("CREATE TARGET TABLE : " + writerConfig.getTablename());
-                pgHelper.runSQL(this.createTableSql(readerConfig, writerConfig));
-            default:
-                throw new GISSparkException("SaveModel Undefined");
-        }
-        log.warn("Pass: DISTRIBUTE TARGET TABLE");
+        LayerWriterConfig prewriterConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
+        if(prewriterConfig.getSinkPath().startsWith("shp:")){
+            ShpWriterConfig shpWriterConfig = (ShpWriterConfig) prewriterConfig;
+        }else {
+            PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) prewriterConfig;
+            writerConfig.setTablename(this.arg.getTableName());
+            this.initPgConfig(writerConfig);
+            PgHelper pgHelper = new PgHelper(this.pgConfig);
+            switch (writerConfig.getSaveMode()) {
+                case Overwrite:
+                    log.info("Drop TARGET TABLE: " + writerConfig.getTablename());
+                    log.info("CREATE TARGET TABLE: " + writerConfig.getTablename());
+                    pgHelper.runSQL(this.createTableSqlWithDrop(readerConfig, writerConfig));
+                    break;
+                case Append:
+                    log.info("CREATE TARGET TABLE IF NOT EXIST: " + writerConfig.getTablename());
+                    pgHelper.runSQL(this.createTableSqlIfNotExists(readerConfig, writerConfig));
+                    break;
+                case ErrorIfExists:
+                    log.info("CREATE TARGET TABLE : " + writerConfig.getTablename());
+                    pgHelper.runSQL(this.createTableSql(readerConfig, writerConfig));
+                default:
+                    throw new GISSparkException("SaveModel Undefined");
+            }
+            log.warn("Pass: DISTRIBUTE TARGET TABLE");
 //        ListStringSQLResultHandler handler = new ListStringSQLResultHandler();
 //        pgHelper.runSQL(this.ifTableHasDistributedSql(readerConfig, writerConfig), handler);
 //
@@ -89,7 +94,10 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
 //        } else {
 //            log.info("TABLE HAS BEEN DISTRIBUTED.");
 //        }
-        pgHelper.close();
+            pgHelper.close();
+        }
+
+
     }
 
     /**
@@ -105,7 +113,7 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
         try {
             LayerWriterConfig writerConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
             ListStringSQLResultHandler handler = new ListStringSQLResultHandler();
-            pgMdHelper.runSQL(countSourceTable(this.arg.getTableName()), handler);
+//            pgMdHelper.runSQL(countSourceTable(this.arg.getTableName()), handler);
             if (handler.getResult().size() == 0) {
                 log.info("create new dataset.");
                 pgMdHelper.runSQL(insertDatasetInfo(),
@@ -283,28 +291,34 @@ public class PgDataLoader extends DataLoader<PgDataLoaderArgs> {
     protected void finish() {
         super.finish();
         LayerReaderConfig readerConfig = LayerFactory.getReaderConfig(this.arg.getInput());
-        PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
-        PgHelper pgHelper = new PgHelper(this.pgConfig);
-        PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
-        try {
-            log.info("Make Vaild Geometry before build index.");
-            pgHelper.runSQL(makeVaild(readerConfig, writerConfig));
-            log.info(String.format("CREATE SPATIAL INDEX FOR %s USING GIST", writerConfig.getTablename()));
-            pgHelper.runSQL(this.createSpatialIndexSql(readerConfig, writerConfig, CRS.parseWKT(this.arg.getTargetCrs())));
-            log.warn("Pass: Truncate Local Data");
+        LayerWriterConfig prewriterConfig = LayerFactory.getWriterConfig(this.arg.getOutput());
+        if(prewriterConfig.getSinkPath().startsWith("shp:")){
+            ShpWriterConfig shpWriterConfig = (ShpWriterConfig) prewriterConfig;
+        }else{
+            PgLayerWriterConfig writerConfig = (PgLayerWriterConfig) LayerFactory.getWriterConfig(this.arg.getOutput());
+            PgHelper pgHelper = new PgHelper(this.pgConfig);
+            PgHelper pgMdHelper = new PgHelper(this.pgMdConfig);
+            try {
+                log.info("Make Vaild Geometry before build index.");
+                pgHelper.runSQL(makeVaild(readerConfig, writerConfig));
+                log.info(String.format("CREATE SPATIAL INDEX FOR %s USING GIST", writerConfig.getTablename()));
+                pgHelper.runSQL(this.createSpatialIndexSql(readerConfig, writerConfig, CRS.parseWKT(this.arg.getTargetCrs())));
+                log.warn("Pass: Truncate Local Data");
 //            log.info("Truncate Local Data: " + writerConfig.getTablename());
 //            pgHelper.runSQL(this.truncateLocalDataSql(writerConfig));
-        } catch (Exception e) {
-            this.ifSuccess = false;
-            log.error(e.getMessage());
-        } finally {
-            pgMdHelper.runSQL(updateLoadState(this.arg.getTableName()),
-                    this.ifSuccess ? "SUCCESS" : "ERROR"
-                    , java.sql.Timestamp.from(Instant.now()));
-            pgMdHelper.close();
-            pgMdHelper.close();
-            pgHelper.close();
+            } catch (Exception e) {
+                this.ifSuccess = false;
+                log.error(e.getMessage());
+            } finally {
+//            pgMdHelper.runSQL(updateLoadState(this.arg.getTableName()),
+//                    this.ifSuccess ? "SUCCESS" : "ERROR"
+//                    , java.sql.Timestamp.from(Instant.now()));
+                pgMdHelper.close();
+                pgMdHelper.close();
+                pgHelper.close();
+            }
         }
+
     }
 
     public static void main(String[] args) throws Exception {

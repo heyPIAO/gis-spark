@@ -6,11 +6,13 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderC
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.mongo.MongoLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.platform.PlatformLayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.GdbLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.MdbLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.ShpLayerReaderConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.mongo.MongoLayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.shp.ShpWriterConfig;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,7 +26,7 @@ public enum SourceType {
 
   FILE(0, "file://"), MONGODB(1, "mongo://"), SHP(2, "shp://"), ES(3, "es://"),
   HDFS_FILE(4, "hdfs://"), HDFS_SHP(5, "hdfshp://"), PG(6, "jdbc:postgresql://"),
-  MYSQL(7, "jdbc:mysql://"), PLATFORM(8, "platform://"),CitusPG(9, "citus:jdbc:postgresql://"), MDB(10, "mdb://");
+  MYSQL(7, "jdbc:mysql://"), PLATFORM(8, "platform://"),CitusPG(9, "citus:jdbc:postgresql://"), MDB(10, "mdb://"), GDB(11,"gdb://");
 
   @Getter
   private int type;
@@ -55,6 +57,7 @@ public enum SourceType {
       case 8: return PlatformLayerReaderConfig.class;
       case 9: return PgLayerReaderConfig.class;
       case 10: return MdbLayerReaderConfig.class;
+      case 11: return GdbLayerReaderConfig.class;
       default:
         throw new GISSparkException("Unsupport layer reader for type: " + type);
     }
@@ -64,6 +67,7 @@ public enum SourceType {
     switch (type) {
       case 0: return FileLayerWriterConfig.class;
       case 1: return MongoLayerWriterConfig.class;
+      case 2: return ShpWriterConfig.class;
       case 6: return PgLayerWriterConfig.class;
       default:
         throw new GISSparkException("Unsupport layer writer for type: " + type);

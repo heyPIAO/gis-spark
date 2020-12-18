@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.helper;
 
 import java.io.Closeable;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 
@@ -47,5 +48,7 @@ public interface JDBCHelper extends Closeable {
   boolean runSQL(String sql);
 
   boolean runSQL(String sql, Object... params);
+
+  ResultSet select(String sql);
 
 }

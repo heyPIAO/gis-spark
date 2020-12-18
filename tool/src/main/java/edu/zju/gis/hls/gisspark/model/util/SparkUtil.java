@@ -30,15 +30,18 @@ public class SparkUtil {
 //    conf.set("es.port", "9200");
 //    conf.set("es.mapping.date.rich", "false");
 //    conf.set("es.nodes.wan.only","true");
+//        conf.set("driver-memory","8g");
+//        conf.set("executor-memory","8g");
         return conf;
     }
 
     private static SparkSession createLocalSparkSession(String appName, SparkConf conf) {
-        //add .enableHiveSupport() for hive
+
         return SparkSession
                 .builder()
                 .appName(appName)
-                .master("local[12]")
+                .master("local[32]")
+//                .master("local-cluster[2,6,6144]")
                 .config(overrideConf(conf))
 //                .enableHiveSupport()
                 .getOrCreate();

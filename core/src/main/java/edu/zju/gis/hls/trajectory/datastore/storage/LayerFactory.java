@@ -16,16 +16,15 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderC
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.CitusPgLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReader;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.pg.PgLayerReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.MdbLayerReader;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.MdbLayerReaderConfig;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.ShpLayerReader;
-import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.ShpLayerReaderConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.reader.shp.*;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.file.FileLayerWriterConfig;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriter;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfig;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.shp.ShpWriter;
+import edu.zju.gis.hls.trajectory.datastore.storage.writer.shp.ShpWriterConfig;
 import org.apache.spark.sql.SparkSession;
 import org.json.JSONObject;
 
@@ -58,6 +57,8 @@ public class LayerFactory {
       return new CitusPgLayerReader<L>(ss, (PgLayerReaderConfig) config);
     } else if (sourceType.equals(SourceType.MDB)){
       return new MdbLayerReader<L>(ss, (MdbLayerReaderConfig) config);
+    } else if (sourceType.equals(SourceType.GDB)){
+      return new GdbLayerReader<L>(ss, (GdbLayerReaderConfig) config);
     } else {
       throw new LayerReaderException("Unsupport layer reader type: " + layerType.name());
     }
@@ -71,6 +72,8 @@ public class LayerFactory {
       return new FileLayerWriter (ss, (FileLayerWriterConfig) config);
     } else if (sourceType.equals(SourceType.PG)) {
       return new PgLayerWriter (ss, (PgLayerWriterConfig) config);
+    } else if (sourceType.equals(SourceType.SHP)) {
+      return new ShpWriter(ss, (ShpWriterConfig) config);
     } else {
       throw new LayerWriterException("Unsupport layer writer type: " + config.getClass().getName());
     }
