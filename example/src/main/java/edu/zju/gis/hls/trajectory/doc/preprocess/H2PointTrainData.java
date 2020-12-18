@@ -7,7 +7,6 @@ import edu.zju.gis.hls.trajectory.analysis.index.uniformGrid.UniformGridConfig;
 import edu.zju.gis.hls.trajectory.analysis.model.*;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.LayerType;
-import edu.zju.gis.hls.trajectory.analysis.rddLayer.PointLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.TrajectoryPointLayer;
 import edu.zju.gis.hls.trajectory.datastore.storage.LayerFactory;
 import edu.zju.gis.hls.trajectory.datastore.storage.reader.LayerReader;
@@ -16,7 +15,7 @@ import edu.zju.gis.hls.trajectory.datastore.storage.reader.file.FileLayerReaderC
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.sql.SparkSession;
 
-import java.lang.reflect.InvocationTargetException;
+
 
 /**
  * @author Hu
@@ -40,7 +39,8 @@ public class H2PointTrainData {
     DistributeSpatialIndex si = SpatialIndexFactory.getDistributedSpatialIndex(IndexType.UNIFORM_GRID, new UniformGridConfig(4, 2));
     KeyIndexedLayer<TrajectoryPointLayer> indexedLayer = si.index(layer);
     TrajectoryPointLayer trajectoryPointLayer = indexedLayer.getLayer();
-    JavaPairRDD<String, Iterable<TimedPoint>> layer2 = trajectoryPointLayer.mapPartitions
+    JavaPairRDD<String, Iterable<TimedPoint>> layer2 = trajectoryPointLayer.mapPartitions(new FlatMapFunction<Iterator<Tuple2<String,TimedPoint>>, Object>() {
+    })
 
 
   }
