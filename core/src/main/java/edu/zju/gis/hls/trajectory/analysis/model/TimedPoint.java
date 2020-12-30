@@ -19,6 +19,7 @@ public class TimedPoint extends Feature<TemporalPoint> {
 
     public TimedPoint(TimedPoint p) {
         super(p);
+        this.geometry = p.getGeometry();
     }
 
     public long getTimestamp() {

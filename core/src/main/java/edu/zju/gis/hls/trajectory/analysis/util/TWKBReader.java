@@ -19,7 +19,6 @@ import org.locationtech.jts.geom.CoordinateSequenceFactory;
 import org.locationtech.jts.geom.CoordinateSequences;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.MultiLineString;
@@ -61,6 +60,11 @@ import scala.Tuple2;
  * Note that the {@link TWKBWriter} is not changed and still write PostGIS WKB
  * geometries
  * @see TWKBWriter for a formal format specification
+ */
+
+/**
+ * @Update Hu
+ * 支持 TPOINT 和 TLINESTRING
  */
 public class TWKBReader
 {

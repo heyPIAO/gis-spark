@@ -121,10 +121,10 @@ public class Feature <T extends Geometry> implements Serializable, Cloneable {
   @Deprecated
   public Feature(Feature f) {
 
-    if (f instanceof MovingPoint) {
-      throw new GISSparkException("Self copy constructor does not support MovingPoint Feature, " +
-              "please use function clone() for MovingPoint deep copy");
-    }
+//    if (f instanceof MovingPoint) {
+//      throw new GISSparkException("Self copy constructor does not support MovingPoint Feature" +
+//              "please use function clone() for MovingPoint deep copy");
+//    }
 
     this.fid = f.getFid();
     this.attributes = (LinkedHashMap<Field, Object>) f.getAttributes().clone();

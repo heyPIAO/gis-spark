@@ -33,6 +33,7 @@ public class MovingPoint extends Feature<TemporalLineString> {
   public MovingPoint(MovingPoint f) {
     super(f);
     this.temporalAttributes = f.temporalAttributes;
+    this.geometry = f.getGeometry();
   }
 
   private LinkedHashMap<Field, Object> getTemporalAttrIndic(int index) {
