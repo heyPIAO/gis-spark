@@ -45,7 +45,7 @@ public class RectGridIndex implements DistributeSpatialIndex, Serializable {
    */
   @Override
   public <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer, boolean withKeyRanges) {
-    return this.index(layer, withKeyRanges, layer.context().defaultParallelism());
+    return this.index(layer, withKeyRanges, -1);
   }
 
   @Override
@@ -54,7 +54,11 @@ public class RectGridIndex implements DistributeSpatialIndex, Serializable {
     PyramidConfig pc = new PyramidConfig.PyramidConfigBuilder().setCrs(crs).setZLevelRange(Term.QUADTREE_MIN_Z, Term.QUADTREE_MAX_Z).setBaseMapEnv(CrsUtils.getCrsEnvelope(crs)).build(true);
     RectGridIndexLayer<L> result = new RectGridIndexLayer<L>();
     RectGridPartitioner partitioner = new RectGridPartitioner(pc, c, numPartitions);
-    L klayer = (L) layer.flatMapToLayer(partitioner).partitionByToLayer(partitioner);
+    L l = (L) layer.flatMapToLayer(partitioner);
+    l.makeSureCached();
+    if (numPartitions == -1) partitioner.setPartitionNum(l.distinctKeys().size());
+    L klayer = (L) l.partitionByToLayer(partitioner);
+    l.unpersist();
     if (withKeyRanges) {
       partitioner.collectPartitionMeta(klayer);
     }

@@ -62,15 +62,18 @@ public class UniformGridPartitioner extends SpaceSplitSpatialPartitioner {
       result.add(getKeyRangeFeature(String.valueOf(this.conf.getEncoder().encode(x, y))));
     } else {
       Envelope e = geometry.getEnvelopeInternal();
-      // 处理x
+      // 处理 x
       int xmin = UniformGridUtil.getGridNum(e.getMinX(), extent.getMinX(), this.resolution[0]);
       int xmax = UniformGridUtil.getGridNum(e.getMaxX(), extent.getMinX(), this.resolution[0]);
-      // 处理y
-      int ymin = UniformGridUtil.getReverseGridNum(e.getMinY(), extent.getMaxY(), this.resolution[1]);
-      int ymax = UniformGridUtil.getReverseGridNum(e.getMaxY(), extent.getMaxY(), this.resolution[1]);
+      // 处理 y
+      int ymax = UniformGridUtil.getReverseGridNum(e.getMinY(), extent.getMaxY(), this.resolution[1]);
+      int ymin = UniformGridUtil.getReverseGridNum(e.getMaxY(), extent.getMaxY(), this.resolution[1]);
       for (int x=xmin; x<=xmax; x++) {
         for (int y=ymin; y<=ymax; y++) {
-          result.add(getKeyRangeFeature(String.valueOf(this.conf.getEncoder().encode(x, y))));
+          KeyRangeFeature feature = getKeyRangeFeature(String.valueOf(this.conf.getEncoder().encode(x, y)));
+          if (feature.getGeometry().intersects(geometry)) {
+            result.add(getKeyRangeFeature(String.valueOf(this.conf.getEncoder().encode(x, y))));
+          }
         }
       }
     }
@@ -91,10 +94,10 @@ public class UniformGridPartitioner extends SpaceSplitSpatialPartitioner {
   }
 
   private Envelope getGridEnvelope(long x, long y) {
-    double xmin = x * resolution[0];
-    double xmax = (x+1) * resolution[0];
-    double ymin = y * resolution[1];
-    double ymax = (y+1) * resolution[1];
+    double xmin = x * resolution[0] + this.extent.getMinX();
+    double xmax = (x+1) * resolution[0] + this.extent.getMinX();
+    double ymin = this.extent.getMaxY() - (y+1) * resolution[1];
+    double ymax = this.extent.getMaxY() - y * resolution[1];
     return new Envelope(xmin, xmax, ymin, ymax);
   }
 

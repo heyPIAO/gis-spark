@@ -2,6 +2,7 @@ package edu.zju.gis.hls.trajectory.analysis.index.rtree;
 
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Polygon;
+import edu.zju.gis.hls.trajectory.analysis.model.Term;
 import edu.zju.gis.hls.trajectory.analysis.util.CrsUtils;
 import edu.zju.gis.hls.trajectory.analysis.util.GeometryUtil;
 import lombok.Getter;
@@ -29,8 +30,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @ToString(callSuper = true)
 public class RTree implements Serializable {
-
-  public static String DAUM_KEY = "DAUM";
 
   private STRtree si;
 
@@ -75,7 +74,7 @@ public class RTree implements Serializable {
    * @return
    */
   private Tuple2<String, Feature>  generateDaumNode() {
-    return new Tuple2<String, Feature>(DAUM_KEY, new Polygon(GeometryUtil.envelopeToPolygon(CrsUtils.getCrsEnvelope(this.crs))));
+    return new Tuple2<String, Feature>(Term.DAUM_KEY, new Polygon(GeometryUtil.envelopeToPolygon(CrsUtils.getCrsEnvelope(this.crs))));
   }
 
   /**
@@ -95,7 +94,7 @@ public class RTree implements Serializable {
 
   public List<Tuple2<String, Feature>> query(Geometry g) {
     List<Tuple2<String, Feature>> e = this.query(g.getEnvelopeInternal());
-    if (e.size() == 1 && e.get(0)._1.equals(RTree.DAUM_KEY)) return e;
+    if (e.size() == 1 && e.get(0)._1.equals(Term.DAUM_KEY)) return e;
     return e.stream()
       .filter(v -> v._2.getGeometry().intersects(g))
       .collect(Collectors.toList());

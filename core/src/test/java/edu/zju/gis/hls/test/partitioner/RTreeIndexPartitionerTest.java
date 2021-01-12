@@ -30,7 +30,7 @@ public class RTreeIndexPartitionerTest {
   public static void main(String[] args) throws Exception {
 
     SparkSession ss = SparkSession.builder()
-      .master("local[1]")
+      .master("local[4]")
       .appName("RTreePartitionerTest")
       .getOrCreate();
 

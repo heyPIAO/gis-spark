@@ -5,7 +5,6 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.KeyIndexedLayer;
 import edu.zju.gis.hls.trajectory.analysis.rddLayer.Layer;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import scala.Serializable;
@@ -16,24 +15,32 @@ import java.util.*;
 /**
  * @author Hu
  * @date 2019/12/24
- * 每个partition内部的R树索引
+ * 每个 partition 内部的 R树索引
  * TODO 待测
  **/
+@Getter
 public class InnerRTreeIndex implements InnerSpatialIndex, Serializable {
 
-  private RTreeIndexConfig conf;
-  private CoordinateReferenceSystem crs;
+  private InnerRTreeIndexConfig conf;
 
   public InnerRTreeIndex() {
-    this(new RTreeIndexConfig());
+    this(new InnerRTreeIndexConfig());
   }
 
-  public InnerRTreeIndex(RTreeIndexConfig conf) {
+  public InnerRTreeIndex(int nodeCapacity) {
+    this(new InnerRTreeIndexConfig(nodeCapacity));
+  }
+
+  public InnerRTreeIndex(int nodeCapacity, CoordinateReferenceSystem crs) {
+    this(new InnerRTreeIndexConfig(nodeCapacity, crs));
+  }
+
+  public InnerRTreeIndex(InnerRTreeIndexConfig conf) {
     this.conf = conf;
   }
 
   /**
-   * 在每个分片内部构建R-Tree索引
+   * 在每个分片内部构建 R-Tree 索引
    * @param layer
    * @return
    */
@@ -46,36 +53,38 @@ public class InnerRTreeIndex implements InnerSpatialIndex, Serializable {
     Layer l = layer.getLayer();
     InnerRTreeIndexLayer result = new InnerRTreeIndexLayer();
     result.setLayer(layer);
-    result.setIndexedPartition(l.mapPartitionsToPair(new RTreeIndexBuilder()));
+    result.setIndexedPartition(l.mapPartitionsToPair(new InnerRTreeIndexBuilder(this.conf)));
     return result;
   }
 
   @Getter
-  @Setter
-  private class RTreeIndexBuilder<V extends Feature> implements PairFlatMapFunction<Iterator<Tuple2<String, V>>, String, RTree> {
+  private class InnerRTreeIndexBuilder<V extends Feature> implements PairFlatMapFunction<Iterator<Tuple2<String, V>>, String, RTree> {
+
+    private InnerRTreeIndexConfig conf;
+
+    public InnerRTreeIndexBuilder(InnerRTreeIndexConfig conf) {
+      this.conf = conf;
+    }
 
     @Override
     public Iterator<Tuple2<String, RTree>> call(Iterator<Tuple2<String, V>> t) throws Exception {
-
       List<Tuple2<String, RTree>> result = new ArrayList<>();
-      String gridId;
-      RTree rTree;
-      if (t.hasNext()) {
-        Tuple2<String, V> m = t.next();
-        gridId = m._1;
-        Class c = m._2.getClass();
-//        LayerType lt = LayerType.findLayerType(FeatureType.getFeatureType(c.getName()));
-        rTree = new RTree(1000, crs);
-        rTree.insert(m._2.getGeometry().getEnvelopeInternal(), m._1, m._2);
-      } else {
-        return result.iterator();
-      }
-
+      Map<String, RTree> resultMap = new HashMap<>();
       while(t.hasNext()) {
         Tuple2<String, V> m = t.next();
-        rTree.insert(m._2.getGeometry().getEnvelopeInternal(), m._1, m._2);
+        String gridId = m._1;
+        RTree rTree = resultMap.get(gridId);
+        if (rTree == null) {
+          rTree = new RTree(this.conf.getNodeCapacity(), this.conf.getCrs());
+          rTree.insert(m._2.getGeometry().getEnvelopeInternal(), m._1, m._2);
+          resultMap.put(gridId, rTree);
+        } else {
+          rTree.insert(m._2.getGeometry().getEnvelopeInternal(), m._1, m._2);
+        }
       }
-      result.add(new Tuple2<>(gridId, rTree));
+      for (String key: resultMap.keySet()) {
+        result.add(new Tuple2<>(key, resultMap.get(key)));
+      }
       return result.iterator();
     }
   }

@@ -5,6 +5,7 @@ import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.Partitioner;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.util.Utils;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @NoArgsConstructor
+@Slf4j
 public abstract class SpatialPartitioner extends Partitioner
   implements FlatMapFunction<Tuple2<String, Feature>, Tuple2<String, Feature>>, Serializable {
 
@@ -135,6 +137,9 @@ public abstract class SpatialPartitioner extends Partitioner
       } else {
         result.add(new Tuple2<>(keyRangeFeature.getFid(), in._2));
       }
+    }
+    if (result.size() == 0) {
+      log.warn(String.format("no place for feature: %s, abort", in._2.toString()));
     }
     return result.iterator();
   }

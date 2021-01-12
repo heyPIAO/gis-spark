@@ -14,11 +14,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.rdd.RDD;
 import org.locationtech.jts.geom.Geometry;
+import scala.Serializable;
 import scala.Tuple2;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,7 +28,7 @@ import java.util.List;
  * TODO 待测
   **/
 @Slf4j
-public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, KeyIndexedLayer<L>> {
+public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer<L, KeyIndexedLayer<L>> implements Serializable {
 
   @Getter
   @Setter
@@ -39,11 +39,23 @@ public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer
   }
 
   @Override
-  public InnerRTreeIndexLayer<L> query(Geometry geometry) {
+  public void makeSureCached() {
+    this.layer.makeSureCached();
+    this.indexedPartition.cache();
+  }
+
+  /**
+   * @param geometry
+   * @return
+   */
+  @Override
+  public KeyIndexedLayer<L> query(Geometry geometry) {
     List<String> partitionIds = this.layer.queryPartitionsKeys(geometry);
-    JavaRDD<Tuple2<String, Feature>> t = indexedPartition.filter(m->partitionIds.contains(m._1)).flatMap(new FlatMapFunction<Tuple2<String, RTree>, Tuple2<String, Feature>>() {
+    JavaPairRDD<String, RTree> partitions = indexedPartition.filter(m->partitionIds.contains(m._1));
+    JavaRDD<Tuple2<String, Feature>> t = partitions
+      .flatMap(new FlatMapFunction<Tuple2<String, RTree>, Tuple2<String, Feature>>() {
       @Override
-      public Iterator<Tuple2<String, Feature>> call(Tuple2<String, RTree> in) throws Exception {
+      public Iterator<Tuple2<String, Feature>> call(Tuple2<String, RTree> in)  {
         return (in._2.query(geometry)).iterator();
       }
     });
@@ -53,11 +65,16 @@ public class InnerRTreeIndexLayer<L extends Layer> extends PartitionIndexedLayer
       Constructor con = this.layer.toLayer().getConstructor(RDD.class);
       L l = (L) con.newInstance(t.rdd());
       this.getLayer().setLayer(l);
-      return this;
+      return this.getLayer();
     } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();
       throw new GISSparkException("InnerRTreeIndexLayer query failed: " + e.getMessage());
     }
   }
 
+  @Override
+  public void unpersist() {
+    this.layer.release();
+    this.indexedPartition.unpersist();
+  }
 }

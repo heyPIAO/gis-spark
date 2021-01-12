@@ -41,7 +41,11 @@ public class TemporalLineString extends LineString {
     }
 
     public long getTimeResolution() {
-        return instants[1] - instants[0];
+        return instants[instants.length-1] - instants[0];
+    }
+
+    public long[] getTimeRange() {
+        return new long[]{instants[0], instants[instants.length-1]};
     }
 
 

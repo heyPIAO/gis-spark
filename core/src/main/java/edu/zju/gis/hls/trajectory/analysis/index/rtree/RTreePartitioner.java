@@ -46,7 +46,7 @@ public class RTreePartitioner extends PreBuildSpatialPartitioner {
 
   public void setConf(RTreeIndexConfig conf) {
     this.conf = conf;
-    this.rTree = new RTree(this.conf.getSampleSize()/partitionNum, this.crs);
+    this.rTree = new RTree((this.conf.getSampleSize()/partitionNum)+1, this.crs);
     this.isClip = conf.isClip();
   }
 
@@ -72,7 +72,7 @@ public class RTreePartitioner extends PreBuildSpatialPartitioner {
    */
   @Override
   public KeyRangeFeature getKeyRangeFeature(String key) {
-    if (key.equals(RTree.DAUM_KEY)) {
+    if (key.equals(Term.DAUM_KEY)) {
       return new KeyRangeFeature(key,
         GeometryUtil.envelopeToPolygon(CrsUtils.getCrsEnvelope(this.crs)),
         getPartition(key));

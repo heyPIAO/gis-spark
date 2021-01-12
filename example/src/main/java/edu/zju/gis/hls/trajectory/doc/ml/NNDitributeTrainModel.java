@@ -1,8 +1,10 @@
 package edu.zju.gis.hls.trajectory.doc.ml;
 
+import edu.zju.gis.hls.trajectory.analysis.index.ml.model.NNModel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.SparkSession;
 import org.deeplearning4j.optimize.solvers.accumulation.encoding.threshold.AdaptiveThresholdAlgorithm;
@@ -10,6 +12,7 @@ import org.deeplearning4j.spark.api.TrainingMaster;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster;
 import org.nd4j.evaluation.regression.RegressionEvaluation;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.parameterserver.distributed.conf.VoidConfiguration;
 import org.nd4j.parameterserver.distributed.v2.enums.MeshBuildMode;
@@ -39,7 +42,7 @@ public class NNDitributeTrainModel {
     // 配置梯度共享实现所需的分布式训练
     this(ss, VoidConfiguration.builder()
       .unicastPort(40123) // 工作机将使用于通信的端口。使用任意空闲的端口
-      .networkMask("0.0.0.0/32")     // 用于通信的网络掩码。示例10.0.0.0/24，或192.168.0.0/16等
+//      .networkMask("0.0.0.0/32")     // 用于通信的网络掩码。示例10.0.0.0/24，或192.168.0.0/16等
       .controllerAddress("127.0.0.1")  // 主/驱动器IP
       .meshBuildMode(MeshBuildMode.MESH)
       .build());
@@ -67,6 +70,10 @@ public class NNDitributeTrainModel {
   public void evaluate(JavaRDD<DataSet> ds) {
     RegressionEvaluation result = this.sparkNet.evaluateRegression(ds);
     System.out.println(result.stats());
+  }
+
+  public JavaPairRDD<String, INDArray> infer(JavaPairRDD<String, INDArray> data, int batchSize) {
+    return this.sparkNet.feedForwardWithKey(data, batchSize);
   }
 
 }

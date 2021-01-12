@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.index.hilbertcurve;
 
 import edu.zju.gis.hls.trajectory.analysis.util.ListsUtil;
-import edu.zju.gis.hls.trajectory.analysis.util.Preconditions;
+import edu.zju.gis.hls.trajectory.analysis.util.PreconditionsUtils;
 
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +28,7 @@ public class Ranges implements Iterable<Range> {
     private int count; // count of items in ranges
 
     public Ranges(int bufferSize) {
-        Preconditions.checkArgument(bufferSize >= 0);
+        PreconditionsUtils.checkArgument(bufferSize >= 0);
         this.bufferSize = bufferSize;
         this.ranges = null;
         if (bufferSize == 0) {
@@ -40,12 +40,12 @@ public class Ranges implements Iterable<Range> {
     }
 
     public Ranges add(long low, long high) {
-        Preconditions.checkArgument(low <= high);
+        PreconditionsUtils.checkArgument(low <= high);
         return add(Range.create(low, high));
     }
 
     public Ranges add(Range r) {
-        Preconditions.checkArgument(ranges == null || ranges.value.high() < r.low(),
+        PreconditionsUtils.checkArgument(ranges == null || ranges.value.high() < r.low(),
                 "ranges must be added in increasing order and without overlap");
         Node node = new Node(r);
         count++;

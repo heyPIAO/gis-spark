@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.util;
 
-public final class Preconditions {
-    private Preconditions() {
+public final class PreconditionsUtils {
+    private PreconditionsUtils() {
     }
 
     public static <T> T checkNotNull(T t) {

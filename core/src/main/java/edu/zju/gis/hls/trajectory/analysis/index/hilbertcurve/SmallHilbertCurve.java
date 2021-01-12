@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.index.hilbertcurve;
 
-import edu.zju.gis.hls.trajectory.analysis.util.Preconditions;
+import edu.zju.gis.hls.trajectory.analysis.util.PreconditionsUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +49,7 @@ public final class SmallHilbertCurve {
      *                                  number of dimensions.
      */
     public long index(long... point) {
-        Preconditions.checkArgument(point.length == dimensions);
+        PreconditionsUtils.checkArgument(point.length == dimensions);
         return toIndex(HilbertCurve.transposedIndex(bits, point));
     }
 
@@ -174,8 +174,8 @@ public final class SmallHilbertCurve {
      * @return ranges
      */
     public Ranges query(long[] a, long[] b, int maxRanges, int bufferSize) {
-        Preconditions.checkArgument(maxRanges >= 0);
-        Preconditions.checkArgument(bufferSize >= maxRanges,
+        PreconditionsUtils.checkArgument(maxRanges >= 0);
+        PreconditionsUtils.checkArgument(bufferSize >= maxRanges,
                 "bufferSize must be greater than or equal to maxRanges");
         if (maxRanges == 0) {
             // unlimited
@@ -243,7 +243,7 @@ public final class SmallHilbertCurve {
         }
 
         public SmallHilbertCurve dimensions(int dimensions) {
-            Preconditions.checkArgument(bits * dimensions <= 63,
+            PreconditionsUtils.checkArgument(bits * dimensions <= 63,
                     "bits * dimensions must be less than or equal to 63");
             return new SmallHilbertCurve(bits, dimensions);
         }

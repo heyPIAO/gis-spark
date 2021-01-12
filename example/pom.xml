@@ -22,6 +22,10 @@
                     <artifactId>avro</artifactId>
                     <groupId>org.apache.avro</groupId>
                 </exclusion>
+                <!--<exclusion>-->
+                    <!--<artifactId>kryo-shaded</artifactId>-->
+                    <!--<groupId>com.esotericsoftware</groupId>-->
+                <!--</exclusion>-->
             </exclusions>
         </dependency>
 
@@ -125,6 +129,84 @@
             <artifactId>dl4j-spark-parameterserver_${scala.version}</artifactId>
             <version>${dl4j-master.version}</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.github.davidmoten/rtree -->
+        <!--<dependency>-->
+            <!--<groupId>com.github.davidmoten</groupId>-->
+            <!--<artifactId>rtree</artifactId>-->
+            <!--<version>0.8.8-SNAPSHOT</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>com.github.davidmoten</groupId>-->
+            <!--<artifactId>rtree-3d</artifactId>-->
+            <!--<version>0.1-SNAPSHOT</version>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>org.tinspin</groupId>
+            <artifactId>tinspin-indexes</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.github.jbellis/jamm -->
+        <!--<dependency>-->
+            <!--<groupId>com.github.jbellis</groupId>-->
+            <!--<artifactId>jamm</artifactId>-->
+            <!--<version>0.3.3</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>com.carrotsearch</groupId>-->
+            <!--<artifactId>java-sizeof</artifactId>-->
+            <!--<version>0.0.5</version>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>com.github.fracpete</groupId>
+            <artifactId>sizeofag</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>org.apache.commons</groupId>-->
+            <!--<artifactId>commons-pool2</artifactId>-->
+            <!--<version>2.6.2</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>com.esotericsoftware</groupId>-->
+            <!--<artifactId>kryo</artifactId>-->
+            <!--<version>5.0.0-RC1</version>-->
+        <!--</dependency>-->
+
+        <!-- https://mvnrepository.com/artifact/com.github.davidmoten/rtree-multi -->
+        <dependency>
+            <groupId>com.github.davidmoten</groupId>
+            <artifactId>rtree-multi</artifactId>
+            <!--<version>0.1-RC1</version>-->
+            <version>0.1-RC3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.davidmoten</groupId>
+                    <artifactId>guava-mini</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.8.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.davidmoten</groupId>
+            <artifactId>guava-mini</artifactId>
+            <version>0.1.3</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -155,7 +237,5 @@
             </plugin>
         </plugins>
     </build>
-
-
 
 </project>

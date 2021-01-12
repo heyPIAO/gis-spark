@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.index.hilbertcurve;
 
-import edu.zju.gis.hls.trajectory.analysis.util.Preconditions;
+import edu.zju.gis.hls.trajectory.analysis.util.PreconditionsUtils;
 
 // NotThreadSafe
 final class Node implements Comparable<Node> {
@@ -23,8 +23,8 @@ final class Node implements Comparable<Node> {
     }
 
     Node setNext(Node next) {
-        Preconditions.checkNotNull(next);
-        Preconditions.checkArgument(next != this);
+        PreconditionsUtils.checkNotNull(next);
+        PreconditionsUtils.checkArgument(next != this);
         this.next = next;
         next.distanceToPrevious = value.low() - next.value.high();
         next.previous = this;

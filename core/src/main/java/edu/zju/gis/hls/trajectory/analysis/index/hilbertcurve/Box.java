@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.analysis.index.hilbertcurve;
 
-import edu.zju.gis.hls.trajectory.analysis.util.Preconditions;
+import edu.zju.gis.hls.trajectory.analysis.util.PreconditionsUtils;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -11,7 +11,7 @@ final class Box {
     final long[] b;
 
     Box(long[] a, long[] b) {
-        Preconditions.checkArgument(a.length == b.length);
+        PreconditionsUtils.checkArgument(a.length == b.length);
         this.a = a;
         this.b = b;
     }
@@ -138,7 +138,7 @@ final class Box {
     }
 
     boolean contains(long[] point) {
-        Preconditions.checkArgument(a.length == point.length);
+        PreconditionsUtils.checkArgument(a.length == point.length);
         for (int i = 0; i < a.length; i++) {
             if (point[i] < Math.min(a[i], b[i]) || point[i] > Math.max(a[i], b[i])) {
                 return false;

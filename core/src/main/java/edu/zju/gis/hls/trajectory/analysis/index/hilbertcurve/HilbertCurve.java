@@ -1,7 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.index.hilbertcurve;
 
 import com.google.common.base.Objects;
-import edu.zju.gis.hls.trajectory.analysis.util.Preconditions;
+import edu.zju.gis.hls.trajectory.analysis.util.PreconditionsUtils;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -60,13 +60,13 @@ public final class HilbertCurve implements Serializable {
         final int bits;
 
         private Builder(int bits) {
-            Preconditions.checkArgument(bits > 0, "bits must be greater than zero");
-            Preconditions.checkArgument(bits < 64, "bits must be 63 or less");
+            PreconditionsUtils.checkArgument(bits > 0, "bits must be greater than zero");
+            PreconditionsUtils.checkArgument(bits < 64, "bits must be 63 or less");
             this.bits = bits;
         }
 
         public HilbertCurve dimensions(int dimensions) {
-            Preconditions.checkArgument(dimensions > 1, "dimensions must be at least 2");
+            PreconditionsUtils.checkArgument(dimensions > 1, "dimensions must be at least 2");
             return new HilbertCurve(bits, dimensions);
         }
     }
@@ -83,7 +83,7 @@ public final class HilbertCurve implements Serializable {
      *             dimensions.
      */
     public BigInteger index(long... point) {
-        Preconditions.checkArgument(point.length == dimensions);
+        PreconditionsUtils.checkArgument(point.length == dimensions);
         return toIndex(transposedIndex(bits, point));
     }
 
@@ -101,14 +101,14 @@ public final class HilbertCurve implements Serializable {
      *             if index is negative
      */
     public long[] point(BigInteger index) {
-        Preconditions.checkNotNull(index);
-        Preconditions.checkArgument(index.signum() != -1, "index cannot be negative");
+        PreconditionsUtils.checkNotNull(index);
+        PreconditionsUtils.checkArgument(index.signum() != -1, "index cannot be negative");
         return transposedIndexToPoint(bits, transpose(index));
     }
 
     public void point(BigInteger index, long[] x) {
-        Preconditions.checkNotNull(index);
-        Preconditions.checkArgument(index.signum() != -1, "index cannot be negative");
+        PreconditionsUtils.checkNotNull(index);
+        PreconditionsUtils.checkArgument(index.signum() != -1, "index cannot be negative");
         HilbertUtil.zero(x);
         transpose(index, x);
         transposedIndexToPoint(bits, x);

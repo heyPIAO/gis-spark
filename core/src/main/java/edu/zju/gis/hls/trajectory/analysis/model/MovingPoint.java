@@ -60,6 +60,10 @@ public class MovingPoint extends Feature<TemporalLineString> {
     return this.geometry.getTimeResolution();
   }
 
+  public long[] getTimeRange() {
+    return this.geometry.getTimeRange();
+  }
+
 
   public TrajectoryOD extractOD() {
     GeometryFactory gf = new GeometryFactory();

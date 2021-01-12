@@ -1,6 +1,8 @@
 package edu.zju.gis.hls.ml;
 
-import edu.zju.gis.hls.trajectory.doc.ml.NNModel;
+import edu.zju.gis.hls.trajectory.analysis.index.ml.model.NNModel;
+import lombok.Getter;
+import lombok.Setter;
 import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.records.reader.impl.csv.SerializableCSVParser;
@@ -24,15 +26,19 @@ import java.util.List;
 public class NNModelTest {
 
   private static Long MIN_INDEX = 0L;
-//  private static Long MAX_INDEX = 12613L;
-  private static Long MAX_INDEX = 98784247856L;
+  private static Long MAX_INDEX = 12613L;
   private static Integer BATCH_SIZE = 1000;
+  private static String MODEL_SAVE_DIR = "";
+
+  private static int inDimension = 2; // 模型输入维度
+  private static int outDimension = 1; // 模型输出维度，对应测试文件的序号
+  private static String[] trainData = new String[]{"", "", ""};
 
   public static void main(String[] args) throws IOException, InterruptedException {
     NNModel model = new NNModel();
     model.setNumEpochs(4000);
-//    DataSet ds = readCSVDataset("D:\\Work\\DaLunWen\\data\\T-drive Taxi Trajectories\\out\\test.csv");
-    DataSet ds = readCSVDataset("D:\\Work\\DaLunWen\\data\\T-drive Taxi Trajectories\\out2");
+    DataSet ds = readCSVDataset("D:\\Work\\DaLunWen\\data\\T-drive Taxi Trajectories\\out\\test.csv");
+//    DataSet ds = readCSVDataset("D:\\Work\\DaLunWen\\data\\T-drive Taxi Trajectories\\out2");
     model.train(ds);
 
     int nSamples = 10;
@@ -47,9 +53,12 @@ public class NNModelTest {
     System.out.println(labels.toStringFull());
     System.out.println("== PREDICTS ==");
     System.out.println(y.toStringFull());
+
+    model.save(MODEL_SAVE_DIR + "model_1");
   }
 
-  private static DataSet readCSVDataset(String filename) throws IOException, InterruptedException {
+  private static DataSet readCSVDataset(String filename)
+    throws IOException, InterruptedException {
     int batchSize = BATCH_SIZE;
     RecordReader rr = new TrajectoryCSVRecordReader();
     rr.initialize(new FileSplit(new File(filename)));

@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -67,6 +69,22 @@ public final class FileUtil {
     /**
      * 覆盖式写入文件
      */
+    public static void write(String file, byte[] bytes) throws IOException {
+        Path p = Paths.get(file);
+        Files.createDirectories(p.getParent());
+        Files.write(p, bytes);
+    }
+
+    /**
+     * 覆盖式写入文件
+     */
+    public static void write(String file, String line) throws IOException {
+        write(Paths.get(file), Collections.singletonList(line));
+    }
+
+    /**
+     * 覆盖式写入文件
+     */
     public static void write(String file, Iterable<String> lines) throws IOException {
         write(Paths.get(file), lines);
     }
@@ -115,7 +133,7 @@ public final class FileUtil {
                 }
 
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     if (!file.getFileName().toString().startsWith(".")) {
                         try (BufferedReader reader = Files.newBufferedReader(file)) {
                             String line;

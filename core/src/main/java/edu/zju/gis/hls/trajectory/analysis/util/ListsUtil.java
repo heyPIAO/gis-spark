@@ -12,14 +12,14 @@ public final class ListsUtil {
   }
 
   public static <E> ArrayList<E> newArrayList(E... elements) {
-    Preconditions.checkNotNull(elements);
+    PreconditionsUtils.checkNotNull(elements);
     int capacity = computeArrayListCapacity(elements.length);
     ArrayList<E> list = new ArrayList(capacity);
     Collections.addAll(list, elements);
     return list;
   }
   static int computeArrayListCapacity(int arraySize) {
-    Preconditions.checkArgument(arraySize >= 0, "arraySize must be non-negative");
+    PreconditionsUtils.checkArgument(arraySize >= 0, "arraySize must be non-negative");
     return saturatedCast(5L + (long)arraySize + (long)(arraySize / 10));
   }
 
@@ -36,7 +36,7 @@ public final class ListsUtil {
   }
 
   public static <E> ArrayList<E> newArrayList(Iterable<? extends E> elements) {
-    Preconditions.checkNotNull(elements);
+    PreconditionsUtils.checkNotNull(elements);
     return elements instanceof Collection ? new ArrayList((Collection)(elements)) : newArrayList(elements.iterator());
   }
 

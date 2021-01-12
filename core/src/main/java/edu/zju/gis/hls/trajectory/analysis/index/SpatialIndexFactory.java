@@ -2,6 +2,10 @@ package edu.zju.gis.hls.trajectory.analysis.index;
 
 import edu.zju.gis.hls.trajectory.analysis.index.equalGrid.EqualGridIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.equalGrid.EqualGridIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.ml.InnerMLIndex;
+import edu.zju.gis.hls.trajectory.analysis.index.ml.InnerMLIndexConfig;
+import edu.zju.gis.hls.trajectory.analysis.index.rtree.InnerRTreeIndex;
+import edu.zju.gis.hls.trajectory.analysis.index.rtree.InnerRTreeIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndex;
 import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTreeIndexConfig;
 import edu.zju.gis.hls.trajectory.analysis.index.rectGrid.RectGridIndex;
@@ -21,7 +25,7 @@ public class SpatialIndexFactory {
     return SpatialIndexFactory.getDistributedSpatialIndex(type, null);
   }
 
-  public static SpatialIndex getInnerSpatialIndex(IndexType type) {
+  public static InnerSpatialIndex getInnerSpatialIndex(IndexType type) {
     return SpatialIndexFactory.getInnerSpatialIndex(type, null);
   }
 
@@ -37,9 +41,10 @@ public class SpatialIndexFactory {
     }
   }
 
-  public static SpatialIndex getInnerSpatialIndex(IndexType type, IndexConfig config) {
+  public static InnerSpatialIndex getInnerSpatialIndex(IndexType type, IndexConfig config) {
     switch (type) {
-      case RTREE: return config == null ? new RTreeIndex():new RTreeIndex((RTreeIndexConfig) config);
+      case RTREE: return config == null ? new InnerRTreeIndex():new InnerRTreeIndex((InnerRTreeIndexConfig) config);
+      case NN: return config == null ? new InnerMLIndex():new InnerMLIndex((InnerMLIndexConfig) config);
       default:
         log.error("Unvalid inner spatial index type");
         throw new UnsupportedOperationException("Unvalid inner spatial index type");

@@ -36,7 +36,7 @@ public class UniformGridIndex implements DistributeSpatialIndex, Serializable {
 
   @Override
   public <L extends Layer, T extends KeyIndexedLayer<L>> T index(L layer, boolean withKeyRanges) {
-    return this.index(layer, withKeyRanges, layer.context().defaultParallelism());
+    return this.index(layer, withKeyRanges, -1);
   }
 
   @Override
@@ -46,7 +46,11 @@ public class UniformGridIndex implements DistributeSpatialIndex, Serializable {
     partitioner.setCrs(crs);
     partitioner.setConf(c);
     UniformGridIndexLayer<L> result = new UniformGridIndexLayer<L>(partitioner);
-    L klayer = (L) layer.flatMapToLayer(partitioner).partitionByToLayer(partitioner);
+    L l = (L) layer.flatMapToLayer(partitioner);
+    l.makeSureCached();
+    if (numPartitions == -1) partitioner.setPartitionNum(l.distinctKeys().size());
+    L klayer = (L)l.partitionByToLayer(partitioner);
+    l.unpersist();
     if (withKeyRanges) {
       partitioner.collectPartitionMeta(klayer);
     }

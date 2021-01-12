@@ -1,6 +1,7 @@
 package edu.zju.gis.hls.trajectory.analysis.rddLayer;
 
 import edu.zju.gis.hls.trajectory.analysis.index.partitioner.SpatialPartitioner;
+import edu.zju.gis.hls.trajectory.analysis.index.rtree.RTree;
 import edu.zju.gis.hls.trajectory.analysis.model.Feature;
 import edu.zju.gis.hls.trajectory.analysis.model.Field;
 import edu.zju.gis.hls.trajectory.datastore.exception.GISSparkException;
@@ -10,11 +11,16 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.rdd.RDD;
 import org.apache.spark.storage.StorageLevel;
 import org.locationtech.jts.geom.Geometry;
 import scala.Tuple2;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -54,8 +60,20 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
   }
 
   @Override
-  public <I extends IndexedLayer<L>> I query(Geometry geometry) {
-    throw new GISSparkException("Under developing");
+  public KeyIndexedLayer<L> query(Geometry geometry) {
+    List<String> partitionKeys = this.queryPartitionsKeys(geometry);
+    L t = (L) this.layer.filterToLayer(new Function<Tuple2<String, Feature>, Boolean>() {
+      @Override
+      public Boolean call(Tuple2<String, Feature> x) throws Exception {
+        return partitionKeys.contains(x._1);
+      }
+    }).filterToLayer(new Function<Tuple2<String, Feature>, Boolean>() {
+      @Override
+      public Boolean call(Tuple2<String, Feature> in) throws Exception {
+        return geometry.contains(in._2.getGeometry()) || geometry.intersects(in._2.getGeometry());
+      }
+    });
+    return new KeyIndexedLayer<>(t, this);
   }
 
   public KeyIndexedLayer(L layer, KeyIndexedLayer<L> l) {
@@ -105,6 +123,10 @@ public class KeyIndexedLayer<L extends Layer> extends IndexedLayer<L> {
 
   public void makeSureCached(StorageLevel level) {
     this.layer.makeSureCached(level);
+  }
+
+  public void release() {
+    this.layer.release();
   }
 
 }

@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Serializable;
+
 
 /**
  * @author Hu
@@ -12,7 +14,8 @@ import lombok.extern.slf4j.Slf4j;
  * 分区内部二层索引的图层
  **/
 @Slf4j
-public abstract class PartitionIndexedLayer<L extends Layer, K extends KeyIndexedLayer<L>> extends IndexedLayer<L> {
+public abstract class PartitionIndexedLayer<L extends Layer, K extends KeyIndexedLayer<L>>
+  extends IndexedLayer<L> implements Serializable {
 
   @Getter
   @Setter
@@ -30,5 +33,9 @@ public abstract class PartitionIndexedLayer<L extends Layer, K extends KeyIndexe
   public L toLayer() {
     return this.layer.toLayer();
   }
+
+  public abstract void makeSureCached();
+
+  public abstract void unpersist();
 
 }

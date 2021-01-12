@@ -39,7 +39,8 @@ public class UniformGridPartitionerTest {
     shapeField.setIndex(0);
     Field fid = new Field("FID","FeatureID", 1, FieldType.ID_FIELD);
 
-    String dataFile = "file:///D:\\Work\\DaLunWen\\code\\trajectory-spark\\core\\src\\test\\resources\\Province.csv";
+    // String dataFile = "file:///D:\\Work\\DaLunWen\\code\\trajectory-spark\\core\\src\\test\\resources\\Province.csv";
+    String dataFile = "file:///C:\\Users\\Hu\\Desktop\\test.txt";
 
     LayerReaderConfig config = new FileLayerReaderConfig();
     config.setLayerId("Province_uniform");

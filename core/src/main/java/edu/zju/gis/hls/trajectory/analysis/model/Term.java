@@ -76,6 +76,8 @@ public class Term implements Serializable {
   public static CustomGeometryFactory CUSTOM_GEOMETRY_FACTORY = new CustomGeometryFactory();
   public static CoordinateSequenceFactory COORDINATE_SEQUENCE_FACTORY = CoordinateArraySequenceFactory.instance();
 
+  public static String DAUM_KEY = "DAUM";
+
   // 图层元数据信息的属性名称
   public static Field LAYER_META_COUNT_FIELD = new Field("LAYER_COUNT", "count", Long.class.getName(), 0, FIELD_EXIST, NORMAL_FIELD);
 

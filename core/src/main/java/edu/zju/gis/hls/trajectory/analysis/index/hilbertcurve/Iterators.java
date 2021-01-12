@@ -5,7 +5,7 @@
 
 package edu.zju.gis.hls.trajectory.analysis.index.hilbertcurve;
 
-import edu.zju.gis.hls.trajectory.analysis.util.Preconditions;
+import edu.zju.gis.hls.trajectory.analysis.util.PreconditionsUtils;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -15,8 +15,8 @@ public final class Iterators {
   }
 
   public static <T> boolean addAll(Collection<T> addTo, Iterator<? extends T> iterator) {
-    Preconditions.checkNotNull(addTo);
-    Preconditions.checkNotNull(iterator);
+    PreconditionsUtils.checkNotNull(addTo);
+    PreconditionsUtils.checkNotNull(iterator);
 
     boolean wasModified;
     for(wasModified = false; iterator.hasNext(); wasModified |= addTo.add(iterator.next())) {
