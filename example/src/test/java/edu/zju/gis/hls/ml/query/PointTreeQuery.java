@@ -70,9 +70,9 @@ public class PointTreeQuery {
       TrainingRecord record = records[i];
       Point p = null;
       if (INPUT_DIMENSION == 3) {
-        p = Point.create(record.getX(), record.getY(), record.getT());
+        p = Point.create(record.getX1(), record.getY1(), record.getT1());
       } else {
-        p = Point.create(record.getX(), record.getY());
+        p = Point.create(record.getX1(), record.getY1());
       }
       rl.add(Entry.entry(i, p));
     }
@@ -115,9 +115,9 @@ public class PointTreeQuery {
       TrainingRecord record = records[i];
       Point p = null;
       if (INPUT_DIMENSION == 3) {
-        p = Point.create(record.getX(), record.getY(), record.getT());
+        p = Point.create(record.getX1(), record.getY1(), record.getT1());
       } else {
-        p = Point.create(record.getX(), record.getY());
+        p = Point.create(record.getX1(), record.getY1());
       }
       rl.add(Entry.entry(i, p));
     }
@@ -159,9 +159,9 @@ public class PointTreeQuery {
     for (int i=0; i<records.length; i++) {
       TrainingRecord record = records[i];
       double[] t = new double[INPUT_DIMENSION];
-      t[0] = record.getX();
-      t[1] = record.getY();
-      if (INPUT_DIMENSION == 3) t[2] = record.getT();
+      t[0] = record.getX1();
+      t[1] = record.getY1();
+      if (INPUT_DIMENSION == 3) t[2] = record.getT1();
       qdTree.insert(t, i);
     }
     long endTime = System.currentTimeMillis();
@@ -200,9 +200,9 @@ public class PointTreeQuery {
     for (int i=0; i<records.length; i++) {
       TrainingRecord record = records[i];
       double[] t = new double[INPUT_DIMENSION];
-      t[0] = record.getX();
-      t[1] = record.getY();
-      if (INPUT_DIMENSION == 3) t[2] = record.getT();
+      t[0] = record.getX1();
+      t[1] = record.getY1();
+      if (INPUT_DIMENSION == 3) t[2] = record.getT1();
       kdTree.insert(t, i);
     }
     long endTime = System.currentTimeMillis();

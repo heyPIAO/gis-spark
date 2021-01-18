@@ -17,9 +17,9 @@ import java.sql.Date;
 @AllArgsConstructor
 public class TrainingRecord implements Serializable {
   private Long index;
-  private Double x;
-  private Double y;
-  private Long t;
+  private Double x1, x2;
+  private Double y1, y2;
+  private Long t1, t2;
   private Double scaledX;
   private Double scaledY;
   private Double scaledTime;
@@ -29,9 +29,9 @@ public class TrainingRecord implements Serializable {
   public TrainingRecord(String line) {
     String[] fields = line.split(",");
     this.index = Long.valueOf(fields[0].trim());
-    this.x = Double.valueOf(fields[1].trim());
-    this.y = Double.valueOf(fields[2].trim());
-    this.t = Long.valueOf(fields[3].trim());
+    this.x1 = Double.valueOf(fields[1].trim());
+    this.y1 = Double.valueOf(fields[2].trim());
+    this.t1 = Long.valueOf(fields[3].trim());
     this.scaledX = Double.valueOf(fields[4].trim());
     this.scaledY = Double.valueOf(fields[5].trim());
     this.scaledTime = Double.valueOf(fields[6].trim());
@@ -41,15 +41,19 @@ public class TrainingRecord implements Serializable {
 
   public TrainingRecord(Row row) {
     this.index = row.getAs("id");
-    this.x = row.getAs("pickup_longitude");
-    this.y = row.getAs("pickup_latitude");
+    this.x1 = row.getAs("pickup_longitude");
+    this.y1 = row.getAs("pickup_latitude");
     Date date1 = row.getAs("pickup_datetime");
-    this.t = date1.getTime();
+    this.t1 = date1.getTime();
+    this.x2 = row.getAs("dropoff_longitude");
+    this.y2 = row.getAs("dropoff_latitude");
+    Date date2 = row.getAs("dropoff_datetime");
+    this.t2 = date2.getTime();
   }
 
   @Override
   public String toString() {
-    return String.format("%d,%f,%f,%d,%f,%f,%f,%f,%s",
-      index, x, y, t, scaledX, scaledY, scaledTime, scaledIndex, trajId);
+    return String.format("%d,%f,%f,%d,%f,%f,%d,%f,%f,%f,%f,%s",
+      index, x1, y1, t1, x2, y2, t2, scaledX, scaledY, scaledTime, scaledIndex, trajId);
   }
 }

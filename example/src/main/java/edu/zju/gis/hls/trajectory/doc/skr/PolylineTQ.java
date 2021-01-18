@@ -14,10 +14,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.locationtech.jts.io.ParseException;
-import org.tinspin.index.kdtree.KDIterator;
-import org.tinspin.index.kdtree.KDTree;
 import org.tinspin.index.qtplain.QEntryDist;
-import org.tinspin.index.qtplain.QuadTreeKD0;
+import org.tinspin.index.qtplain.QuadTreeRKD0;
 import sizeof.agent.SizeOfAgent;
 
 import java.io.BufferedWriter;
@@ -28,11 +26,10 @@ import java.util.List;
 
 /**
  * @author Sun Katus
- * @version 1.0, 2021-01-15
+ * @version 1.0, 2021-01-18
  */
 @Slf4j
-public class PointTQ {
-
+public class PolylineTQ {
     private static Integer INPUT_DIMENSION;
     private static Integer KNN_NUM;
     private static BufferedWriter WRITER;
@@ -78,38 +75,43 @@ public class PointTQ {
 
         recordsList.clear();
 
-        Point[] rtreePoints = dataPreProcessing(records);
-        strTree(rtreePoints);
-        strStarTree(rtreePoints);
-        quadTree(rtreePoints);
-        kdTree(rtreePoints);
+        Rectangle[] rectangles = dataPreProcessing(records);
+        strTree(rectangles);
+        strStarTree(rectangles);
+        quadTree(rectangles);
 
         WRITER.flush();
         WRITER.close();
     }
 
-    private static Point[] dataPreProcessing(TrainingRecord[] records) {
-        Point[] points = new Point[records.length];
+    private static Rectangle[] dataPreProcessing(TrainingRecord[] records) {
+        Rectangle[] rectangles = new Rectangle[records.length];
         for (int i = 0; i < records.length; i++) {
             TrainingRecord record = records[i];
+            double[] rmins = new double[INPUT_DIMENSION];
+            rmins[0] = Math.min(record.getX1(), record.getX2());
+            rmins[1] = Math.min(record.getY1(), record.getY2());
+            double[] rmaxs = new double[INPUT_DIMENSION];
+            rmaxs[0] = Math.max(record.getX1(), record.getX2());
+            rmaxs[1] = Math.max(record.getY1(), record.getY2());
             if (INPUT_DIMENSION == 3) {
-                points[i] = Point.create(record.getX1(), record.getY1(), record.getT1());
-            } else {
-                points[i] = Point.create(record.getX1(), record.getY1());
+                rmins[2] = record.getT1();
+                rmaxs[2] = record.getT2();
             }
+            rectangles[i] = Rectangle.create(rmins, rmaxs);
         }
-        return points;
+        return rectangles;
     }
 
-    public static void strTree(Point[] rtreePoints) throws IOException {
+    public static void strTree(Rectangle[] rectangles) throws IOException {
         WRITER.write(" =========== STR-Tree ========== \n");
-        List<Entry<Integer, Point>> rl = new ArrayList<>();
-        for (int i = 0; i < rtreePoints.length; i++) {
-            rl.add(Entry.entry(i, rtreePoints[i]));
+        List<Entry<Integer, Rectangle>> rl = new ArrayList<>();
+        for (int i = 0; i < rectangles.length; i++) {
+            rl.add(Entry.entry(i, rectangles[i]));
         }
 
         long startTime = System.currentTimeMillis();
-        RTree<Integer, Point> rTree = RTree.dimensions(INPUT_DIMENSION).create(rl);
+        RTree<Integer, Rectangle> rTree = RTree.dimensions(INPUT_DIMENSION).create(rl);
         long endTime = System.currentTimeMillis();
         WRITER.write("STR-Tree Bulk-Load Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("STR-Tree Index Size: " + getSize(rTree) + "\n");
@@ -146,15 +148,15 @@ public class PointTQ {
         }
     }
 
-    public static void strStarTree(Point[] rtreePoints) throws IOException {
+    public static void strStarTree(Rectangle[] rectangles) throws IOException {
         WRITER.write(" =========== STR*-Tree ========== \n");
-        List<Entry<Integer, Point>> rl = new ArrayList<>();
-        for (int i = 0; i < rtreePoints.length; i++) {
-            rl.add(Entry.entry(i, rtreePoints[i]));
+        List<Entry<Integer, Rectangle>> rl = new ArrayList<>();
+        for (int i = 0; i < rectangles.length; i++) {
+            rl.add(Entry.entry(i, rectangles[i]));
         }
 
         long startTime = System.currentTimeMillis();
-        RTree<Integer, Point> rStarTree = RTree.star().dimensions(INPUT_DIMENSION).create(rl);
+        RTree<Integer, Rectangle> rStarTree = RTree.star().dimensions(INPUT_DIMENSION).create(rl);
         long endTime = System.currentTimeMillis();
         WRITER.write("STR*-Tree Bulk-Load Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("STR*-Tree Index Size: " + getSize(rStarTree) + "\n");
@@ -191,13 +193,13 @@ public class PointTQ {
         }
     }
 
-    public static void quadTree(Point[] rtreePoints) throws IOException {
+    public static void quadTree(Rectangle[] rectangles) throws IOException {
         WRITER.write(" =========== Quad-Tree ========== \n");
-        QuadTreeKD0 qdTree = QuadTreeKD0.create(INPUT_DIMENSION);
+        QuadTreeRKD0 qdTree = QuadTreeRKD0.create(INPUT_DIMENSION);
 
         long startTime = System.currentTimeMillis();
-        for (int i = 0; i < rtreePoints.length; i++) {
-            qdTree.insert(rtreePoints[i].mins(), i);
+        for (int i = 0; i < rectangles.length; i++) {
+            qdTree.insert(rectangles[i].mins(), rectangles[i].maxes(), i);
         }
         long endTime = System.currentTimeMillis();
         WRITER.write("QuadTree Index Building Time: " + (endTime-startTime) + "\n");
@@ -211,7 +213,7 @@ public class PointTQ {
         WRITER.write("level,index,time,resultSize\n");
         for (Region region : regions) {
             startTime = System.currentTimeMillis();
-            QuadTreeKD0.QIterator iterator = qdTree.query(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
+            QuadTreeRKD0.QRIterator iterator = qdTree.queryIntersect(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
             endTime = System.currentTimeMillis();
             List result = IteratorUtils.toList(iterator);
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
@@ -235,52 +237,7 @@ public class PointTQ {
         }
     }
 
-    public static void kdTree(Point[] rtreePoints) throws IOException {
-        WRITER.write(" =========== kdTree ========== \n");
-        KDTree kdTree = KDTree.create(INPUT_DIMENSION);
-
-        long startTime = System.currentTimeMillis();
-        for (int i = 0; i < rtreePoints.length; i++) {
-            kdTree.insert(rtreePoints[i].mins(), i);
-        }
-        long endTime = System.currentTimeMillis();
-        WRITER.write("KdTree Index Building Time: " + (endTime-startTime) + "\n");
-        WRITER.write("KdTree Index Size: " + getSize(kdTree) + "\n");
-
-        StringBuilder builder = new StringBuilder();
-
-        // 区域查询测试
-        WRITER.write(" ----------- Range Search Test ---------- \n");
-        List<Region> regions = testData.getRegions();
-        WRITER.write("level,index,time,resultSize\n");
-        for (Region region : regions) {
-            startTime = System.currentTimeMillis();
-            KDIterator iterator = kdTree.query(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
-            endTime = System.currentTimeMillis();
-            List result = IteratorUtils.toList(iterator);
-            builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
-            builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
-            WRITER.write(builder.toString());
-            builder.delete(0, builder.length());
-        }
-
-        // KNN查询测试
-        WRITER.write(" ----------- KNN Search Test ---------- \n");
-        List<CheckPoint> points = testData.getPoints();
-        WRITER.write("index,time,resultSize\n");
-        for (CheckPoint point : points) {
-            startTime = System.currentTimeMillis();
-            List<QEntryDist> knnResult = kdTree.knnQuery(point.getValue(), KNN_NUM);
-            endTime = System.currentTimeMillis();
-            builder.append(point.getIndex()).append(",");
-            builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
-            WRITER.write(builder.toString());
-            builder.delete(0, builder.length());
-        }
-    }
-
     public static long getSize(Object o) {
         return SizeOfAgent.fullSizeOf(o);
     }
-
 }
