@@ -3,7 +3,10 @@ package edu.zju.gis.hls.trajectory.doc.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.spark.sql.Row;
 import scala.Serializable;
+
+import java.sql.Date;
 
 /**
  * @author Hu
@@ -34,6 +37,14 @@ public class TrainingRecord implements Serializable {
     this.scaledTime = Double.valueOf(fields[6].trim());
     this.scaledIndex = Double.valueOf(fields[7].trim());
     this.trajId = fields[8].trim();
+  }
+
+  public TrainingRecord(Row row) {
+    this.index = row.getAs("id");
+    this.x = row.getAs("pickup_longitude");
+    this.y = row.getAs("pickup_latitude");
+    Date date1 = row.getAs("pickup_datetime");
+    this.t = date1.getTime();
   }
 
   @Override

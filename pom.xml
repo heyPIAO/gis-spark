@@ -166,7 +166,7 @@
                 <artifactId>gdal</artifactId>
                 <version>${gdal.version}</version>
                 <scope>system</scope>
-                <systemPath>D:\Work\DaLunWen\code\trajectory-spark-1203\lib\gdal.jar</systemPath>
+                <systemPath>D:\Codes\hls-projects\gis-spark\lib\gdal.jar</systemPath>
             </dependency>
 
             <!-- Deeplearning4j + Spark -->
