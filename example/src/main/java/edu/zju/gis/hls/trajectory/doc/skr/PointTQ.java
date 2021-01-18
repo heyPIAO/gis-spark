@@ -32,9 +32,7 @@ import java.util.List;
  */
 @Slf4j
 public class PointTQ {
-
-    private static Integer INPUT_DIMENSION;
-    private static Integer KNN_NUM;
+    private static Integer INPUT_DIMENSION, KNN_NUM;
     private static BufferedWriter WRITER;
     private static TestData testData;
 
@@ -101,7 +99,7 @@ public class PointTQ {
         return points;
     }
 
-    public static void strTree(Point[] rtreePoints) throws IOException {
+    private static void strTree(Point[] rtreePoints) throws IOException {
         WRITER.write(" =========== STR-Tree ========== \n");
         List<Entry<Integer, Point>> rl = new ArrayList<>();
         for (int i = 0; i < rtreePoints.length; i++) {
@@ -111,6 +109,7 @@ public class PointTQ {
         long startTime = System.currentTimeMillis();
         RTree<Integer, Point> rTree = RTree.dimensions(INPUT_DIMENSION).create(rl);
         long endTime = System.currentTimeMillis();
+
         WRITER.write("STR-Tree Bulk-Load Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("STR-Tree Index Size: " + getSize(rTree) + "\n");
 
@@ -122,9 +121,11 @@ public class PointTQ {
         WRITER.write("level,index,time,resultSize\n");
         for (Region region : regions) {
             Rectangle r = Rectangle.create(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
+
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> result = IteratorUtils.toList(rTree.search(r).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
             WRITER.write(builder.toString());
@@ -139,6 +140,7 @@ public class PointTQ {
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> knnResult = IteratorUtils.toList(rTree.nearest(point.getKNNPoint(), Double.MAX_VALUE, KNN_NUM).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(point.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
             WRITER.write(builder.toString());
@@ -146,7 +148,7 @@ public class PointTQ {
         }
     }
 
-    public static void strStarTree(Point[] rtreePoints) throws IOException {
+    private static void strStarTree(Point[] rtreePoints) throws IOException {
         WRITER.write(" =========== STR*-Tree ========== \n");
         List<Entry<Integer, Point>> rl = new ArrayList<>();
         for (int i = 0; i < rtreePoints.length; i++) {
@@ -156,6 +158,7 @@ public class PointTQ {
         long startTime = System.currentTimeMillis();
         RTree<Integer, Point> rStarTree = RTree.star().dimensions(INPUT_DIMENSION).create(rl);
         long endTime = System.currentTimeMillis();
+
         WRITER.write("STR*-Tree Bulk-Load Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("STR*-Tree Index Size: " + getSize(rStarTree) + "\n");
 
@@ -167,9 +170,11 @@ public class PointTQ {
         WRITER.write("level,index,time,resultSize\n");
         for (Region region : regions) {
             Rectangle r = Rectangle.create(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
+
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> result = IteratorUtils.toList(rStarTree.search(r).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
             WRITER.write(builder.toString());
@@ -184,6 +189,7 @@ public class PointTQ {
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> knnResult = IteratorUtils.toList(rStarTree.nearest(point.getKNNPoint(), Double.MAX_VALUE, KNN_NUM).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(point.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
             WRITER.write(builder.toString());
@@ -191,7 +197,7 @@ public class PointTQ {
         }
     }
 
-    public static void quadTree(Point[] rtreePoints) throws IOException {
+    private static void quadTree(Point[] rtreePoints) throws IOException {
         WRITER.write(" =========== Quad-Tree ========== \n");
         QuadTreeKD0 qdTree = QuadTreeKD0.create(INPUT_DIMENSION);
 
@@ -200,6 +206,7 @@ public class PointTQ {
             qdTree.insert(rtreePoints[i].mins(), i);
         }
         long endTime = System.currentTimeMillis();
+
         WRITER.write("QuadTree Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("QuadTree Index Size: " + getSize(qdTree) + "\n");
 
@@ -213,6 +220,7 @@ public class PointTQ {
             startTime = System.currentTimeMillis();
             QuadTreeKD0.QIterator iterator = qdTree.query(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
             endTime = System.currentTimeMillis();
+
             List result = IteratorUtils.toList(iterator);
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
@@ -228,6 +236,7 @@ public class PointTQ {
             startTime = System.currentTimeMillis();
             List<QEntryDist> knnResult = qdTree.knnQuery(point.getValue(), KNN_NUM);
             endTime = System.currentTimeMillis();
+
             builder.append(point.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
             WRITER.write(builder.toString());
@@ -235,7 +244,7 @@ public class PointTQ {
         }
     }
 
-    public static void kdTree(Point[] rtreePoints) throws IOException {
+    private static void kdTree(Point[] rtreePoints) throws IOException {
         WRITER.write(" =========== kdTree ========== \n");
         KDTree kdTree = KDTree.create(INPUT_DIMENSION);
 
@@ -244,6 +253,7 @@ public class PointTQ {
             kdTree.insert(rtreePoints[i].mins(), i);
         }
         long endTime = System.currentTimeMillis();
+
         WRITER.write("KdTree Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("KdTree Index Size: " + getSize(kdTree) + "\n");
 
@@ -257,6 +267,7 @@ public class PointTQ {
             startTime = System.currentTimeMillis();
             KDIterator iterator = kdTree.query(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
             endTime = System.currentTimeMillis();
+
             List result = IteratorUtils.toList(iterator);
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
@@ -272,6 +283,7 @@ public class PointTQ {
             startTime = System.currentTimeMillis();
             List<QEntryDist> knnResult = kdTree.knnQuery(point.getValue(), KNN_NUM);
             endTime = System.currentTimeMillis();
+
             builder.append(point.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
             WRITER.write(builder.toString());
@@ -279,8 +291,7 @@ public class PointTQ {
         }
     }
 
-    public static long getSize(Object o) {
+    private static long getSize(Object o) {
         return SizeOfAgent.fullSizeOf(o);
     }
-
 }

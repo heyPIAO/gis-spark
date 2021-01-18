@@ -17,8 +17,8 @@ import java.util.List;
  */
 @Getter
 public class TestData {
-    private List<Region> regions;
-    private List<CheckPoint> points;
+    private final List<Region> regions;
+    private final List<CheckPoint> points;
 
     public TestData() throws IOException, ParseException {
         BufferedReader br1 = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/regions.tsv")));

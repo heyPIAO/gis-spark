@@ -3,6 +3,7 @@ package edu.zju.gis.hls.trajectory.doc.skr.entity;
 import lombok.Getter;
 import lombok.Setter;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
@@ -21,13 +22,16 @@ public class Region implements Serializable {
     private Long startTime;
     private Long endTime;
 
+    private Geometry geometry;
+
     public Region(String line) throws ParseException {
         String[] items = line.split("\t");
         this.level = Integer.parseInt(items[0]);
         this.index = Integer.parseInt(items[1]);
         WKTReader reader = new WKTReader();
         String wkt = items[2].trim();
-        this.envelope = reader.read(wkt).getEnvelopeInternal();
+        this.geometry = reader.read(wkt);
+        this.envelope = geometry.getEnvelopeInternal();
         this.startTime = Long.parseLong(items[3]);
         this.endTime = Long.parseLong(items[4]);
     }

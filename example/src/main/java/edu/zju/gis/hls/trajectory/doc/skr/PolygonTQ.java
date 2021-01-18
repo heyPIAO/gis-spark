@@ -30,8 +30,7 @@ import java.util.List;
  */
 @Slf4j
 public class PolygonTQ {
-    private static Integer INPUT_DIMENSION;
-    private static Integer KNN_NUM;
+    private static Integer INPUT_DIMENSION, KNN_NUM;
     private static BufferedWriter WRITER;
     private static TestData testData;
 
@@ -103,7 +102,7 @@ public class PolygonTQ {
         return rectangles;
     }
 
-    public static void strTree(Rectangle[] rectangles) throws IOException {
+    private static void strTree(Rectangle[] rectangles) throws IOException {
         WRITER.write(" =========== STR-Tree ========== \n");
         List<Entry<Integer, Rectangle>> rl = new ArrayList<>();
         for (int i = 0; i < rectangles.length; i++) {
@@ -113,6 +112,7 @@ public class PolygonTQ {
         long startTime = System.currentTimeMillis();
         RTree<Integer, Rectangle> rTree = RTree.dimensions(INPUT_DIMENSION).create(rl);
         long endTime = System.currentTimeMillis();
+
         WRITER.write("STR-Tree Bulk-Load Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("STR-Tree Index Size: " + getSize(rTree) + "\n");
 
@@ -124,9 +124,11 @@ public class PolygonTQ {
         WRITER.write("level,index,time,resultSize\n");
         for (Region region : regions) {
             Rectangle r = Rectangle.create(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
+
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> result = IteratorUtils.toList(rTree.search(r).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
             WRITER.write(builder.toString());
@@ -141,6 +143,7 @@ public class PolygonTQ {
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> knnResult = IteratorUtils.toList(rTree.nearest(point.getKNNPoint(), Double.MAX_VALUE, KNN_NUM).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(point.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
             WRITER.write(builder.toString());
@@ -148,7 +151,7 @@ public class PolygonTQ {
         }
     }
 
-    public static void strStarTree(Rectangle[] rectangles) throws IOException {
+    private static void strStarTree(Rectangle[] rectangles) throws IOException {
         WRITER.write(" =========== STR*-Tree ========== \n");
         List<Entry<Integer, Rectangle>> rl = new ArrayList<>();
         for (int i = 0; i < rectangles.length; i++) {
@@ -158,6 +161,7 @@ public class PolygonTQ {
         long startTime = System.currentTimeMillis();
         RTree<Integer, Rectangle> rStarTree = RTree.star().dimensions(INPUT_DIMENSION).create(rl);
         long endTime = System.currentTimeMillis();
+
         WRITER.write("STR*-Tree Bulk-Load Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("STR*-Tree Index Size: " + getSize(rStarTree) + "\n");
 
@@ -169,9 +173,11 @@ public class PolygonTQ {
         WRITER.write("level,index,time,resultSize\n");
         for (Region region : regions) {
             Rectangle r = Rectangle.create(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
+
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> result = IteratorUtils.toList(rStarTree.search(r).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
             WRITER.write(builder.toString());
@@ -186,6 +192,7 @@ public class PolygonTQ {
             startTime = System.currentTimeMillis();
             List<Entry<Integer, Point>> knnResult = IteratorUtils.toList(rStarTree.nearest(point.getKNNPoint(), Double.MAX_VALUE, KNN_NUM).iterator());
             endTime = System.currentTimeMillis();
+
             builder.append(point.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
             WRITER.write(builder.toString());
@@ -193,7 +200,7 @@ public class PolygonTQ {
         }
     }
 
-    public static void quadTree(Rectangle[] rectangles) throws IOException {
+    private static void quadTree(Rectangle[] rectangles) throws IOException {
         WRITER.write(" =========== Quad-Tree ========== \n");
         QuadTreeRKD0 qdTree = QuadTreeRKD0.create(INPUT_DIMENSION);
 
@@ -202,6 +209,7 @@ public class PolygonTQ {
             qdTree.insert(rectangles[i].mins(), rectangles[i].maxes(), i);
         }
         long endTime = System.currentTimeMillis();
+
         WRITER.write("QuadTree Index Building Time: " + (endTime-startTime) + "\n");
         WRITER.write("QuadTree Index Size: " + getSize(qdTree) + "\n");
 
@@ -215,6 +223,7 @@ public class PolygonTQ {
             startTime = System.currentTimeMillis();
             QuadTreeRKD0.QRIterator iterator = qdTree.queryIntersect(region.getMin(INPUT_DIMENSION), region.getMax(INPUT_DIMENSION));
             endTime = System.currentTimeMillis();
+
             List result = IteratorUtils.toList(iterator);
             builder.append(region.getLevel()).append(",").append(region.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(result.size()).append("\n");
@@ -230,6 +239,7 @@ public class PolygonTQ {
             startTime = System.currentTimeMillis();
             List<QEntryDist> knnResult = qdTree.knnQuery(point.getValue(), KNN_NUM);
             endTime = System.currentTimeMillis();
+
             builder.append(point.getIndex()).append(",");
             builder.append(endTime-startTime).append(",").append(knnResult.size()).append("\n");
             WRITER.write(builder.toString());
@@ -237,7 +247,7 @@ public class PolygonTQ {
         }
     }
 
-    public static long getSize(Object o) {
+    private static long getSize(Object o) {
         return SizeOfAgent.fullSizeOf(o);
     }
 }
