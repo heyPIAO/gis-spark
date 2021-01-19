@@ -49,7 +49,7 @@ public class NNModel implements Serializable {
   private double scoreThreshold = 0.001; // 默认得分变化的比例，少于 0.1%的话，就停止训练。
 
   public NNModel() {
-    this(2,1);
+    this(3,1);
   }
 
 
@@ -61,7 +61,7 @@ public class NNModel implements Serializable {
       .l2(1e-3) // weight decay
       .list()
       .layer(0, new DenseLayer.Builder().nIn(inDimension).nOut(100).activation(Activation.RELU).weightInit(WeightInit.XAVIER).build())
-//      .layer(1, new DenseLayer.Builder().nIn(200).nOut(20).activation(Activation.RELU).weightInit(WeightInit.XAVIER).build())
+      .layer(1, new DenseLayer.Builder().nIn(100).nOut(100).activation(Activation.RELU).weightInit(WeightInit.XAVIER).build())
       .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.L1).nIn(100).nOut(outDimension).activation(Activation.IDENTITY).weightInit(WeightInit.XAVIER).build())
       .backpropType(BackpropType.Standard)
       .build();

@@ -79,11 +79,12 @@ public class NNModelTest {
     protected List<Writable> parseLine(String line) {
       String[] split;
       try {
+        //存疑，为什么要这样读取
         split = this.csvParser.parseLine(line);
         String pointX = split[2];
         String pointY = split[3];
-        String time = split[3];
-        split = new String[] {split[2], pointX, pointY, time};
+        String time = split[4];
+        split = new String[] {split[1], pointX, pointY, time};
       } catch (IOException var8) {
         throw new RuntimeException(var8);
       }
