@@ -4,6 +4,7 @@ import edu.zju.gis.hls.trajectory.doc.ml.NNDitributeTrainModel;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
@@ -20,9 +21,7 @@ import org.nd4j.linalg.dataset.DataSet;
 import scala.Array;
 import scala.Tuple2;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.Vector;
+import java.util.*;
 
 public class LearnIndexDistributeTest {
     private static String FILEPATH = "E:\\2020data\\test.csv";
@@ -32,7 +31,7 @@ public class LearnIndexDistributeTest {
         SparkSession ss = SparkSession.builder().master("local[4]").appName("GenerateTrainData").getOrCreate();
         JavaSparkContext jsc = new JavaSparkContext(ss.sparkContext());
         Vector<NNDitributeTrainModel> modelset = new Vector<NNDitributeTrainModel>();
-        Vector<JavaRDD<DataSet>> rddset=new Vector<JavaRDD<DataSet>>();
+        Vector<Float> errbounds=new Vector<Float>();
 
         // map data to DataSet
         JavaRDD<String> s = jsc.textFile(FILEPATH);
@@ -135,27 +134,36 @@ public class LearnIndexDistributeTest {
                     return origin;
                 }
             });
-            subds.collect();
             subds.cache();
             model.train(subds);
             model.evaluate(subds);
-            List<DataSet> samples = subds.take(10);
+            List<DataSet> samples = subds.collect();
             JavaPairRDD<String, DataSet> sampleRDD = jsc.parallelize(samples).mapToPair(x-> new Tuple2<String, DataSet>(UUID.randomUUID().toString(), x));
             sampleRDD.cache();
             JavaPairRDD<String, INDArray> sampleFeaturesRDD = sampleRDD.mapToPair(x-> new Tuple2<String, INDArray>(x._1, x._2.getFeatures()));
-
-            System.out.println("=== ORIGINS ===");
-            sampleRDD.collect().forEach(x->System.out.println(x._1 + ": " + x._2.getLabels().toStringFull()));
-            System.out.println("=== INFERRESULTS ===");
-            List<Tuple2<String, INDArray>> result = model.infer(sampleFeaturesRDD, 10).collect();
-            result.forEach(x -> System.out.println(x._1 + ": " + x._2.toStringFull()));
+            List<Tuple2<String, INDArray>> result = model.infer(sampleFeaturesRDD, samples.size()).collect();
+            JavaPairRDD<String, INDArray> resultRDD = jsc.parallelize(result).mapToPair((PairFunction<Tuple2<String, INDArray>, String, INDArray>) stringINDArrayTuple2 -> stringINDArrayTuple2);
+            JavaPairRDD<String, Tuple2<INDArray, DataSet>> join = resultRDD.join(sampleRDD);
+            JavaRDD<Float> floatJavaRDD = join.flatMap(new FlatMapFunction<Tuple2<String, Tuple2<INDArray, DataSet>>, Float>() {
+                @Override
+                public Iterator<Float> call(Tuple2<String, Tuple2<INDArray, DataSet>> stringTuple2Tuple2) throws Exception {
+                    float temp = Math.abs(stringTuple2Tuple2._2._2.getLabels().data().getFloat(0) -
+                            stringTuple2Tuple2._2._1.data().getFloat(0));
+                    return Arrays.asList(temp).iterator();
+                }
+            });
+            Float reduce = floatJavaRDD.reduce(new Function2<Float, Float, Float>() {
+                @Override
+                public Float call(Float aFloat, Float aFloat2) throws Exception {
+                    return Math.max(aFloat, aFloat2);
+                }
+            });
+            errbounds.add(reduce);
             modelset.add(model);
 
         }
         ss.stop();
         ss.close();
-
-
 
     }
 }
