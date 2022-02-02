@@ -22,7 +22,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <mysql.version>8.0.16</mysql.version>
-        <postgresql.version>42.2.14</postgresql.version>
+        <postgresql.version>42.2.25</postgresql.version>
         <mybatis.version>3.4.5</mybatis.version>
         <hadoop.version>2.7.3</hadoop.version>
         <scala.version>2.11</scala.version>
