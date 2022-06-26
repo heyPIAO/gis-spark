@@ -114,7 +114,8 @@ public class MdbLayerReader<T extends Layer> extends LayerReader<T> {
           }
 
           // build feature
-          Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+//          Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes, timestamp, startTime, endTime);
+          Feature feature = buildFeature(readerConfig.getLayerType().getFeatureType(), fid, geometry, attributes);
           result.add(new Tuple2<>(fid, feature));
 
           sf = reader.nextFeature();

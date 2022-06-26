@@ -82,8 +82,8 @@ public class MdbDataReader extends DataReader {
   }
 
   @Override
-  protected String readCRS() {
-    return this.featureLayer.GetSpatialRef().ExportToWkt();
+  protected void readCRS() {
+    this.crs = this.featureLayer.GetSpatialRef().ExportToWkt();
   }
 
   @Override
