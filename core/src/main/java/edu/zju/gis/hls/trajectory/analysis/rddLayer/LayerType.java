@@ -11,6 +11,8 @@ import lombok.Getter;
  **/
 public enum LayerType {
 
+  GEOMETRY_LAYER(8, FeatureType.GEOMETRY),
+
   POINT_LAYER(0, FeatureType.POINT),
   POLYLINE_LAYER(1, FeatureType.POLYLINE),
   POLYGON_LAYER(2, FeatureType.POLYGON),
@@ -47,6 +49,7 @@ public enum LayerType {
   }
 
   private Class<? extends Layer> getLayerClass(FeatureType ft) {
+    if (ft.equals(FeatureType.GEOMETRY)) return GeometryLayer.class;
     if (ft.equals(FeatureType.POINT)) return PointLayer.class;
     if (ft.equals(FeatureType.POLYLINE)) return PolylineLayer.class;
     if (ft.equals(FeatureType.POLYGON)) return PolygonLayer.class;

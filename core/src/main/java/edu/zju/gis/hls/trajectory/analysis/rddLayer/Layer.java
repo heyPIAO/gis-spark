@@ -17,6 +17,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.expressions.GenericRow;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -168,17 +169,18 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
     /**
      * 投影转换
      *
-     * @param ocrs：目标css
+     * @param ocrs：目标crs
      * @return
      */
     public Layer<K, V> transform(CoordinateReferenceSystem ocrs) {
-        Function transformFunction = new Function<Tuple2<K, V>, Tuple2<K, V>>() {
-            @Override
-            public Tuple2<K, V> call(Tuple2<K, V> t) throws Exception {
-                V f = (V)(new Feature(t._2));
-                f.transform(metadata.getCrs(), ocrs);
-                return new Tuple2<>(t._1, f);
-            }
+        return this.transform(metadata.getCrs(), ocrs);
+    }
+
+    public Layer<K, V> transform(CoordinateReferenceSystem srcCrs, CoordinateReferenceSystem ocrs) {
+        Function transformFunction = (Function<Tuple2<K, V>, Tuple2<K, V>>) t -> {
+            V f = (V)(new Feature(t._2));
+            f.transform(srcCrs, ocrs);
+            return new Tuple2<>(t._1, f);
         };
         this.metadata.setCrs(ocrs);
         return this.mapToLayer(transformFunction);
@@ -411,6 +413,13 @@ public class Layer<K, V extends Feature> extends JavaPairRDD<K, V> implements Se
     public Dataset<Row> toDataset(SparkSession ss) {
         JavaRDD<Row> rdd = this.rdd().toJavaRDD().map(x -> x._2).map(x -> new GenericRow(x.toObjectArray()));
         return ss.createDataFrame(rdd, this.getLayerStructType());
+    }
+
+    public Dataset<Row> toDataset(SparkSession ss, boolean geomReserved) {
+        JavaRDD<Row> rdd = this.rdd().toJavaRDD()
+                .map(x -> x._2)
+                .map(x -> new GenericRow(x.toObjectArray(geomReserved)));
+        return ss.createDataFrame(rdd, this.getLayerStructType(geomReserved));
     }
 
     /**

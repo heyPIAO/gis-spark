@@ -1,5 +1,6 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.writer.pg;
 
+import edu.zju.gis.hls.trajectory.datastore.datasource.params.JdbcParams;
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,8 @@ import org.apache.spark.sql.SaveMode;
 @ToString
 @NoArgsConstructor
 public class PgLayerWriterConfig extends LayerWriterConfig {
+
+  private final String driver = "org.postgresql.Driver";
 
   private String schema;
   private String tablename;
@@ -42,5 +45,13 @@ public class PgLayerWriterConfig extends LayerWriterConfig {
     this.tablename = tablename;
     this.username = username;
     this.password = password;
+  }
+
+  public JdbcParams toJdbcParams(){
+    return new JdbcParams().setTableName(this.getTablename())
+            .setJdbcDriver(this.getDriver())
+            .setJdbcUrl(this.getSinkPath())
+            .setPassword(this.getPassword())
+            .setUserName(this.getUsername());
   }
 }

@@ -4,6 +4,7 @@ import edu.zju.gis.hls.trajectory.analysis.proto.{TemporalLineString, TemporalPo
 import edu.zju.gis.hls.trajectory.analysis.util.GeometryUtil
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
+import org.apache.spark.sql.hls.util.WKBUtils
 import org.apache.spark.sql.types._
 import org.locationtech.jts.geom._
 
@@ -17,11 +18,11 @@ private [spark] class AbstractGeometryUDT[T >: Null <: Geometry: ClassTag]
   extends UserDefinedType[T] {
 
   override def serialize(obj: T): InternalRow = {
-    new GenericInternalRow(Array[Any](GeometryUtil.toByteArray(obj)))
+    new GenericInternalRow(Array[Any](WKBUtils.write(obj)))
   }
 
   override def sqlType: DataType = StructType(Seq(
-    StructField("GEOM",DataTypes.BinaryType)
+    StructField("geometry",DataTypes.BinaryType)
   ))
 
   override def userClass: Class[T] = classTag[T].runtimeClass.asInstanceOf[Class[T]]

@@ -11,6 +11,11 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.expressions.GenericRow;
+import org.apache.spark.sql.hls.dialect.GeometryDialect;
+import org.apache.spark.sql.jdbc.JdbcDialects;
+
+import java.util.List;
+
 
 /**
  * @author Hu
@@ -36,15 +41,21 @@ public class PgLayerWriter extends LayerWriter<Row> {
 
     @Override
     public void write(Layer layer) {
-        Dataset<Row> df = layer.toDataset(this.ss);
+        Dataset<Row> df = layer.toDataset(this.ss, true);
+//        df.cache();
+//        List<Row> r = df.collectAsList();
+        JdbcDialects.registerDialect(new GeometryDialect());
+
         df.cache();
         df.printSchema();
         df.write()
-                .format("jdbc")
+//                .format(PostgresSource.class.getCanonicalName()) // datasource v3的写法，但是不好用
+                .format("pg") // datasource v1
                 .option("url", config.getSinkPath())
                 .option("dbtable", String.format("%s.%s", config.getSchema(), config.getTablename()))
                 .option("user", config.getUsername())
                 .option("password", config.getPassword())
+                .option("driver", config.getDriver())
                 .mode(config.getSaveMode().equals(SaveMode.Append) ? SaveMode.Append : SaveMode.ErrorIfExists)
                 .save();
         df.unpersist();

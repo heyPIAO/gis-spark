@@ -44,7 +44,7 @@ public class SparkUtil {
         return SparkSession
                 .builder()
                 .appName(appName)
-                .master("local[1]")
+                .master("local[4]")
                 .config(conf)
                 .config("spark.driver.host", "localhost")
 //                .config(overrideConf(conf))

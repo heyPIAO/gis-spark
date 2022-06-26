@@ -89,6 +89,9 @@ public abstract class LayerReader<T extends Layer> implements Closeable, Seriali
       feature = c.newInstance(fid, (TemporalPoint)geometry, attributes);
     } else if (featureType.equals(FeatureType.TRAJECTORY_POLYLINE)) {
       throw new GISSparkException("You need to initialize TrajectoryPointLayer first, and then convert it to TrajectoryPolylineLayer");
+    } else if (featureType.equals(FeatureType.GEOMETRY)) {
+      c = featureClass.getConstructor(String.class, Geometry.class, LinkedHashMap.class);
+      feature = c.newInstance(fid, geometry, attributes);
     } else {
       log.error("Unsupport feature type: " + featureType.getName());
       return null;

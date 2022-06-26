@@ -18,7 +18,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,26 +49,38 @@ public class ShpDataReader extends DataReader {
     super.init();
     this.readHeader();
     this.readCRS();
-    this.initReader();
+    this.initReader(0, "UTF-8");
   }
 
-  private void initReader(){
-    File file = new File(filename);
-    if(!file.exists()){
-      throw new DataReaderException(DataReaderExceptionEnum.FILE_NOT_EXIST, this.filename);
-    }
+  // 0: local file system; 1: object file system
+  public void init(int mode, String charset) {
+    super.init();
+    if(mode == 0)
+        this.readCRS();
+    this.initReader(mode, charset);
+    this.readHeader();
+  }
+
+  // 0: local file system; 1: object file system
+  private void initReader(int mode, String charset){
     try {
-      this.shpDataStore = new ShapefileDataStore(file.toURI().toURL());
+      if (mode == 0) {
+        File file = new File(filename);
+        if (!file.exists()) {
+          throw new DataReaderException(DataReaderExceptionEnum.FILE_NOT_EXIST, this.filename);
+        }
+        this.shpDataStore = new ShapefileDataStore(file.toURI().toURL());
+      } else if (mode == 1) {
+        this.shpDataStore = new ShapefileDataStore(new URL(filename));
+        // set crs
+        this.crs = this.shpDataStore.getFeatureSource().getSchema().getCoordinateReferenceSystem().toWKT();
+      }
       // 设置编码
-      Charset charset = Charset.forName("UTF-8");
-      this.shpDataStore.setCharset(charset);
+      this.shpDataStore.setCharset(Charset.forName(charset));
       String typeName = this.shpDataStore.getTypeNames()[0]; // 获取第一层图层名
       SimpleFeatureSource featureSource = this.shpDataStore.getFeatureSource (typeName);
       FeatureCollection<SimpleFeatureType, SimpleFeature> collection = featureSource.getFeatures();
       this.reader = collection.features();
-    } catch (MalformedURLException e) {
-      e.printStackTrace();
-      throw new DataReaderException(DataReaderExceptionEnum.SYSTEM_READ_ERROR, this.filename);
     } catch (IOException e) {
       e.printStackTrace();
       throw new DataReaderException(DataReaderExceptionEnum.SYSTEM_READ_ERROR, this.filename);
@@ -92,7 +106,7 @@ public class ShpDataReader extends DataReader {
     if(this.headers != null) return this.headers;
     DbaseFileReader dbfReader = null;
     try {
-      dbfReader = new DbaseFileReader(new ShpFiles(this.filename), false, Charset.forName("UTF-8"));
+      dbfReader = new DbaseFileReader(new ShpFiles(this.filename), false, StandardCharsets.UTF_8);
       DbaseFileHeader header = dbfReader.getHeader();
       int numFields = header.getNumFields();
       String[] results = new String[numFields];

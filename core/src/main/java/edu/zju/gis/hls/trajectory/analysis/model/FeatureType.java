@@ -12,6 +12,8 @@ import java.io.Serializable;
  **/
 public enum FeatureType implements Serializable {
 
+  GEOMETRY("geometry", Geometry.class.getName()),
+
   POINT("point", Point.class.getName()),
   POLYLINE("polyline", Polyline.class.getName()),
   POLYGON("polygon", Polygon.class.getName()),

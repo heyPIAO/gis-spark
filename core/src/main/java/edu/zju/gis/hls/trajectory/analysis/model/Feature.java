@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.IteratorUtils;
+import org.apache.spark.sql.hls.util.WKBUtils;
+import org.apache.spark.sql.hls.util.WKBUtils$;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -416,6 +418,7 @@ public class Feature <T extends Geometry> implements Serializable, Cloneable {
     if (!this.isEmpty()) {
       if (geomReserved) {
         objs[objs.length-1] = this.getGeometry();
+//        objs[objs.length-1] = GeometryUtil.toWKB(this.getGeometry());
       } else {
         objs[objs.length-1] = this.getGeometryWkt();
       }

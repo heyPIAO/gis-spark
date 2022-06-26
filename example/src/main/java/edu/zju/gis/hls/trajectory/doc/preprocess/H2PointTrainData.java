@@ -210,7 +210,8 @@ public class H2PointTrainData {
           Double scaledX = (record._2.getGeometry().getX()-stats.getXmin())/stats.xDiff();
           Double scaledY = (record._2.getGeometry().getY()-stats.getYmin())/stats.yDiff();
           Double scaledTime = (Double.valueOf(record._2.getGeometry().getInstant()-stats.getTimeMin()))/stats.timeDiff();
-          return new TrainingRecord(index, record._2.getGeometry().getX(), record._2.getGeometry().getY(), record._2.getGeometry().getInstant(), scaledX, scaledY, scaledTime, scaledIndex, String.valueOf(record._2.getAttribute("trajId")));
+//          return new TrainingRecord(index, record._2.getGeometry().getX(), record._2.getGeometry().getY(), record._2.getGeometry().getInstant(), scaledX, scaledY, scaledTime, scaledIndex, String.valueOf(record._2.getAttribute("trajId")));
+          return null;
         }
       });
 

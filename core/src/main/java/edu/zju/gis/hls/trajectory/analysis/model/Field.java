@@ -164,12 +164,15 @@ public class Field implements Serializable {
      * @param field
      * @return reference: #{org.apache.spark.sql.Row}
      */
-    public static DataType converFieldTypeToDataType(Field field, boolean geomReserved) {
+    public static DataType
+    converFieldTypeToDataType(Field field, boolean geomReserved) {
 
         String fieldType = field.getType();
 
         if (field.getFieldType().equals(FieldType.SHAPE_FIELD)) {
             if (!geomReserved) return DataTypes.StringType;
+//            if (fieldType.equals(org.locationtech.jts.geom.Geometry.class.getName())) return DataTypes.BinaryType;
+            if (fieldType.equals(org.locationtech.jts.geom.Geometry.class.getName())) return new GeometryUDT();
             if (fieldType.equals(org.locationtech.jts.geom.Point.class.getName())) return new PointUDT();
             if (fieldType.equals(org.locationtech.jts.geom.LineString.class.getName())) return new PolylineUDT();
             if (fieldType.equals(org.locationtech.jts.geom.Polygon.class.getName())) return new PolygonUDT();
