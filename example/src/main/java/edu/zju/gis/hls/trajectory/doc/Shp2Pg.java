@@ -12,6 +12,8 @@ import edu.zju.gis.hls.trajectory.datastore.storage.writer.pg.PgLayerWriterConfi
 import edu.zju.gis.hls.trajectory.sql.util.SparkSqlUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
+import org.geotools.referencing.CRS;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import javax.xml.bind.ValidationException;
 import java.sql.Connection;
@@ -54,7 +56,8 @@ public class Shp2Pg {
             throw new ValidationException("The num of arguments has errors.");
         }
 
-        SparkSession ss = SparkSqlUtil.createSparkSessionWithSqlExtent(SparkSessionType.LOCAL, APP_NAME);
+//        SparkSession ss = SparkSqlUtil.createSparkSessionWithSqlExtent(SparkSessionType.LOCAL, APP_NAME);
+        SparkSession ss = SparkSqlUtil.createSparkSessionWithSqlExtent(SparkSessionType.REMOTE, APP_NAME);
 //        source = "jdbc:postgresql://gp-bp1dzd3e839uf010eo-master.gpdb.rds.aliyuncs.com:5432/fuxi";
 //        source ="jdbc:postgresql://pgm-bp18r1dq5gq2b8w7po.pg.rds.aliyuncs.com:1921/fuxi";
 //        user = "postgres";

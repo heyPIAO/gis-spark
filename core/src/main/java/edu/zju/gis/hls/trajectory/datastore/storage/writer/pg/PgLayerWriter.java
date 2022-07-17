@@ -51,6 +51,7 @@ public class PgLayerWriter extends LayerWriter<Row> {
         df.write()
 //                .format(PostgresSource.class.getCanonicalName()) // datasource v3的写法，但是不好用
                 .format("pg") // datasource v1
+//                .format("jdbc")
                 .option("url", config.getSinkPath())
                 .option("dbtable", String.format("%s.%s", config.getSchema(), config.getTablename()))
                 .option("user", config.getUsername())

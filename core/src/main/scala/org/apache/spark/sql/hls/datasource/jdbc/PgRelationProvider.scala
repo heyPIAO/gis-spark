@@ -7,7 +7,7 @@ import org.apache.spark.sql.{AnalysisException, DataFrame, SQLContext, SaveMode}
 import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider, DataSourceRegister, RelationProvider}
 
 class PgRelationProvider extends CreatableRelationProvider
-  with RelationProvider with DataSourceRegister{
+  with RelationProvider with DataSourceRegister {
   override def createRelation(sqlContext: SQLContext, mode: SaveMode,
                               parameters: Map[String, String], df: DataFrame): BaseRelation = {
     val options = new JdbcOptionsInWrite(parameters)
@@ -54,8 +54,7 @@ class PgRelationProvider extends CreatableRelationProvider
     }
 
     createRelation(sqlContext, parameters)
-  
-      }
+  }
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
     val jdbcOptions = new JDBCOptions(parameters)

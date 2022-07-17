@@ -1,6 +1,6 @@
 package edu.zju.gis.hls.trajectory.datastore.storage.writer.pg;
 
-import edu.zju.gis.hls.trajectory.datastore.datasource.params.JdbcParams;
+
 import edu.zju.gis.hls.trajectory.datastore.storage.writer.LayerWriterConfig;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,13 +45,5 @@ public class PgLayerWriterConfig extends LayerWriterConfig {
     this.tablename = tablename;
     this.username = username;
     this.password = password;
-  }
-
-  public JdbcParams toJdbcParams(){
-    return new JdbcParams().setTableName(this.getTablename())
-            .setJdbcDriver(this.getDriver())
-            .setJdbcUrl(this.getSinkPath())
-            .setPassword(this.getPassword())
-            .setUserName(this.getUsername());
   }
 }

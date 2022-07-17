@@ -1,21 +1,5 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.apache.spark.sql.hls.util
+
 
 import java.sql.{Connection, Driver, DriverManager, JDBCType, PreparedStatement, ResultSet, ResultSetMetaData, SQLException}
 import java.util.Locale
@@ -33,6 +17,7 @@ import org.apache.spark.sql.catalyst.expressions.SpecificInternalRow
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.catalyst.util.{CaseInsensitiveMap, DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.execution.datasources.jdbc.{DriverRegistry, DriverWrapper, JDBCOptions, JdbcOptionsInWrite}
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.logWarning
 import org.apache.spark.sql.hls.udt.GeometryUDT
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects, JdbcType}
 import org.apache.spark.sql.types._
@@ -49,7 +34,6 @@ object PgUtils extends Logging {
    * Returns a factory for creating connections to the given JDBC URL.
    *
    * @param options - JDBC options that contains url, table and other information.
-   * @throws IllegalArgumentException if the driver could not open a JDBC connection.
    */
   def createConnectionFactory(options: JDBCOptions): () => Connection = {
     val driverClass: String = options.driverClass
@@ -62,11 +46,7 @@ object PgUtils extends Logging {
         throw new IllegalStateException(
           s"Did not find registered driver with class $driverClass")
       }
-      val connection: Connection = driver.connect(options.url, options.asConnectionProperties)
-      require(connection != null,
-        s"The driver could not open a JDBC connection. Check the URL: ${options.url}")
-
-      connection
+      driver.connect(options.url, options.asConnectionProperties)
     }
   }
 
@@ -176,6 +156,7 @@ object PgUtils extends Logging {
       case BooleanType => Option(JdbcType("BIT(1)", java.sql.Types.BIT))
       case StringType => Option(JdbcType("TEXT", java.sql.Types.CLOB))
       case BinaryType => Option(JdbcType("BLOB", java.sql.Types.BLOB))
+      case t: GeometryUDT => Option(JdbcType("BLOB", java.sql.Types.BLOB))
       case TimestampType => Option(JdbcType("TIMESTAMP", java.sql.Types.TIMESTAMP))
       case DateType => Option(JdbcType("DATE", java.sql.Types.DATE))
       case t: DecimalType => Option(
@@ -203,60 +184,52 @@ object PgUtils extends Logging {
                                signed: Boolean): DataType = {
     val answer = sqlType match {
       // scalastyle:off
-      case java.sql.Types.ARRAY => null
-      case java.sql.Types.BIGINT => if (signed) {
-        LongType
-      } else {
-        DecimalType(20, 0)
-      }
-      case java.sql.Types.BINARY => BinaryType
-      case java.sql.Types.BIT => BooleanType // @see JdbcDialect for quirks
-      case java.sql.Types.BLOB => BinaryType
-      case java.sql.Types.BOOLEAN => BooleanType
-      case java.sql.Types.CHAR => StringType
-      case java.sql.Types.CLOB => StringType
-      case java.sql.Types.DATALINK => null
-      case java.sql.Types.DATE => DateType
+      case java.sql.Types.ARRAY         => null
+      case java.sql.Types.BIGINT        => if (signed) { LongType } else { DecimalType(20,0) }
+      case java.sql.Types.BINARY        => BinaryType
+      case java.sql.Types.BIT           => BooleanType // @see JdbcDialect for quirks
+      case java.sql.Types.BLOB          => BinaryType
+      case java.sql.Types.BOOLEAN       => BooleanType
+      case java.sql.Types.CHAR          => StringType
+      case java.sql.Types.CLOB          => StringType
+      case java.sql.Types.DATALINK      => null
+      case java.sql.Types.DATE          => DateType
       case java.sql.Types.DECIMAL
         if precision != 0 || scale != 0 => DecimalType.bounded(precision, scale)
-      case java.sql.Types.DECIMAL => DecimalType.SYSTEM_DEFAULT
-      case java.sql.Types.DISTINCT => null
-      case java.sql.Types.DOUBLE => DoubleType
-      case java.sql.Types.FLOAT => FloatType
-      case java.sql.Types.INTEGER => if (signed) {
-        IntegerType
-      } else {
-        LongType
-      }
-      case java.sql.Types.JAVA_OBJECT => null
-      case java.sql.Types.LONGNVARCHAR => StringType
+      case java.sql.Types.DECIMAL       => DecimalType.SYSTEM_DEFAULT
+      case java.sql.Types.DISTINCT      => null
+      case java.sql.Types.DOUBLE        => DoubleType
+      case java.sql.Types.FLOAT         => FloatType
+      case java.sql.Types.INTEGER       => if (signed) { IntegerType } else { LongType }
+      case java.sql.Types.JAVA_OBJECT   => null
+      case java.sql.Types.LONGNVARCHAR  => StringType
       case java.sql.Types.LONGVARBINARY => BinaryType
-      case java.sql.Types.LONGVARCHAR => StringType
-      case java.sql.Types.NCHAR => StringType
-      case java.sql.Types.NCLOB => StringType
-      case java.sql.Types.NULL => null
+      case java.sql.Types.LONGVARCHAR   => StringType
+      case java.sql.Types.NCHAR         => StringType
+      case java.sql.Types.NCLOB         => StringType
+      case java.sql.Types.NULL          => null
       case java.sql.Types.NUMERIC
         if precision != 0 || scale != 0 => DecimalType.bounded(precision, scale)
-      case java.sql.Types.NUMERIC => DecimalType.SYSTEM_DEFAULT
-      case java.sql.Types.NVARCHAR => StringType
-      case java.sql.Types.OTHER => null
-      case java.sql.Types.REAL => DoubleType
-      case java.sql.Types.REF => StringType
-      case java.sql.Types.REF_CURSOR => null
-      case java.sql.Types.ROWID => LongType
-      case java.sql.Types.SMALLINT => IntegerType
-      case java.sql.Types.SQLXML => StringType
-      case java.sql.Types.STRUCT => StringType
-      case java.sql.Types.TIME => TimestampType
+      case java.sql.Types.NUMERIC       => DecimalType.SYSTEM_DEFAULT
+      case java.sql.Types.NVARCHAR      => StringType
+      case java.sql.Types.OTHER         => null
+      case java.sql.Types.REAL          => DoubleType
+      case java.sql.Types.REF           => StringType
+      case java.sql.Types.REF_CURSOR    => null
+      case java.sql.Types.ROWID         => LongType
+      case java.sql.Types.SMALLINT      => IntegerType
+      case java.sql.Types.SQLXML        => StringType
+      case java.sql.Types.STRUCT        => StringType
+      case java.sql.Types.TIME          => TimestampType
       case java.sql.Types.TIME_WITH_TIMEZONE
       => null
-      case java.sql.Types.TIMESTAMP => TimestampType
+      case java.sql.Types.TIMESTAMP     => TimestampType
       case java.sql.Types.TIMESTAMP_WITH_TIMEZONE
       => null
-      case java.sql.Types.TINYINT => IntegerType
-      case java.sql.Types.VARBINARY => BinaryType
-      case java.sql.Types.VARCHAR => StringType
-      case _ =>
+      case java.sql.Types.TINYINT       => IntegerType
+      case java.sql.Types.VARBINARY     => BinaryType
+      case java.sql.Types.VARCHAR       => StringType
+      case _                            =>
         throw new SQLException("Unrecognized SQL type " + sqlType)
       // scalastyle:on
     }
@@ -340,9 +313,9 @@ object PgUtils extends Logging {
   def resultSetToRows(resultSet: ResultSet, schema: StructType): Iterator[Row] = {
     val inputMetrics =
       Option(TaskContext.get()).map(_.taskMetrics().inputMetrics).getOrElse(new InputMetrics)
-    val fromRow = RowEncoder(schema).resolveAndBind().createDeserializer()
+    val encoder = RowEncoder(schema).resolveAndBind()
     val internalRows = resultSetToSparkInternalRows(resultSet, schema, inputMetrics)
-    internalRows.map(fromRow)
+    internalRows.map(encoder.fromRow)
   }
 
   private[spark] def resultSetToSparkInternalRows(
@@ -451,10 +424,6 @@ object PgUtils extends Logging {
     case ShortType =>
       (rs: ResultSet, row: InternalRow, pos: Int) =>
         row.setShort(pos, rs.getShort(pos + 1))
-
-    case ByteType =>
-      (rs: ResultSet, row: InternalRow, pos: Int) =>
-        row.setByte(pos, rs.getByte(pos + 1))
 
     case StringType =>
       (rs: ResultSet, row: InternalRow, pos: Int) =>
@@ -569,10 +538,11 @@ object PgUtils extends Logging {
       (stmt: PreparedStatement, row: Row, pos: Int) =>
         stmt.setString(pos + 1, row.getString(pos))
 
-    case GeometryUDT =>
+    case t: GeometryUDT =>
       (stmt: PreparedStatement, row: Row, pos: Int) => {
         stmt.setBytes(pos + 1, WKBUtils.write(row.getAs[Geometry](pos)))
       }
+
     case BinaryType =>
       (stmt: PreparedStatement, row: Row, pos: Int) =>
         stmt.setBytes(pos + 1, row.getAs[Array[Byte]](pos))
@@ -618,13 +588,6 @@ object PgUtils extends Logging {
    * implementation changes elsewhere might easily render such a closure
    * non-Serializable.  Instead, we explicitly close over all variables that
    * are used.
-   *
-   * Note that this method records task output metrics. It assumes the method is
-   * running in a task. For now, we only records the number of rows being written
-   * because there's no good way to measure the total bytes being written. Only
-   * effective outputs are taken into account: for example, metric will not be updated
-   * if it supports transaction and transaction is rolled back, but metric will be
-   * updated even with error if it doesn't support transaction, as there're dirty outputs.
    */
   def savePartition(
                      getConnection: () => Connection,
@@ -635,9 +598,7 @@ object PgUtils extends Logging {
                      batchSize: Int,
                      dialect: JdbcDialect,
                      isolationLevel: Int,
-                     options: JDBCOptions): Unit = {
-    val outMetrics = TaskContext.get().taskMetrics().outputMetrics
-
+                     options: JDBCOptions): Iterator[Byte] = {
     val conn = getConnection()
     var committed = false
 
@@ -650,7 +611,7 @@ object PgUtils extends Logging {
           // has been chosen and transactions are supported
           val defaultIsolation = metadata.getDefaultTransactionIsolation
           finalIsolationLevel = defaultIsolation
-          if (metadata.supportsTransactionIsolationLevel(isolationLevel)) {
+          if (metadata.supportsTransactionIsolationLevel(isolationLevel))  {
             // Finally update to actually requested level if possible
             finalIsolationLevel = isolationLevel
           } else {
@@ -665,7 +626,7 @@ object PgUtils extends Logging {
       }
     }
     val supportsTransactions = finalIsolationLevel != Connection.TRANSACTION_NONE
-    var totalRowCount = 0L
+
     try {
       if (supportsTransactions) {
         conn.setAutoCommit(false) // Everything in the same db transaction.
@@ -694,7 +655,6 @@ object PgUtils extends Logging {
           }
           stmt.addBatch()
           rowCount += 1
-          totalRowCount += 1
           if (rowCount % batchSize == 0) {
             stmt.executeBatch()
             rowCount = 0
@@ -710,6 +670,7 @@ object PgUtils extends Logging {
         conn.commit()
       }
       committed = true
+      Iterator.empty
     } catch {
       case e: SQLException =>
         val cause = e.getNextException
@@ -737,13 +698,9 @@ object PgUtils extends Logging {
         // tell the user about another problem.
         if (supportsTransactions) {
           conn.rollback()
-        } else {
-          outMetrics.setRecordsWritten(totalRowCount)
         }
         conn.close()
       } else {
-        outMetrics.setRecordsWritten(totalRowCount)
-
         // The stage must succeed.  We cannot propagate any exception close() might throw.
         try {
           conn.close()
@@ -866,11 +823,10 @@ object PgUtils extends Logging {
       case Some(n) if n < df.rdd.getNumPartitions => df.coalesce(n)
       case _ => df
     }
-    repartitionedDF.rdd.foreachPartition { iterator =>
-      savePartition(
-        getConnection, table, iterator, rddSchema, insertStmt, batchSize, dialect, isolationLevel,
-        options)
-    }
+    repartitionedDF.rdd.foreachPartition(iterator => savePartition(
+      getConnection, table, iterator, rddSchema, insertStmt, batchSize, dialect, isolationLevel,
+      options)
+    )
   }
 
   /**

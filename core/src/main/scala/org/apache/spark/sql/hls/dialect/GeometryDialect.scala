@@ -55,7 +55,7 @@ class GeometryDialect extends JdbcDialect {
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
-    case GeometryUDT => Some(JdbcType("geometry", Types.BINARY))
+    case t: GeometryUDT => Some(JdbcType("geometry", Types.BINARY))
     case StringType => Some(JdbcType("TEXT", Types.CHAR))
     case BinaryType => Some(JdbcType("BYTEA", Types.BINARY))
     case BooleanType => Some(JdbcType("BOOLEAN", Types.BOOLEAN))
@@ -68,7 +68,14 @@ class GeometryDialect extends JdbcDialect {
       getJDBCType(et).map(_.databaseTypeDefinition)
         .orElse(JdbcUtils.getCommonJDBCType(et).map(_.databaseTypeDefinition))
         .map(typeName => JdbcType(s"$typeName[]", java.sql.Types.ARRAY))
-    case _ => None
+    case _ =>
+//      try
+//        if (dt.asInstanceOf[GeometryUDT].userClass.equals(GeometryUDT.userClass))
+//          return Some(JdbcType("geometry", Types.BINARY))
+//      catch {
+//        case _: Exception =>
+//      }
+      None
   }
 
   override def getTableExistsQuery(table: String): String = {

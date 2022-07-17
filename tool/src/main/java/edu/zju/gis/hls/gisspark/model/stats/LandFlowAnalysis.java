@@ -27,6 +27,7 @@ import org.apache.spark.api.java.function.*;
 import org.apache.spark.sql.SparkSession;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
 import scala.Tuple2;
